@@ -1,0 +1,537 @@
+/* pages/profile/profile.wxss */
+.profile-container {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 头部信息 */
+.profile-header {
+  background: linear-gradient(135deg, #4CAF50, #66BB6A);
+  padding: 40rpx 30rpx 30rpx;
+  color: white;
+}
+
+.user-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  overflow: hidden;
+  margin: 0 auto 20rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.user-avatar image {
+  width: 100%;
+  height: 100%;
+}
+
+.user-info {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.username {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.join-date {
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+.profile-stats {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20rpx;
+  padding: 30rpx 0;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+/* 标签页导航 */
+.tab-nav {
+  display: flex;
+  background: white;
+  border-bottom: 1rpx solid #eee;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 30rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  position: relative;
+}
+
+.tab-item.active {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60rpx;
+  height: 4rpx;
+  background: #4CAF50;
+  border-radius: 2rpx;
+}
+
+/* 标签页内容 */
+.tab-content {
+  padding: 30rpx;
+}
+
+/* 档案卡片 */
+.profile-card {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+}
+
+.edit-btn, .cancel-btn {
+  padding: 12rpx 24rpx;
+  background: #4CAF50;
+  color: white;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  margin-left: 20rpx;
+}
+
+.cancel-btn {
+  background: #999;
+}
+
+/* 档案部分 */
+.profile-section {
+  margin-bottom: 40rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+/* 皮肤类型 */
+.skin-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.skin-type-tag {
+  padding: 16rpx 32rpx;
+  background: #E8F5E8;
+  color: #4CAF50;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+}
+
+.skin-types-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.skin-type-option {
+  padding: 24rpx;
+  border: 2rpx solid #eee;
+  border-radius: 16rpx;
+  background: white;
+}
+
+.skin-type-option.selected {
+  border-color: #4CAF50;
+  background: #E8F5E8;
+}
+
+.type-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.type-desc {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 关注点和目标 */
+.concerns-list, .goals-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.concern-tag, .goal-tag {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  background: #F0F0F0;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+}
+
+.concern-icon, .goal-icon {
+  margin-right: 8rpx;
+}
+
+.concerns-edit, .goals-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.concern-option, .goal-option {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  border: 2rpx solid #eee;
+  border-radius: 30rpx;
+  background: white;
+  font-size: 24rpx;
+}
+
+.concern-option.selected, .goal-option.selected {
+  border-color: #4CAF50;
+  background: #E8F5E8;
+  color: #4CAF50;
+}
+
+.empty-text {
+  color: #999;
+  font-size: 24rpx;
+  font-style: italic;
+}
+
+/* 最近检测 */
+.recent-detection {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30rpx;
+}
+
+.view-all {
+  color: #4CAF50;
+  font-size: 24rpx;
+}
+
+.detection-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.detection-item:last-child {
+  border-bottom: none;
+}
+
+.detection-info {
+  flex: 1;
+}
+
+.detection-type {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.detection-date {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.detection-score {
+  text-align: center;
+}
+
+.score-number {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+.score-label {
+  font-size: 20rpx;
+  color: #999;
+}
+
+/* 快捷操作 */
+.quick-actions {
+  display: flex;
+  justify-content: space-around;
+  background: white;
+  border-radius: 20rpx;
+  padding: 40rpx 20rpx;
+}
+
+.action-item {
+  text-align: center;
+}
+
+.action-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background: #E8F5E8;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin: 0 auto 16rpx;
+}
+
+.action-text {
+  font-size: 24rpx;
+  color: #333;
+}
+
+/* 检测历史 */
+.history-list {
+  background: white;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-info {
+  flex: 1;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.history-type {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.history-date {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.history-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.summary-text, .summary-issues {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.history-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  padding: 12rpx 24rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+.view-btn {
+  background: #E8F5E8;
+  color: #4CAF50;
+}
+
+.delete-btn {
+  background: #FFE8E8;
+  color: #F44336;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 100rpx 40rpx;
+  background: white;
+  border-radius: 20rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.5;
+}
+
+.empty-text {
+  display: block;
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.empty-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #ccc;
+  margin-bottom: 40rpx;
+}
+
+.empty-action {
+  padding: 20rpx 40rpx;
+  background: #4CAF50;
+  color: white;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  display: inline-block;
+}
+
+/* 趋势分析 */
+.trend-analysis {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+}
+
+.trend-summary {
+  margin-bottom: 40rpx;
+}
+
+.trend-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.trend-period {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.trend-chart {
+  height: 400rpx;
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.chart-placeholder {
+  color: #999;
+  font-size: 24rpx;
+}
+
+.trend-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.insight-item {
+  padding: 24rpx;
+  background: #E8F5E8;
+  border-radius: 16rpx;
+  border-left: 6rpx solid #4CAF50;
+}
+
+.insight-text {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* 设置列表 */
+.settings-list {
+  background: white;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 40rpx 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.setting-arrow {
+  color: #ccc;
+  font-size: 24rpx;
+}

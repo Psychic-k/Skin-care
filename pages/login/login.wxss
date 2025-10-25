@@ -1,0 +1,191 @@
+/* 登录页面样式 */
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #E8F5E8 0%, #F0F8F0 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx 40rpx;
+}
+
+/* 品牌区域 */
+.brand-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 80rpx;
+}
+
+.brand-logo {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 20rpx;
+}
+
+.brand-name {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #4CAF50;
+  margin-bottom: 10rpx;
+}
+
+.brand-slogan {
+  font-size: 28rpx;
+  color: #666666;
+  text-align: center;
+}
+
+/* 登录区域 */
+.login-section {
+  width: 100%;
+  max-width: 600rpx;
+  margin-bottom: 60rpx;
+}
+
+.login-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  text-align: center;
+  margin-bottom: 10rpx;
+}
+
+.login-subtitle {
+  font-size: 28rpx;
+  color: #666666;
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+/* 登录按钮 */
+.login-btn {
+  width: 100%;
+  height: 88rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn::after {
+  border: none;
+}
+
+.wechat-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+  color: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(76, 175, 80, 0.3);
+}
+
+.wechat-btn.loading {
+  background: #cccccc;
+  box-shadow: none;
+}
+
+.profile-btn {
+  background: #ffffff;
+  color: #4CAF50;
+  border: 2rpx solid #4CAF50;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.btn-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
+}
+
+/* 跳过登录 */
+.skip-login {
+  text-align: center;
+  margin-top: 40rpx;
+}
+
+.skip-login text {
+  font-size: 28rpx;
+  color: #999999;
+  text-decoration: underline;
+}
+
+/* 功能介绍 */
+.features-section {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 600rpx;
+  margin-bottom: 60rpx;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.feature-icon {
+  width: 60rpx;
+  height: 60rpx;
+  margin-bottom: 16rpx;
+}
+
+.feature-text {
+  font-size: 24rpx;
+  color: #666666;
+}
+
+/* 隐私协议 */
+.privacy-section {
+  position: fixed;
+  bottom: 40rpx;
+  left: 40rpx;
+  right: 40rpx;
+  text-align: center;
+}
+
+.privacy-text {
+  font-size: 24rpx;
+  color: #999999;
+  line-height: 1.5;
+}
+
+.privacy-link {
+  color: #4CAF50;
+  text-decoration: underline;
+}
+
+/* 按钮点击效果 */
+.login-btn:active {
+  transform: scale(0.98);
+  transition: transform 0.1s;
+}
+
+/* 加载动画 */
+.loading {
+  position: relative;
+}
+
+.loading::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40rpx;
+  height: 40rpx;
+  margin: -20rpx 0 0 -20rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

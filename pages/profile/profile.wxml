@@ -1,0 +1,242 @@
+<!--pages/profile/profile.wxml-->
+<view class="profile-container">
+  <!-- 头部信息 -->
+  <view class="profile-header">
+    <view class="user-avatar">
+      <image src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+    </view>
+    <view class="user-info">
+      <text class="username">{{userInfo.nickName || '护肤达人'}}</text>
+      <text class="join-date">加入时间：{{userInfo.createTime || '2024-01-01'}}</text>
+    </view>
+    <view class="profile-stats">
+      <view class="stat-item">
+        <text class="stat-number">{{detectionHistory.length || 0}}</text>
+        <text class="stat-label">检测次数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{profileData.skinAge || '--'}}</text>
+        <text class="stat-label">肌龄</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{profileData.skinScore || '--'}}</text>
+        <text class="stat-label">肌肤评分</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 标签页导航 -->
+  <view class="tab-nav">
+    <view class="tab-item {{currentTab === 'overview' ? 'active' : ''}}" 
+          data-tab="overview" bindtap="switchTab">
+      <text>档案概览</text>
+    </view>
+    <view class="tab-item {{currentTab === 'history' ? 'active' : ''}}" 
+          data-tab="history" bindtap="switchTab">
+      <text>检测历史</text>
+    </view>
+    <view class="tab-item {{currentTab === 'analysis' ? 'active' : ''}}" 
+          data-tab="analysis" bindtap="switchTab">
+      <text>趋势分析</text>
+    </view>
+    <view class="tab-item {{currentTab === 'settings' ? 'active' : ''}}" 
+          data-tab="settings" bindtap="switchTab">
+      <text>设置</text>
+    </view>
+  </view>
+
+  <!-- 档案概览 -->
+  <view class="tab-content" wx:if="{{currentTab === 'overview'}}">
+    <!-- 皮肤档案卡片 -->
+    <view class="profile-card">
+      <view class="card-header">
+        <text class="card-title">皮肤档案</text>
+        <view class="edit-btn" bindtap="{{isEditing ? 'saveEdit' : 'startEdit'}}">
+          <text>{{isEditing ? '保存' : '编辑'}}</text>
+        </view>
+        <view class="cancel-btn" wx:if="{{isEditing}}" bindtap="cancelEdit">
+          <text>取消</text>
+        </view>
+      </view>
+      
+      <!-- 皮肤类型 -->
+      <view class="profile-section">
+        <text class="section-title">皮肤类型</text>
+        <view class="skin-types" wx:if="{{!isEditing}}">
+          <view class="skin-type-tag selected" wx:if="{{skinProfile.skinType}}">
+            {{getSkinTypeName(skinProfile.skinType)}}
+          </view>
+          <text class="empty-text" wx:else>未设置</text>
+        </view>
+        <view class="skin-types-edit" wx:else>
+          <view class="skin-type-option {{editData.skinType === item.id ? 'selected' : ''}}"
+                wx:for="{{skinTypes}}" wx:key="id"
+                data-type="{{item.id}}" bindtap="selectSkinType">
+            <text class="type-name">{{item.name}}</text>
+            <text class="type-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 护肤关注点 -->
+      <view class="profile-section">
+        <text class="section-title">护肤关注点</text>
+        <view class="concerns-list" wx:if="{{!isEditing}}">
+          <view class="concern-tag" wx:for="{{skinProfile.concerns}}" wx:key="*this">
+            <text class="concern-icon">{{getSkinConcernInfo(item, 'icon')}}</text>
+            <text class="concern-name">{{getSkinConcernInfo(item, 'name')}}</text>
+          </view>
+          <text class="empty-text" wx:if="{{!skinProfile.concerns.length}}">未设置</text>
+        </view>
+        <view class="concerns-edit" wx:else>
+          <view class="concern-option {{editData.concerns.includes(item.id) ? 'selected' : ''}}"
+                wx:for="{{skinConcerns}}" wx:key="id"
+                data-id="{{item.id}}" bindtap="toggleConcern">
+            <text class="concern-icon">{{item.icon}}</text>
+            <text class="concern-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 护肤目标 -->
+      <view class="profile-section">
+        <text class="section-title">护肤目标</text>
+        <view class="goals-list" wx:if="{{!isEditing}}">
+          <view class="goal-tag" wx:for="{{skinProfile.goals}}" wx:key="*this">
+            <text class="goal-icon">{{getSkinGoalInfo(item, 'icon')}}</text>
+            <text class="goal-name">{{getSkinGoalInfo(item, 'name')}}</text>
+          </view>
+          <text class="empty-text" wx:if="{{!skinProfile.goals.length}}">未设置</text>
+        </view>
+        <view class="goals-edit" wx:else>
+          <view class="goal-option {{editData.goals.includes(item.id) ? 'selected' : ''}}"
+                wx:for="{{skinGoals}}" wx:key="id"
+                data-id="{{item.id}}" bindtap="toggleGoal">
+            <text class="goal-icon">{{item.icon}}</text>
+            <text class="goal-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 最近检测 -->
+    <view class="recent-detection" wx:if="{{detectionHistory.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">最近检测</text>
+        <text class="view-all" bindtap="switchTab" data-tab="history">查看全部</text>
+      </view>
+      <view class="detection-item" wx:for="{{detectionHistory.slice(0, 3)}}" wx:key="id"
+            data-id="{{item.id}}" bindtap="viewDetectionDetail">
+        <view class="detection-info">
+          <text class="detection-type">{{item.type}}</text>
+          <text class="detection-date">{{item.createTime}}</text>
+        </view>
+        <view class="detection-score">
+          <text class="score-number">{{item.overallScore}}</text>
+          <text class="score-label">分</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 快捷操作 -->
+    <view class="quick-actions">
+      <view class="action-item" bindtap="startNewDetection">
+        <view class="action-icon">📷</view>
+        <text class="action-text">开始检测</text>
+      </view>
+      <view class="action-item" bindtap="viewTrendAnalysis">
+        <view class="action-icon">📊</view>
+        <text class="action-text">趋势分析</text>
+      </view>
+      <view class="action-item" bindtap="shareProfile">
+        <view class="action-icon">📤</view>
+        <text class="action-text">分享档案</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 检测历史 -->
+  <view class="tab-content" wx:if="{{currentTab === 'history'}}">
+    <view class="history-list" wx:if="{{detectionHistory.length > 0}}">
+      <view class="history-item" wx:for="{{detectionHistory}}" wx:key="id">
+        <view class="history-info" data-id="{{item.id}}" bindtap="viewDetectionDetail">
+          <view class="history-header">
+            <text class="history-type">{{item.type}}</text>
+            <text class="history-date">{{item.createTime}}</text>
+          </view>
+          <view class="history-summary">
+            <text class="summary-text">综合评分：{{item.overallScore}}分</text>
+            <text class="summary-issues" wx:if="{{item.mainIssues}}">
+              主要问题：{{item.mainIssues}}
+            </text>
+          </view>
+        </view>
+        <view class="history-actions">
+          <view class="action-btn view-btn" data-id="{{item.id}}" bindtap="viewDetectionDetail">
+            <text>查看</text>
+          </view>
+          <view class="action-btn delete-btn" data-id="{{item.id}}" bindtap="deleteDetection">
+            <text>删除</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="empty-state" wx:else>
+      <view class="empty-icon">📋</view>
+      <text class="empty-text">暂无检测记录</text>
+      <view class="empty-action" bindtap="startNewDetection">
+        <text>开始第一次检测</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 趋势分析 -->
+  <view class="tab-content" wx:if="{{currentTab === 'analysis'}}">
+    <view class="trend-analysis" wx:if="{{trendData}}">
+      <view class="trend-summary">
+        <text class="trend-title">肌肤变化趋势</text>
+        <view class="trend-period">
+          <text>近30天数据分析</text>
+        </view>
+      </view>
+      
+      <!-- 这里可以添加图表组件 -->
+      <view class="trend-chart">
+        <text class="chart-placeholder">趋势图表（待实现）</text>
+      </view>
+      
+      <view class="trend-insights">
+        <view class="insight-item" wx:for="{{trendData.insights}}" wx:key="*this">
+          <text class="insight-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="empty-state" wx:else>
+      <view class="empty-icon">📈</view>
+      <text class="empty-text">数据不足，无法生成趋势分析</text>
+      <text class="empty-desc">至少需要3次检测记录</text>
+    </view>
+  </view>
+
+  <!-- 设置 -->
+  <view class="tab-content" wx:if="{{currentTab === 'settings'}}">
+    <view class="settings-list">
+      <view class="setting-item" bindtap="exportData">
+        <text class="setting-text">导出数据</text>
+        <text class="setting-arrow">></text>
+      </view>
+      <view class="setting-item">
+        <text class="setting-text">隐私设置</text>
+        <text class="setting-arrow">></text>
+      </view>
+      <view class="setting-item">
+        <text class="setting-text">通知设置</text>
+        <text class="setting-arrow">></text>
+      </view>
+      <view class="setting-item">
+        <text class="setting-text">关于我们</text>
+        <text class="setting-arrow">></text>
+      </view>
+    </view>
+  </view>
+</view>

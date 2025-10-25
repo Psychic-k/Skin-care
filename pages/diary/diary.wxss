@@ -1,0 +1,672 @@
+/* pages/diary/diary.wxss */
+.diary-container {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 头部工具栏 */
+.diary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx;
+  background: white;
+  border-bottom: 1rpx solid #eee;
+}
+
+.header-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.header-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.add-btn {
+  width: 60rpx;
+  height: 60rpx;
+  background: #4CAF50;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+/* 视图模式切换 */
+.view-mode-tabs {
+  display: flex;
+  background: white;
+  border-bottom: 1rpx solid #eee;
+}
+
+.mode-tab {
+  flex: 1;
+  text-align: center;
+  padding: 30rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  position: relative;
+}
+
+.mode-tab.active {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.mode-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60rpx;
+  height: 4rpx;
+  background: #4CAF50;
+  border-radius: 2rpx;
+}
+
+/* 筛选和排序栏 */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 30rpx;
+  background: white;
+  border-bottom: 1rpx solid #eee;
+  font-size: 24rpx;
+}
+
+.filter-section, .sort-section {
+  display: flex;
+  align-items: center;
+}
+
+.filter-label, .sort-label {
+  color: #666;
+  margin-right: 20rpx;
+}
+
+.filter-options, .sort-options {
+  display: flex;
+  gap: 20rpx;
+}
+
+.filter-option, .sort-option {
+  padding: 8rpx 16rpx;
+  background: #f0f0f0;
+  border-radius: 16rpx;
+  color: #666;
+}
+
+.filter-option.active, .sort-option.active {
+  background: #E8F5E8;
+  color: #4CAF50;
+}
+
+/* 日记列表 */
+.diary-list {
+  padding: 30rpx;
+}
+
+.diary-item {
+  background: white;
+  border-radius: 20rpx;
+  margin-bottom: 30rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.diary-content {
+  padding: 30rpx;
+  display: flex;
+  gap: 30rpx;
+}
+
+.diary-date {
+  text-align: center;
+  min-width: 120rpx;
+}
+
+.date-text {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.weekday {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.diary-info {
+  flex: 1;
+}
+
+.condition-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.condition-item {
+  display: flex;
+  align-items: center;
+}
+
+.condition-label {
+  font-size: 26rpx;
+  color: #666;
+  min-width: 80rpx;
+}
+
+.condition-stars {
+  display: flex;
+  gap: 4rpx;
+}
+
+.star {
+  font-size: 20rpx;
+  color: #ddd;
+}
+
+.star.filled {
+  color: #FFD700;
+}
+
+.weather-products {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.weather-info {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.weather-icon {
+  font-size: 24rpx;
+}
+
+.weather-name {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.products-count {
+  font-size: 24rpx;
+  color: #4CAF50;
+}
+
+.diary-notes {
+  margin-bottom: 20rpx;
+}
+
+.notes-text {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
+.diary-photos {
+  position: relative;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.photo-thumb {
+  width: 100%;
+  height: 100%;
+}
+
+.photos-count {
+  position: absolute;
+  bottom: 8rpx;
+  right: 8rpx;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+}
+
+.diary-actions {
+  display: flex;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.action-btn {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  font-size: 26rpx;
+  border-right: 1rpx solid #f0f0f0;
+}
+
+.action-btn:last-child {
+  border-right: none;
+}
+
+.edit-btn {
+  color: #4CAF50;
+}
+
+.delete-btn {
+  color: #F44336;
+}
+
+.share-btn {
+  color: #2196F3;
+}
+
+/* 日历视图 */
+.calendar-view {
+  padding: 30rpx;
+}
+
+.calendar-header {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.calendar-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.calendar-grid {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+}
+
+.calendar-weekdays {
+  display: flex;
+  margin-bottom: 20rpx;
+}
+
+.weekday-item {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  color: #666;
+  padding: 16rpx 0;
+}
+
+.calendar-placeholder {
+  height: 400rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 统计视图 */
+.stats-view {
+  padding: 30rpx;
+}
+
+.stats-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+}
+
+.stats-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30rpx;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30rpx;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #4CAF50;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.trend-chart {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+}
+
+.chart-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30rpx;
+}
+
+.chart-placeholder {
+  height: 300rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 100rpx 40rpx;
+  background: white;
+  border-radius: 20rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.5;
+}
+
+.empty-text {
+  display: block;
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.empty-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #ccc;
+  margin-bottom: 40rpx;
+}
+
+.empty-action {
+  padding: 20rpx 40rpx;
+  background: #4CAF50;
+  color: white;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  display: inline-block;
+}
+
+/* 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-diary-modal, .product-modal {
+  width: 90%;
+  max-height: 80%;
+  background: white;
+  border-radius: 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.close-btn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #999;
+}
+
+.modal-content {
+  flex: 1;
+  padding: 30rpx;
+}
+
+.form-item {
+  margin-bottom: 40rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.date-picker {
+  padding: 24rpx;
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  color: #333;
+}
+
+.weather-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.weather-option {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 24rpx;
+  border: 2rpx solid #eee;
+  border-radius: 30rpx;
+  background: white;
+}
+
+.weather-option.selected {
+  border-color: #4CAF50;
+  background: #E8F5E8;
+  color: #4CAF50;
+}
+
+.products-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx;
+  background: #f8f8f8;
+  border-radius: 16rpx;
+}
+
+.selector-text {
+  color: #333;
+}
+
+.selector-arrow {
+  color: #999;
+}
+
+.photos-section {
+  display: flex;
+  gap: 20rpx;
+  flex-wrap: wrap;
+}
+
+.photo-item {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.photo-item image {
+  width: 100%;
+  height: 100%;
+}
+
+.delete-photo {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+}
+
+.add-photo {
+  width: 160rpx;
+  height: 160rpx;
+  border: 2rpx dashed #ccc;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #ccc;
+}
+
+.notes-input {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 20rpx;
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.modal-footer {
+  display: flex;
+  border-top: 1rpx solid #eee;
+}
+
+.cancel-btn, .save-btn, .confirm-btn {
+  flex: 1;
+  text-align: center;
+  padding: 30rpx 0;
+  font-size: 28rpx;
+}
+
+.cancel-btn {
+  color: #999;
+  border-right: 1rpx solid #eee;
+}
+
+.save-btn, .confirm-btn {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+/* 产品选择弹窗 */
+.product-list {
+  flex: 1;
+  padding: 30rpx;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.product-item:last-child {
+  border-bottom: none;
+}
+
+.product-item.selected {
+  background: #E8F5E8;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.product-image {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 12rpx;
+  margin-right: 24rpx;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.product-name {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.product-brand {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.product-check {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4CAF50;
+  font-size: 24rpx;
+  font-weight: bold;
+}

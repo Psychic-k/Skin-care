@@ -1,0 +1,131 @@
+<!--个人中心页面-->
+<view class="container">
+  <!-- 用户信息卡片 -->
+  <view class="user-card">
+    <view class="user-header">
+      <view class="user-avatar-section">
+        <image class="user-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+        <view class="avatar-badge" wx:if="{{userInfo.vipLevel > 0}}">VIP</view>
+      </view>
+      
+      <view class="user-info">
+        <view class="user-name">{{userInfo.nickName || '未登录'}}</view>
+        <view class="user-level">
+          <text class="level-icon">⭐</text>
+          <text class="level-text">Lv.{{userInfo.level}}</text>
+          <text class="points-text">{{userInfo.points}}积分</text>
+        </view>
+        <view class="vip-status" wx:if="{{userInfo.vipLevel > 0}}">
+          <text class="vip-icon">👑</text>
+          <text class="vip-text">VIP会员 至{{userInfo.vipExpireTime}}</text>
+        </view>
+      </view>
+      
+      <view class="user-actions">
+        <view class="action-btn edit-btn" bindtap="onEditProfile">
+          <text class="action-icon">✏️</text>
+        </view>
+        <view class="action-btn vip-btn" bindtap="onUpgradeVip" wx:if="{{userInfo.vipLevel === 0}}">
+          <text class="action-text">升级VIP</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 统计数据 -->
+    <view class="stats-section">
+      <view class="stat-item" bindtap="onMenuItemTap" data-item="{{menuItems[0]}}">
+        <view class="stat-number">{{stats.detectionCount}}</view>
+        <view class="stat-label">检测次数</view>
+      </view>
+      <view class="stat-item" bindtap="onMenuItemTap" data-item="{{menuItems[1]}}">
+        <view class="stat-number">{{stats.diaryCount}}</view>
+        <view class="stat-label">护肤日记</view>
+      </view>
+      <view class="stat-item" bindtap="onMenuItemTap" data-item="{{menuItems[2]}}">
+        <view class="stat-number">{{stats.reportCount}}</view>
+        <view class="stat-label">体验报告</view>
+      </view>
+      <view class="stat-item" bindtap="onMenuItemTap" data-item="{{menuItems[3]}}">
+        <view class="stat-number">{{stats.favoriteCount}}</view>
+        <view class="stat-label">我的收藏</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-section">
+    <view class="section-title">我的功能</view>
+    <view class="menu-list">
+      <view class="menu-item" wx:for="{{menuItems}}" wx:key="id" bindtap="onMenuItemTap" data-item="{{item}}">
+        <view class="menu-icon">{{item.icon}}</view>
+        <view class="menu-content">
+          <view class="menu-title">{{item.title}}</view>
+          <view class="menu-subtitle">{{item.subtitle}}</view>
+        </view>
+        <view class="menu-arrow" wx:if="{{item.arrow}}">›</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 服务支持 -->
+  <view class="service-section">
+    <view class="section-title">服务支持</view>
+    <view class="service-list">
+      <view class="service-item" wx:for="{{serviceItems}}" wx:key="id" bindtap="onServiceItemTap" data-item="{{item}}">
+        <view class="service-icon">{{item.icon}}</view>
+        <view class="service-content">
+          <view class="service-title">{{item.title}}</view>
+          <view class="service-subtitle">{{item.subtitle}}</view>
+        </view>
+        <view class="service-arrow">›</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- VIP升级弹窗 -->
+  <view class="vip-modal" wx:if="{{showVipModal}}">
+    <view class="modal-mask" bindtap="onCloseVipModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <view class="modal-title">升级VIP会员</view>
+        <view class="modal-close" bindtap="onCloseVipModal">×</view>
+      </view>
+      
+      <view class="vip-benefits">
+        <view class="benefits-title">会员特权</view>
+        <view class="benefit-item">
+          <text class="benefit-icon">✨</text>
+          <text class="benefit-text">无限次AI皮肤检测</text>
+        </view>
+        <view class="benefit-item">
+          <text class="benefit-icon">🎯</text>
+          <text class="benefit-text">专属个性化护肤方案</text>
+        </view>
+        <view class="benefit-item">
+          <text class="benefit-icon">👥</text>
+          <text class="benefit-text">优先客服支持</text>
+        </view>
+        <view class="benefit-item">
+          <text class="benefit-icon">📚</text>
+          <text class="benefit-text">会员专享护肤内容</text>
+        </view>
+      </view>
+      
+      <view class="vip-plans">
+        <view class="plan-item" wx:for="{{vipPlans}}" wx:key="id" bindtap="onSelectVipPlan" data-plan="{{item}}">
+          <view class="plan-header">
+            <view class="plan-name">{{item.name}}</view>
+            <view class="plan-duration">{{item.duration}}</view>
+          </view>
+          <view class="plan-price">
+            <text class="current-price">¥{{item.price}}</text>
+            <text class="original-price">¥{{item.originalPrice}}</text>
+          </view>
+          <view class="plan-benefits">
+            <text class="benefit-tag" wx:for="{{item.benefits}}" wx:key="*this">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

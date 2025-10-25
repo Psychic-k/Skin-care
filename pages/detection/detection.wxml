@@ -1,0 +1,162 @@
+<!--pages/detection/detection.wxml-->
+<view class="detection-container">
+  <!-- 顶部导航 -->
+  <view class="header">
+    <view class="header-title">AI皮肤检测</view>
+    <view class="header-subtitle">科学分析，精准护肤</view>
+  </view>
+
+  <!-- 检测步骤指示器 -->
+  <view class="step-indicator">
+    <view class="step {{detectionStep >= 1 ? 'active' : ''}}" data-step="1">
+      <view class="step-number">1</view>
+      <view class="step-text">选择类型</view>
+    </view>
+    <view class="step-line {{detectionStep >= 2 ? 'active' : ''}}"></view>
+    <view class="step {{detectionStep >= 2 ? 'active' : ''}}" data-step="2">
+      <view class="step-number">2</view>
+      <view class="step-text">拍照检测</view>
+    </view>
+    <view class="step-line {{detectionStep >= 3 ? 'active' : ''}}"></view>
+    <view class="step {{detectionStep >= 3 ? 'active' : ''}}" data-step="3">
+      <view class="step-number">3</view>
+      <view class="step-text">AI分析</view>
+    </view>
+    <view class="step-line {{detectionStep >= 4 ? 'active' : ''}}"></view>
+    <view class="step {{detectionStep >= 4 ? 'active' : ''}}" data-step="4">
+      <view class="step-number">4</view>
+      <view class="step-text">查看报告</view>
+    </view>
+  </view>
+
+  <!-- 步骤1: 选择检测类型 -->
+  <view class="step-content" wx:if="{{detectionStep === 1}}">
+    <view class="section-title">选择检测类型</view>
+    
+    <view class="detection-types">
+      <view 
+        class="type-card {{selectedType === item.id ? 'selected' : ''}}"
+        wx:for="{{detectionTypes}}" 
+        wx:key="id"
+        data-type="{{item.id}}"
+        bindtap="selectDetectionType"
+      >
+        <view class="type-icon">{{item.icon}}</view>
+        <view class="type-name">{{item.name}}</view>
+        <view class="type-desc">{{item.desc}}</view>
+        <view class="type-check" wx:if="{{selectedType === item.id}}">✓</view>
+      </view>
+    </view>
+
+    <!-- 拍照指导 -->
+    <view class="guidelines">
+      <view class="guidelines-title">拍照指导</view>
+      <view class="guideline-item" wx:for="{{guidelines}}" wx:key="*this">
+        <view class="guideline-dot">•</view>
+        <view class="guideline-text">{{item}}</view>
+      </view>
+    </view>
+
+    <!-- 最近检测记录 -->
+    <view class="recent-section" wx:if="{{recentDetections.length > 0}}">
+      <view class="section-header">
+        <view class="section-title">最近检测</view>
+        <view class="view-all" bindtap="viewHistory">查看全部</view>
+      </view>
+      
+      <view class="recent-list">
+        <view 
+          class="recent-item"
+          wx:for="{{recentDetections}}" 
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="viewDetectionDetail"
+        >
+          <view class="recent-date">{{item.date}}</view>
+          <view class="recent-type">{{item.typeName}}</view>
+          <view class="recent-score">{{item.score}}分</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 开始检测按钮 -->
+    <view class="action-buttons">
+      <button class="start-btn" bindtap="startDetection">
+        开始{{selectedType === 'face' ? '面部' : selectedType === 'eye' ? '眼部' : '唇部'}}检测
+      </button>
+    </view>
+  </view>
+
+  <!-- 步骤2: 拍照检测 -->
+  <view class="step-content camera-content" wx:if="{{detectionStep === 2}}">
+    <view class="camera-container">
+      <camera 
+        class="camera"
+        device-position="{{cameraPosition}}"
+        flash="{{flash}}"
+        binderror="onCameraError"
+      >
+        <!-- 拍照框 -->
+        <view class="camera-frame">
+          <view class="frame-corner tl"></view>
+          <view class="frame-corner tr"></view>
+          <view class="frame-corner bl"></view>
+          <view class="frame-corner br"></view>
+        </view>
+
+        <!-- 拍照提示 -->
+        <view class="camera-tips">
+          <view class="tip-text">请将{{selectedType === 'face' ? '面部' : selectedType === 'eye' ? '眼部' : '唇部'}}对准框内</view>
+        </view>
+
+        <!-- 相机控制 -->
+        <view class="camera-controls">
+          <view class="control-btn" bindtap="switchCamera">
+            <image class="control-icon" src="/images/icons/camera-switch.png" />
+          </view>
+          <view class="control-btn" bindtap="switchFlash">
+            <image class="control-icon" src="/images/icons/flash-{{flash}}.png" />
+          </view>
+        </view>
+      </camera>
+    </view>
+
+    <!-- 拍照按钮 -->
+    <view class="photo-actions">
+      <view class="photo-btn-container">
+        <button class="album-btn" bindtap="chooseFromAlbum">相册</button>
+        <view class="photo-btn" bindtap="takePhoto">
+          <view class="photo-btn-inner"></view>
+        </view>
+        <button class="back-btn" bindtap="restart">返回</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 步骤3: AI分析中 -->
+  <view class="step-content analyzing-content" wx:if="{{detectionStep === 3}}">
+    <view class="analyzing-animation">
+      <view class="scanning-line"></view>
+      <view class="analyzing-icon">🔍</view>
+    </view>
+    
+    <view class="analyzing-text">
+      <view class="analyzing-title">AI正在分析中...</view>
+      <view class="analyzing-desc">请稍候，我们正在为您进行专业的皮肤分析</view>
+    </view>
+
+    <view class="analyzing-progress">
+      <view class="progress-bar">
+        <view class="progress-fill"></view>
+      </view>
+      <view class="progress-text">分析进度 85%</view>
+    </view>
+  </view>
+
+  <!-- 步骤4: 检测完成 -->
+  <view class="step-content complete-content" wx:if="{{detectionStep === 4}}">
+    <view class="complete-icon">✅</view>
+    <view class="complete-title">检测完成</view>
+    <view class="complete-desc">AI分析已完成，正在跳转到检测报告...</view>
+  </view>
+</view>

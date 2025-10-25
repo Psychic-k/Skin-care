@@ -1,0 +1,311 @@
+<!--pages/report/report.wxml-->
+<view class="report-container">
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{isLoading}}">
+    <view class="loading-animation">
+      <view class="loading-circle"></view>
+    </view>
+    <view class="loading-text">正在生成报告...</view>
+  </view>
+
+  <!-- 报告内容 -->
+  <view class="report-content" wx:if="{{!isLoading && reportData}}">
+    <!-- 报告头部 -->
+    <view class="report-header">
+      <view class="header-bg">
+        <view class="header-title">皮肤检测报告</view>
+        <view class="header-date">{{reportData.detectionDate}}</view>
+        <view class="header-type">{{reportData.detectionTypeName}}</view>
+      </view>
+      
+      <!-- 综合评分 -->
+      <view class="score-section">
+        <view class="score-circle">
+          <view class="score-number">{{scoreAnimation}}</view>
+          <view class="score-label">综合评分</view>
+        </view>
+        <view class="score-desc">
+          <view class="score-level">{{reportData.scoreLevel}}</view>
+          <view class="score-summary">{{reportData.scoreSummary}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 标签页导航 -->
+    <view class="tab-nav">
+      <view 
+        class="tab-item {{currentTab === 'overview' ? 'active' : ''}}"
+        data-tab="overview"
+        bindtap="switchTab"
+      >
+        概览
+      </view>
+      <view 
+        class="tab-item {{currentTab === 'details' ? 'active' : ''}}"
+        data-tab="details"
+        bindtap="switchTab"
+      >
+        详细分析
+      </view>
+      <view 
+        class="tab-item {{currentTab === 'recommendations' ? 'active' : ''}}"
+        data-tab="recommendations"
+        bindtap="switchTab"
+      >
+        护肤建议
+      </view>
+      <view 
+        class="tab-item {{currentTab === 'history' ? 'active' : ''}}"
+        data-tab="history"
+        bindtap="switchTab"
+      >
+        历史对比
+      </view>
+    </view>
+
+    <!-- 概览标签页 -->
+    <view class="tab-content" wx:if="{{currentTab === 'overview'}}">
+      <!-- 关键指标 -->
+      <view class="metrics-section">
+        <view class="section-title">关键指标</view>
+        <view class="metrics-grid">
+          <view 
+            class="metric-item"
+            wx:for="{{reportData.keyMetrics}}" 
+            wx:key="name"
+          >
+            <view class="metric-icon">{{item.icon}}</view>
+            <view class="metric-name">{{item.name}}</view>
+            <view class="metric-value">{{item.value}}</view>
+            <view class="metric-status {{item.status}}">{{item.statusText}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 问题分析 -->
+      <view class="issues-section" wx:if="{{reportData.issues.length > 0}}">
+        <view class="section-title">发现的问题</view>
+        <view class="issues-list">
+          <view 
+            class="issue-item"
+            wx:for="{{reportData.issues}}" 
+            wx:key="id"
+          >
+            <view class="issue-severity {{item.severity}}">{{item.severityText}}</view>
+            <view class="issue-content">
+              <view class="issue-name">{{item.name}}</view>
+              <view class="issue-desc">{{item.description}}</view>
+            </view>
+            <view class="issue-arrow">></view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 改善建议 -->
+      <view class="suggestions-section">
+        <view class="section-title">改善建议</view>
+        <view class="suggestions-list">
+          <view 
+            class="suggestion-item"
+            wx:for="{{reportData.suggestions}}" 
+            wx:key="id"
+          >
+            <view class="suggestion-icon">💡</view>
+            <view class="suggestion-text">{{item.text}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 详细分析标签页 -->
+    <view class="tab-content" wx:if="{{currentTab === 'details'}}">
+      <view class="analysis-sections">
+        <view 
+          class="analysis-section"
+          wx:for="{{reportData.detailedAnalysis}}" 
+          wx:key="category"
+          data-category="{{item.category}}"
+          bindtap="viewDetailAnalysis"
+        >
+          <view class="analysis-header">
+            <view class="analysis-title">{{item.title}}</view>
+            <view class="analysis-score">{{item.score}}分</view>
+          </view>
+          
+          <view class="analysis-progress">
+            <view class="progress-bar">
+              <view 
+                class="progress-fill" 
+                style="width: {{item.score}}%"
+              ></view>
+            </view>
+          </view>
+          
+          <view class="analysis-summary">{{item.summary}}</view>
+          
+          <!-- 子指标 -->
+          <view class="sub-metrics" wx:if="{{item.subMetrics}}">
+            <view 
+              class="sub-metric"
+              wx:for="{{item.subMetrics}}" 
+              wx:for-item="subItem"
+              wx:key="name"
+            >
+              <view class="sub-metric-name">{{subItem.name}}</view>
+              <view class="sub-metric-value">{{subItem.value}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 护肤建议标签页 -->
+    <view class="tab-content" wx:if="{{currentTab === 'recommendations'}}">
+      <!-- 产品推荐 -->
+      <view class="products-section">
+        <view class="section-title">推荐产品</view>
+        <view class="products-list">
+          <view 
+            class="product-card"
+            wx:for="{{reportData.recommendedProducts}}" 
+            wx:key="id"
+            data-product-id="{{item.id}}"
+            bindtap="viewProductRecommendation"
+          >
+            <image class="product-image" src="{{item.image}}" />
+            <view class="product-info">
+              <view class="product-name">{{item.name}}</view>
+              <view class="product-brand">{{item.brand}}</view>
+              <view class="product-reason">{{item.recommendReason}}</view>
+              <view class="product-match">匹配度: {{item.matchScore}}%</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 护肤步骤 -->
+      <view class="routine-section">
+        <view class="section-title">建议护肤流程</view>
+        <view class="routine-tabs">
+          <view class="routine-tab active">日间护理</view>
+          <view class="routine-tab">夜间护理</view>
+        </view>
+        
+        <view class="routine-steps">
+          <view 
+            class="routine-step"
+            wx:for="{{reportData.recommendedRoutine.morning}}" 
+            wx:key="step"
+          >
+            <view class="step-number">{{item.step}}</view>
+            <view class="step-content">
+              <view class="step-name">{{item.name}}</view>
+              <view class="step-desc">{{item.description}}</view>
+              <view class="step-products" wx:if="{{item.products}}">
+                <text 
+                  class="step-product"
+                  wx:for="{{item.products}}" 
+                  wx:for-item="product"
+                  wx:key="*this"
+                >
+                  {{product}}
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 生活建议 -->
+      <view class="lifestyle-section">
+        <view class="section-title">生活建议</view>
+        <view class="lifestyle-tips">
+          <view 
+            class="tip-item"
+            wx:for="{{reportData.lifestyleTips}}" 
+            wx:key="category"
+          >
+            <view class="tip-category">{{item.category}}</view>
+            <view class="tip-content">{{item.content}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 历史对比标签页 -->
+    <view class="tab-content" wx:if="{{currentTab === 'history'}}">
+      <view class="comparison-section" wx:if="{{showComparison}}">
+        <view class="section-title">历史趋势</view>
+        
+        <!-- 趋势图表 -->
+        <view class="chart-container">
+          <canvas 
+            canvas-id="trendChart" 
+            class="trend-chart"
+          ></canvas>
+        </view>
+        
+        <!-- 对比数据 -->
+        <view class="comparison-list">
+          <view 
+            class="comparison-item"
+            wx:for="{{comparisonData}}" 
+            wx:key="date"
+          >
+            <view class="comparison-date">{{item.date}}</view>
+            <view class="comparison-score">{{item.score}}分</view>
+            <view class="comparison-change {{item.change >= 0 ? 'positive' : 'negative'}}">
+              {{item.change >= 0 ? '+' : ''}}{{item.change}}
+            </view>
+          </view>
+        </view>
+        
+        <button class="view-trends-btn" bindtap="viewTrends">
+          查看完整趋势
+        </button>
+      </view>
+      
+      <view class="no-history" wx:else>
+        <view class="no-history-icon">📊</view>
+        <view class="no-history-text">暂无历史数据</view>
+        <view class="no-history-desc">继续使用检测功能，积累更多数据</view>
+      </view>
+    </view>
+
+    <!-- 底部操作按钮 -->
+    <view class="action-buttons">
+      <button class="action-btn secondary" bindtap="saveToProfile">
+        保存到档案
+      </button>
+      <button class="action-btn secondary" bindtap="shareReport" disabled="{{isSharing}}">
+        {{isSharing ? '生成中...' : '分享报告'}}
+      </button>
+      <button class="action-btn primary" bindtap="startSkincarePlan">
+        开始护肤计划
+      </button>
+    </view>
+
+    <!-- 其他操作 -->
+    <view class="other-actions">
+      <view class="other-action" bindtap="retakeDetection">
+        <view class="other-action-icon">🔄</view>
+        <view class="other-action-text">重新检测</view>
+      </view>
+      <view class="other-action" bindtap="consultExpert">
+        <view class="other-action-icon">👩‍⚕️</view>
+        <view class="other-action-text">咨询专家</view>
+      </view>
+      <view class="other-action" bindtap="goHome">
+        <view class="other-action-icon">🏠</view>
+        <view class="other-action-text">返回首页</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分享画布 -->
+  <canvas 
+    canvas-id="shareCanvas" 
+    class="share-canvas"
+    style="width: 750rpx; height: 1334rpx; position: fixed; top: -9999rpx; left: -9999rpx;"
+  ></canvas>
+</view>

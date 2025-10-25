@@ -1,0 +1,303 @@
+<!--pages/diary/diary.wxml-->
+<view class="diary-container">
+  <!-- 头部工具栏 -->
+  <view class="diary-header">
+    <view class="header-title">护肤日记</view>
+    <view class="header-actions">
+      <view class="add-btn" bindtap="showAddDiary">
+        <text>+</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 视图模式切换 -->
+  <view class="view-mode-tabs">
+    <view class="mode-tab {{viewMode === 'list' ? 'active' : ''}}" 
+          data-mode="list" bindtap="switchViewMode">
+      <text>列表</text>
+    </view>
+    <view class="mode-tab {{viewMode === 'calendar' ? 'active' : ''}}" 
+          data-mode="calendar" bindtap="switchViewMode">
+      <text>日历</text>
+    </view>
+    <view class="mode-tab {{viewMode === 'chart' ? 'active' : ''}}" 
+          data-mode="chart" bindtap="switchViewMode">
+      <text>统计</text>
+    </view>
+  </view>
+
+  <!-- 筛选和排序 -->
+  <view class="filter-bar" wx:if="{{viewMode === 'list'}}">
+    <view class="filter-section">
+      <text class="filter-label">筛选：</text>
+      <view class="filter-options">
+        <view class="filter-option {{filterType === 'all' ? 'active' : ''}}"
+              data-type="all" bindtap="switchFilter">全部</view>
+        <view class="filter-option {{filterType === 'skincare' ? 'active' : ''}}"
+              data-type="skincare" bindtap="switchFilter">护肤</view>
+        <view class="filter-option {{filterType === 'mood' ? 'active' : ''}}"
+              data-type="mood" bindtap="switchFilter">心情</view>
+      </view>
+    </view>
+    <view class="sort-section">
+      <text class="sort-label">排序：</text>
+      <view class="sort-options">
+        <view class="sort-option {{sortBy === 'date' ? 'active' : ''}}"
+              data-sort="date" bindtap="switchSort">日期</view>
+        <view class="sort-option {{sortBy === 'mood' ? 'active' : ''}}"
+              data-sort="mood" bindtap="switchSort">心情</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 列表视图 -->
+  <view class="diary-list" wx:if="{{viewMode === 'list'}}">
+    <view class="diary-item" wx:for="{{diaryList}}" wx:key="id">
+      <view class="diary-content" data-id="{{item.id}}" bindtap="viewDiaryDetail">
+        <view class="diary-date">
+          <text class="date-text">{{item.date}}</text>
+          <text class="weekday">{{item.weekday}}</text>
+        </view>
+        <view class="diary-info">
+          <view class="condition-row">
+            <view class="condition-item">
+              <text class="condition-label">肌肤：</text>
+              <view class="condition-stars">
+                <text class="star {{index < item.skinCondition ? 'filled' : ''}}"
+                      wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this">★</text>
+              </view>
+            </view>
+            <view class="condition-item">
+              <text class="condition-label">心情：</text>
+              <view class="condition-stars">
+                <text class="star {{index < item.mood ? 'filled' : ''}}"
+                      wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this">★</text>
+              </view>
+            </view>
+          </view>
+          <view class="weather-products">
+            <view class="weather-info">
+              <text class="weather-icon">{{getWeatherInfo(item.weather, 'icon')}}</text>
+              <text class="weather-name">{{getWeatherInfo(item.weather, 'name')}}</text>
+            </view>
+            <view class="products-count" wx:if="{{item.products.length > 0}}">
+              <text>使用了{{item.products.length}}个产品</text>
+            </view>
+          </view>
+          <view class="diary-notes" wx:if="{{item.notes}}">
+            <text class="notes-text">{{item.notes}}</text>
+          </view>
+        </view>
+        <view class="diary-photos" wx:if="{{item.photos.length > 0}}">
+          <image class="photo-thumb" src="{{item.photos[0]}}" mode="aspectFill"></image>
+          <view class="photos-count" wx:if="{{item.photos.length > 1}}">
+            <text>+{{item.photos.length - 1}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="diary-actions">
+        <view class="action-btn edit-btn" data-id="{{item.id}}" bindtap="editDiary">
+          <text>编辑</text>
+        </view>
+        <view class="action-btn delete-btn" data-id="{{item.id}}" bindtap="deleteDiary">
+          <text>删除</text>
+        </view>
+        <view class="action-btn share-btn" data-id="{{item.id}}" bindtap="shareDiary">
+          <text>分享</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{diaryList.length === 0}}">
+      <view class="empty-icon">📝</view>
+      <text class="empty-text">还没有日记记录</text>
+      <view class="empty-action" bindtap="showAddDiary">
+        <text>写第一篇日记</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 日历视图 -->
+  <view class="calendar-view" wx:if="{{viewMode === 'calendar'}}">
+    <view class="calendar-header">
+      <text class="calendar-title">{{currentDate.substring(0, 7)}}</text>
+    </view>
+    <view class="calendar-grid">
+      <view class="calendar-weekdays">
+        <text class="weekday-item">日</text>
+        <text class="weekday-item">一</text>
+        <text class="weekday-item">二</text>
+        <text class="weekday-item">三</text>
+        <text class="weekday-item">四</text>
+        <text class="weekday-item">五</text>
+        <text class="weekday-item">六</text>
+      </view>
+      <!-- 这里可以添加日历日期网格 -->
+      <view class="calendar-placeholder">
+        <text>日历视图（待完善）</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计视图 -->
+  <view class="stats-view" wx:if="{{viewMode === 'chart'}}">
+    <view class="stats-summary" wx:if="{{statsData}}">
+      <view class="stats-card">
+        <text class="stats-title">本月统计</text>
+        <view class="stats-grid">
+          <view class="stat-item">
+            <text class="stat-number">{{statsData.monthlyEntries || 0}}</text>
+            <text class="stat-label">日记条数</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-number">{{statsData.avgSkinCondition || 0}}</text>
+            <text class="stat-label">平均肌肤状态</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-number">{{statsData.avgMood || 0}}</text>
+            <text class="stat-label">平均心情</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-number">{{statsData.totalProducts || 0}}</text>
+            <text class="stat-label">使用产品数</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="trend-chart">
+        <text class="chart-title">肌肤状态趋势</text>
+        <view class="chart-placeholder">
+          <text>趋势图表（待实现）</text>
+        </view>
+      </view>
+    </view>
+    
+    <view class="empty-state" wx:else>
+      <view class="empty-icon">📊</view>
+      <text class="empty-text">数据不足，无法生成统计</text>
+      <text class="empty-desc">至少需要5条日记记录</text>
+    </view>
+  </view>
+
+  <!-- 添加/编辑日记弹窗 -->
+  <view class="modal-overlay" wx:if="{{showAddModal}}" bindtap="closeAddModal">
+    <view class="add-diary-modal" catchtap="">
+      <view class="modal-header">
+        <text class="modal-title">{{editingId ? '编辑日记' : '添加日记'}}</text>
+        <view class="close-btn" bindtap="closeAddModal">×</view>
+      </view>
+      
+      <scroll-view class="modal-content" scroll-y>
+        <!-- 日期选择 -->
+        <view class="form-item">
+          <text class="form-label">日期</text>
+          <picker mode="date" value="{{newDiary.date}}" bindchange="onDateChange">
+            <view class="date-picker">
+              <text>{{newDiary.date}}</text>
+            </view>
+          </picker>
+        </view>
+
+        <!-- 肌肤状态 -->
+        <view class="form-item">
+          <text class="form-label">肌肤状态 ({{newDiary.skinCondition}}/10)</text>
+          <slider value="{{newDiary.skinCondition}}" min="1" max="10" 
+                  show-value bindchange="onSkinConditionChange" 
+                  activeColor="#4CAF50" backgroundColor="#e0e0e0"/>
+        </view>
+
+        <!-- 心情状态 -->
+        <view class="form-item">
+          <text class="form-label">心情状态 ({{newDiary.mood}}/10)</text>
+          <slider value="{{newDiary.mood}}" min="1" max="10" 
+                  show-value bindchange="onMoodChange" 
+                  activeColor="#FF9800" backgroundColor="#e0e0e0"/>
+        </view>
+
+        <!-- 天气选择 -->
+        <view class="form-item">
+          <text class="form-label">天气</text>
+          <view class="weather-options">
+            <view class="weather-option {{newDiary.weather === item.id ? 'selected' : ''}}"
+                  wx:for="{{weatherOptions}}" wx:key="id"
+                  data-weather="{{item.id}}" bindtap="selectWeather">
+              <text class="weather-icon">{{item.icon}}</text>
+              <text class="weather-name">{{item.name}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 使用产品 -->
+        <view class="form-item">
+          <text class="form-label">使用产品</text>
+          <view class="products-selector" bindtap="showProductSelector">
+            <text class="selector-text">
+              {{newDiary.products.length > 0 ? '已选择' + newDiary.products.length + '个产品' : '点击选择产品'}}
+            </text>
+            <text class="selector-arrow">></text>
+          </view>
+        </view>
+
+        <!-- 照片 -->
+        <view class="form-item">
+          <text class="form-label">照片 (最多3张)</text>
+          <view class="photos-section">
+            <view class="photo-item" wx:for="{{newDiary.photos}}" wx:key="*this">
+              <image src="{{item}}" mode="aspectFill"></image>
+              <view class="delete-photo" data-index="{{index}}" bindtap="deletePhoto">×</view>
+            </view>
+            <view class="add-photo" wx:if="{{newDiary.photos.length < 3}}" bindtap="choosePhotos">
+              <text>+</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 备注 -->
+        <view class="form-item">
+          <text class="form-label">备注</text>
+          <textarea class="notes-input" placeholder="记录今天的护肤心得..."
+                    value="{{newDiary.notes}}" bindinput="onNotesInput"
+                    maxlength="200" auto-height/>
+        </view>
+      </scroll-view>
+
+      <view class="modal-footer">
+        <view class="cancel-btn" bindtap="closeAddModal">取消</view>
+        <view class="save-btn" bindtap="saveDiary">保存</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 产品选择弹窗 -->
+  <view class="modal-overlay" wx:if="{{showProductModal}}" bindtap="closeProductModal">
+    <view class="product-modal" catchtap="">
+      <view class="modal-header">
+        <text class="modal-title">选择产品</text>
+        <view class="close-btn" bindtap="closeProductModal">×</view>
+      </view>
+      
+      <scroll-view class="product-list" scroll-y>
+        <view class="product-item {{selectedProducts.includes(item.id) ? 'selected' : ''}}"
+              wx:for="{{availableProducts}}" wx:key="id"
+              data-id="{{item.id}}" bindtap="toggleProduct">
+          <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
+          <view class="product-info">
+            <text class="product-name">{{item.name}}</text>
+            <text class="product-brand">{{item.brand}}</text>
+          </view>
+          <view class="product-check">
+            <text wx:if="{{selectedProducts.includes(item.id)}}">✓</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="modal-footer">
+        <view class="cancel-btn" bindtap="closeProductModal">取消</view>
+        <view class="confirm-btn" bindtap="confirmProducts">
+          确定 ({{selectedProducts.length}})
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

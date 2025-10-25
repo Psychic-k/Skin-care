@@ -1,0 +1,66 @@
+<!--登录页面-->
+<view class="login-container">
+  <!-- 品牌区域 -->
+  <view class="brand-section">
+    <image class="brand-logo" src="/images/logo.png" mode="aspectFit"></image>
+    <text class="brand-name">谷雨护肤</text>
+    <text class="brand-slogan">科学护肤，美丽由内而外</text>
+  </view>
+
+  <!-- 登录区域 -->
+  <view class="login-section">
+    <view class="login-title">欢迎使用谷雨护肤小程序</view>
+    <view class="login-subtitle">开启您的智能护肤之旅</view>
+
+    <!-- 微信登录按钮 -->
+    <button 
+      class="login-btn wechat-btn {{isLoading ? 'loading' : ''}}"
+      bindtap="onWechatLogin"
+      disabled="{{isLoading}}"
+    >
+      <image class="btn-icon" src="/images/wechat-icon.png" wx:if="{{!isLoading}}"></image>
+      <text>{{isLoading ? '登录中...' : '微信一键登录'}}</text>
+    </button>
+
+    <!-- 用户信息授权按钮 -->
+    <button 
+      class="login-btn profile-btn"
+      bindtap="onGetUserProfile"
+      wx:if="{{canIUseGetUserProfile}}"
+    >
+      <image class="btn-icon" src="/images/user-icon.png"></image>
+      <text>获取用户信息</text>
+    </button>
+
+    <!-- 跳过登录 -->
+    <view class="skip-login" bindtap="onSkipLogin">
+      <text>暂不登录，先体验</text>
+    </view>
+  </view>
+
+  <!-- 功能介绍 -->
+  <view class="features-section">
+    <view class="feature-item">
+      <image class="feature-icon" src="/images/detection-icon.png"></image>
+      <text class="feature-text">AI智能检测</text>
+    </view>
+    <view class="feature-item">
+      <image class="feature-icon" src="/images/diary-icon.png"></image>
+      <text class="feature-text">护肤日记</text>
+    </view>
+    <view class="feature-item">
+      <image class="feature-icon" src="/images/products-icon.png"></image>
+      <text class="feature-text">产品知识库</text>
+    </view>
+  </view>
+
+  <!-- 隐私协议 -->
+  <view class="privacy-section">
+    <text class="privacy-text">
+      登录即表示同意
+      <text class="privacy-link">《用户协议》</text>
+      和
+      <text class="privacy-link">《隐私政策》</text>
+    </text>
+  </view>
+</view>

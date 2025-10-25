@@ -1,0 +1,69 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/login",
+    "pages/detection/detection",
+    "pages/report/report",
+    "pages/profile/profile",
+    "pages/diary/diary",
+    "pages/products/products",
+    "pages/expert/expert",
+    "pages/user/user"
+  ],
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#4CAF50",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/tab/home.png",
+        "selectedIconPath": "images/tab/home-active.png"
+      },
+      {
+        "pagePath": "pages/detection/detection",
+        "text": "检测",
+        "iconPath": "images/tab/detection.png",
+        "selectedIconPath": "images/tab/detection-active.png"
+      },
+      {
+        "pagePath": "pages/diary/diary",
+        "text": "日记",
+        "iconPath": "images/tab/diary.png",
+        "selectedIconPath": "images/tab/diary-active.png"
+      },
+      {
+        "pagePath": "pages/products/products",
+        "text": "产品",
+        "iconPath": "images/tab/products.png",
+        "selectedIconPath": "images/tab/products-active.png"
+      },
+      {
+        "pagePath": "pages/user/user",
+        "text": "我的",
+        "iconPath": "images/tab/user.png",
+        "selectedIconPath": "images/tab/user-active.png"
+      }
+    ]
+  },
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "谷雨护肤",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f8f9fa",
+    "backgroundTextStyle": "light",
+    "enablePullDownRefresh": false
+  },
+  "requiredPrivateInfos": [
+    "chooseAddress"
+  ],
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "networkTimeout": {
+    "request": 10000,
+    "downloadFile": 10000
+  },
+  "debug": true
+}

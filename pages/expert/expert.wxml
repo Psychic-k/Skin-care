@@ -1,0 +1,253 @@
+<!--体验官中心页面-->
+<view class="container">
+  <!-- 头部信息卡片 -->
+  <view class="header-card">
+    <view class="user-info">
+      <image class="avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill" />
+      <view class="user-details">
+        <view class="username">{{userInfo.nickName || '体验官'}}</view>
+        <view class="level-badge">
+          <text class="level-icon">⭐</text>
+          <text class="level-text">{{getLevelName(expertLevel)}}</text>
+        </view>
+      </view>
+      <view class="share-btn" bindtap="onShareAchievement">
+        <text class="share-icon">📤</text>
+      </view>
+    </view>
+    
+    <!-- 积分进度 -->
+    <view class="points-progress">
+      <view class="progress-header">
+        <view class="current-points">
+          <text class="points-number">{{currentPoints}}</text>
+          <text class="points-label">当前积分</text>
+        </view>
+        <view class="next-level">
+          <text class="next-points">{{nextLevelPoints}}</text>
+          <text class="next-label">下级所需</text>
+        </view>
+      </view>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+      </view>
+      <view class="progress-actions">
+        <view class="action-btn" bindtap="onPointsExchange">
+          <text class="action-icon">🎁</text>
+          <text class="action-text">积分兑换</text>
+        </view>
+        <view class="action-btn" bindtap="onPointsRule">
+          <text class="action-icon">📖</text>
+          <text class="action-text">积分规则</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 统计数据 -->
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-number">{{stats.completedTasks}}</text>
+        <text class="stat-label">完成任务</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.totalReports}}</text>
+        <text class="stat-label">提交报告</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.totalPoints}}</text>
+        <text class="stat-label">累计积分</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.ranking}}</text>
+        <text class="stat-label">当前排名</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 标签页导航 -->
+  <view class="tabs">
+    <view 
+      class="tab-item {{currentTab === index ? 'active' : ''}}"
+      wx:for="{{tabs}}" 
+      wx:key="index"
+      bindtap="onTabChange"
+      data-index="{{index}}"
+    >
+      <text class="tab-icon">{{item.icon}}</text>
+      <text class="tab-name">{{item.name}}</text>
+      <view class="tab-indicator" wx:if="{{currentTab === index}}"></view>
+    </view>
+  </view>
+
+  <!-- 内容区域 -->
+  <scroll-view class="content-scroll" scroll-y="true" bindscrolltolower="loadMore">
+    
+    <!-- 任务中心 -->
+    <view class="task-center" wx:if="{{currentTab === 0}}">
+      <!-- 任务标签页 -->
+      <view class="task-tabs">
+        <view 
+          class="task-tab {{currentTaskTab === index ? 'active' : ''}}"
+          wx:for="{{taskTabs}}" 
+          wx:key="index"
+          bindtap="onTaskTabChange"
+          data-index="{{index}}"
+        >
+          {{item}}
+        </view>
+      </view>
+      
+      <!-- 任务列表 -->
+      <view class="task-list">
+        <view 
+          class="task-card"
+          wx:for="{{tasks}}" 
+          wx:key="id"
+          bindtap="onTaskDetail"
+          data-task="{{item}}"
+        >
+          <view class="task-header">
+            <view class="task-title">{{item.title}}</view>
+            <view class="task-status {{getTaskStatusClass(item.status)}}">
+              {{getTaskStatusText(item.status)}}
+            </view>
+          </view>
+          
+          <view class="task-description">{{item.description}}</view>
+          
+          <view class="task-info">
+            <view class="task-points">
+              <text class="points-icon">💎</text>
+              <text class="points-text">{{item.points}}积分</text>
+            </view>
+            <view class="task-deadline">
+              <text class="deadline-icon">⏰</text>
+              <text class="deadline-text">{{formatDate(item.deadline)}}</text>
+            </view>
+          </view>
+          
+          <view class="task-actions" wx:if="{{item.status === 'pending' || item.status === 'in_progress'}}">
+            <view 
+              class="task-btn accept"
+              wx:if="{{item.status === 'pending'}}"
+              bindtap="onAcceptTask"
+              data-task="{{item}}"
+              catchtap="true"
+            >
+              接受任务
+            </view>
+            <view 
+              class="task-btn submit"
+              wx:if="{{item.status === 'in_progress'}}"
+              bindtap="onSubmitTask"
+              data-task="{{item}}"
+              catchtap="true"
+            >
+              提交任务
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 积分记录 -->
+    <view class="points-records" wx:if="{{currentTab === 1}}">
+      <view 
+        class="record-card"
+        wx:for="{{pointRecords}}" 
+        wx:key="id"
+      >
+        <view class="record-info">
+          <view class="record-title">{{item.title}}</view>
+          <view class="record-time">{{formatDate(item.createTime)}}</view>
+        </view>
+        <view class="record-points {{getPointChangeClass(item.points)}}">
+          {{formatPointChange(item.points, item.type)}}
+        </view>
+      </view>
+      
+      <!-- 加载更多 -->
+      <view class="load-more" wx:if="{{hasMore}}">
+        <text class="load-text">{{loading ? '加载中...' : '上拉加载更多'}}</text>
+      </view>
+    </view>
+
+    <!-- 排行榜 -->
+    <view class="rankings" wx:if="{{currentTab === 2}}">
+      <view 
+        class="ranking-card"
+        wx:for="{{rankings}}" 
+        wx:key="id"
+      >
+        <view class="ranking-number {{index < 3 ? 'top-three' : ''}}">
+          <text wx:if="{{index === 0}}">🥇</text>
+          <text wx:elif="{{index === 1}}">🥈</text>
+          <text wx:elif="{{index === 2}}">🥉</text>
+          <text wx:else>{{index + 1}}</text>
+        </view>
+        
+        <image class="ranking-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+        
+        <view class="ranking-info">
+          <view class="ranking-name">{{item.nickName}}</view>
+          <view class="ranking-level">{{getLevelName(item.level)}}</view>
+        </view>
+        
+        <view class="ranking-points">
+          <text class="points-number">{{item.points}}</text>
+          <text class="points-label">积分</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 我的报告 -->
+    <view class="my-reports" wx:if="{{currentTab === 3}}">
+      <view 
+        class="report-card"
+        wx:for="{{reports}}" 
+        wx:key="id"
+        bindtap="onReportDetail"
+        data-report="{{item}}"
+      >
+        <view class="report-header">
+          <view class="report-title">{{item.title}}</view>
+          <view class="report-status {{item.status}}">
+            {{item.statusText}}
+          </view>
+        </view>
+        
+        <view class="report-content">
+          <view class="report-product">
+            <image class="product-image" src="{{item.productImage}}" mode="aspectFill" />
+            <view class="product-info">
+              <view class="product-name">{{item.productName}}</view>
+              <view class="product-brand">{{item.productBrand}}</view>
+            </view>
+          </view>
+          
+          <view class="report-summary">{{item.summary}}</view>
+        </view>
+        
+        <view class="report-footer">
+          <view class="report-time">{{formatDate(item.createTime)}}</view>
+          <view class="report-score" wx:if="{{item.score}}">
+            <text class="score-label">评分:</text>
+            <text class="score-value">{{item.score}}/10</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 加载更多 -->
+      <view class="load-more" wx:if="{{hasMore}}">
+        <text class="load-text">{{loading ? '加载中...' : '上拉加载更多'}}</text>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{isEmpty}}">
+      <text class="empty-icon">📋</text>
+      <text class="empty-text">暂无相关内容</text>
+      <text class="empty-tip">完成更多任务获得积分奖励</text>
+    </view>
+  </scroll-view>
+</view>

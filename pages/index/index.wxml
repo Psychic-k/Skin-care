@@ -1,0 +1,24 @@
+<!--index.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">谷雨护肤</text>
+    <text class="subtitle">专业皮肤检测与护理</text>
+  </view>
+  
+  <view class="features">
+    <view class="feature-item" bindtap="goToDetection">
+      <text class="feature-title">皮肤检测</text>
+      <text class="feature-desc">AI智能分析您的肌肤状态</text>
+    </view>
+    
+    <view class="feature-item" bindtap="goToDiary">
+      <text class="feature-title">护肤日记</text>
+      <text class="feature-desc">记录您的护肤历程</text>
+    </view>
+    
+    <view class="feature-item" bindtap="goToProducts">
+      <text class="feature-title">产品推荐</text>
+      <text class="feature-desc">个性化护肤产品推荐</text>
+    </view>
+  </view>
+</view>

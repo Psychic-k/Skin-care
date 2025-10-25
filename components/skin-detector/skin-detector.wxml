@@ -1,0 +1,170 @@
+<!--皮肤检测组件-->
+<view class="skin-detector">
+  <!-- 相机模式 -->
+  <view class="camera-container" wx:if="{{mode === 'camera'}}">
+    <camera 
+      class="camera" 
+      device-position="front"
+      flash="off"
+      binderror="onCameraError"
+      bindready="onCameraReady">
+    </camera>
+    
+    <!-- 检测区域指引 -->
+    <view class="detection-overlay">
+      <view class="detection-area {{detectionStyle}}" 
+            style="width: {{detectionArea.width}}rpx; height: {{detectionArea.height}}rpx; left: {{detectionArea.left}}rpx; top: {{detectionArea.top}}rpx;">
+        <view class="area-border"></view>
+        <view class="area-corners">
+          <view class="corner top-left"></view>
+          <view class="corner top-right"></view>
+          <view class="corner bottom-left"></view>
+          <view class="corner bottom-right"></view>
+        </view>
+      </view>
+      
+      <!-- 检测指引文字 -->
+      <view class="detection-guide" wx:if="{{!detecting && !result}}">
+        <text class="guide-text">请将面部对准检测区域</text>
+        <text class="guide-subtext">保持光线充足，面部清晰可见</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 图片预览模式 -->
+  <view class="image-preview" wx:if="{{mode === 'album' || imagePath}}">
+    <image class="preview-image" src="{{imagePath}}" mode="aspectFit" wx:if="{{imagePath}}"></image>
+    <view class="preview-placeholder" wx:else>
+      <text class="placeholder-icon">📷</text>
+      <text class="placeholder-text">点击选择图片</text>
+    </view>
+  </view>
+
+  <!-- 检测进度 -->
+  <view class="detection-progress" wx:if="{{detecting}}">
+    <view class="progress-container">
+      <view class="progress-circle">
+        <view class="progress-fill" style="transform: rotate({{progress * 3.6}}deg);"></view>
+        <view class="progress-text">{{Math.floor(progress)}}%</view>
+      </view>
+      <view class="progress-status">
+        <text class="status-text">AI正在分析您的肌肤...</text>
+        <view class="status-dots">
+          <text class="dot">●</text>
+          <text class="dot">●</text>
+          <text class="dot">●</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 检测结果 -->
+  <view class="detection-result" wx:if="{{result && !detecting}}">
+    <view class="result-header">
+      <text class="result-title">检测完成</text>
+      <text class="result-score">综合评分：{{result.score}}分</text>
+    </view>
+    
+    <view class="result-summary">
+      <view class="summary-item">
+        <text class="summary-label">肌肤类型</text>
+        <text class="summary-value">{{result.skinType}}</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-label">肌肤年龄</text>
+        <text class="summary-value">{{result.skinAge}}岁</text>
+      </view>
+    </view>
+
+    <view class="result-details">
+      <view class="detail-item">
+        <text class="detail-label">水分</text>
+        <view class="detail-bar">
+          <view class="bar-fill" style="width: {{result.moisture}}%;"></view>
+        </view>
+        <text class="detail-value">{{result.moisture}}%</text>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">油分</text>
+        <view class="detail-bar">
+          <view class="bar-fill" style="width: {{result.oiliness}}%;"></view>
+        </view>
+        <text class="detail-value">{{result.oiliness}}%</text>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">敏感度</text>
+        <view class="detail-bar">
+          <view class="bar-fill sensitive" style="width: {{result.sensitivity}}%;"></view>
+        </view>
+        <text class="detail-value">{{result.sensitivity}}%</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <!-- 检测按钮 -->
+    <view class="detect-btn {{detecting ? 'detecting' : ''}}" 
+          bindtap="startDetection" 
+          wx:if="{{!result}}">
+      <text class="btn-text" wx:if="{{!detecting}}">
+        {{mode === 'camera' ? '拍照检测' : '选择图片'}}
+      </text>
+      <text class="btn-text" wx:else>检测中...</text>
+    </view>
+
+    <!-- 结果操作按钮 -->
+    <view class="result-actions" wx:if="{{result}}">
+      <view class="action-btn secondary" bindtap="retryDetection">
+        <text class="btn-text">重新检测</text>
+      </view>
+      <view class="action-btn primary" bindtap="viewReport">
+        <text class="btn-text">查看报告</text>
+      </view>
+    </view>
+
+    <!-- 模式切换 -->
+    <view class="mode-switch" bindtap="switchMode" wx:if="{{!detecting && !result}}">
+      <text class="switch-text">
+        {{mode === 'camera' ? '从相册选择' : '使用相机拍摄'}}
+      </text>
+    </view>
+  </view>
+
+  <!-- 检测指引按钮 -->
+  <view class="guide-btn" bindtap="showDetectionGuide" wx:if="{{showGuide && !detecting && !result}}">
+    <text class="guide-icon">❓</text>
+  </view>
+
+  <!-- 检测指引弹窗 -->
+  <view class="guide-modal" id="guide-modal" hidden>
+    <view class="modal-mask" bindtap="closeGuide"></view>
+    <view class="modal-content">
+      <view class="guide-header">
+        <text class="guide-title">检测指引</text>
+        <view class="guide-close" bindtap="closeGuide">×</view>
+      </view>
+      
+      <view class="guide-content">
+        <view class="guide-step">
+          <text class="step-icon">{{guideSteps[guideStep].icon}}</text>
+          <text class="step-title">{{guideSteps[guideStep].title}}</text>
+          <text class="step-desc">{{guideSteps[guideStep].desc}}</text>
+        </view>
+        
+        <view class="guide-progress">
+          <view class="progress-dot {{index <= guideStep ? 'active' : ''}}" 
+                wx:for="{{guideSteps}}" 
+                wx:key="*this">
+          </view>
+        </view>
+      </view>
+      
+      <view class="guide-actions">
+        <view class="guide-btn-next" bindtap="nextGuideStep">
+          {{guideStep < guideSteps.length - 1 ? '下一步' : '开始检测'}}
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
