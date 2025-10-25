@@ -1,24 +1,66 @@
 <!--index.wxml-->
 <view class="container">
+  <!-- 顶部装饰背景 -->
+  <view class="bg-decoration"></view>
+  
+  <!-- 头部区域 -->
   <view class="header">
-    <text class="title">谷雨护肤</text>
-    <text class="subtitle">专业皮肤检测与护理</text>
+    <view class="header-content">
+      <text class="title">谷雨护肤</text>
+      <text class="subtitle">专业皮肤检测与护理</text>
+      <view class="title-decoration"></view>
+    </view>
   </view>
   
-  <view class="features">
-    <view class="feature-item" bindtap="goToDetection">
-      <text class="feature-title">皮肤检测</text>
-      <text class="feature-desc">AI智能分析您的肌肤状态</text>
+  <!-- 主要功能区域 -->
+  <view class="main-content">
+    <!-- 快速检测卡片 -->
+    <view class="hero-card" bindtap="goToDetection">
+      <view class="hero-content">
+        <view class="hero-icon">📷</view>
+        <view class="hero-text">
+          <text class="hero-title">AI皮肤检测</text>
+          <text class="hero-desc">智能分析肌肤状态，获得专业护理建议</text>
+        </view>
+      </view>
+      <view class="hero-arrow">→</view>
     </view>
     
-    <view class="feature-item" bindtap="goToDiary">
-      <text class="feature-title">护肤日记</text>
-      <text class="feature-desc">记录您的护肤历程</text>
+    <!-- 功能网格 -->
+    <view class="features-grid">
+      <view class="feature-card" bindtap="goToDiary">
+        <view class="feature-icon">📝</view>
+        <text class="feature-title">护肤日记</text>
+        <text class="feature-desc">记录护肤历程</text>
+      </view>
+      
+      <view class="feature-card" bindtap="goToProducts">
+        <view class="feature-icon">🧴</view>
+        <text class="feature-title">产品推荐</text>
+        <text class="feature-desc">个性化推荐</text>
+      </view>
+      
+      <view class="feature-card" bindtap="goToExpert">
+        <view class="feature-icon">👩‍⚕️</view>
+        <text class="feature-title">专家咨询</text>
+        <text class="feature-desc">专业指导</text>
+      </view>
+      
+      <view class="feature-card" bindtap="goToProfile">
+        <view class="feature-icon">📊</view>
+        <text class="feature-title">肌肤档案</text>
+        <text class="feature-desc">数据分析</text>
+      </view>
     </view>
     
-    <view class="feature-item" bindtap="goToProducts">
-      <text class="feature-title">产品推荐</text>
-      <text class="feature-desc">个性化护肤产品推荐</text>
+    <!-- 云函数测试按钮 -->
+    <view class="test-section">
+      <button class="test-button" bindtap="testCloudFunctions">测试云函数</button>
+    </view>
+    
+    <!-- 底部提示 -->
+    <view class="bottom-tip">
+      <text class="tip-text">开始您的专业护肤之旅</text>
     </view>
   </view>
 </view>

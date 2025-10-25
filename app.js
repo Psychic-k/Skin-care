@@ -7,6 +7,9 @@ App({
   onLaunch() {
     console.log('Skin-care 护肤小程序启动');
     
+    // 初始化云开发
+    this.initCloud();
+    
     // 初始化应用
     this.initApp();
     
@@ -26,6 +29,19 @@ App({
 
   onError(msg) {
     console.error('应用发生错误:', msg);
+  },
+
+  // 初始化云开发
+  initCloud() {
+    if (config.cloudEnvId) {
+      wx.cloud.init({
+        env: config.cloudEnvId,
+        traceUser: true
+      });
+      console.log('云开发初始化成功，环境ID:', config.cloudEnvId);
+    } else {
+      console.warn('未配置云开发环境ID');
+    }
   },
 
   // 初始化应用

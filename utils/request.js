@@ -5,6 +5,7 @@ class Request {
   constructor() {
     this.baseUrl = config.apiBaseUrl;
     this.timeout = 10000;
+    this.useCloud = config.cloudEnvId ? true : false;
   }
 
   // 获取用户token
@@ -12,8 +13,38 @@ class Request {
     return wx.getStorageSync(config.storageKeys.userToken) || '';
   }
 
+  // 云函数调用方法
+  callCloudFunction(name, data = {}) {
+    return new Promise((resolve, reject) => {
+      wx.cloud.callFunction({
+        name,
+        data,
+        success: (res) => {
+          if (res.result && res.result.code === 0) {
+            resolve(res.result);
+          } else {
+            this.handleError(res.result || { code: -1, message: '云函数调用失败' });
+            reject(res.result || { code: -1, message: '云函数调用失败' });
+          }
+        },
+        fail: (err) => {
+          this.handleNetworkError(err);
+          reject(err);
+        }
+      });
+    });
+  }
+
   // 通用请求方法
   request(options) {
+    // 如果使用云开发，优先使用云函数
+    if (this.useCloud) {
+      const { url, method = 'GET', data = {} } = options;
+      const functionName = this.urlToFunctionName(url, method);
+      return this.callCloudFunction(functionName, data);
+    }
+
+    // 传统HTTP请求作为备选方案
     return new Promise((resolve, reject) => {
       const { url, method = 'GET', data = {}, header = {} } = options;
       
@@ -51,6 +82,36 @@ class Request {
         }
       });
     });
+  }
+
+  // URL转换为云函数名称
+  urlToFunctionName(url, method) {
+    // 移除开头的斜杠
+    const cleanUrl = url.replace(/^\/+/, '');
+    
+    // 将URL路径转换为云函数名称
+    const parts = cleanUrl.split('/');
+    let functionName = parts.join('_');
+    
+    // 添加方法前缀
+    if (method !== 'GET') {
+      functionName = method.toLowerCase() + '_' + functionName;
+    }
+    
+    // 处理常见的API路径映射
+    const apiMappings = {
+      'user/login': 'userLogin',
+      'user/profile': 'userProfile',
+      'detection/analyze': 'detectionAnalyze',
+      'detection/history': 'detectionHistory',
+      'diary/list': 'diaryList',
+      'diary/create': 'diaryCreate',
+      'diary/update': 'diaryUpdate',
+      'products/list': 'productsList',
+      'products/search': 'productsSearch'
+    };
+    
+    return apiMappings[cleanUrl] || functionName || 'defaultFunction';
   }
 
   // GET请求

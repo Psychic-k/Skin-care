@@ -1,10 +1,13 @@
 // 应用配置文件
 const config = {
   // API基础配置
-  apiBaseUrl: 'https://your-api-domain.com/api',
+  apiBaseUrl: '', // 使用云开发，不需要baseUrl
   
   // 微信小程序配置
-  appId: 'your-wechat-appid',
+  appId: 'wx20498e7775b32e18',
+  
+  // 云开发配置
+  cloudEnvId: 'cloud1-7grsf5bufd76f124',
   
   // 存储键名
   storageKeys: {
