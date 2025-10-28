@@ -4,7 +4,7 @@ const config = {
   apiBaseUrl: '', // 使用云开发，不需要baseUrl
   
   // 微信小程序配置
-  appId: 'wx20498e7775b32e18',
+  appId: 'wxfdbb0cd8b2a0995c',
   
   // 云开发配置
   cloudEnvId: 'cloud1-7grsf5bufd76f124',

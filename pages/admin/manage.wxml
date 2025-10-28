@@ -86,6 +86,10 @@
         <view class="btn-icon">{{isSelectMode ? '✓' : '☐'}}</view>
         <view class="btn-text">{{isSelectMode ? '取消选择' : '批量操作'}}</view>
       </button>
+      <button class="action-btn test" bindtap="showCloudFunctionTest">
+        <view class="btn-icon">🧪</view>
+        <view class="btn-text">测试云函数</view>
+      </button>
     </view>
     
     <view class="right-actions">
@@ -292,5 +296,99 @@
     </view>
     
     <button class="batch-cancel" bindtap="hideBatchActions">取消</button>
+  </view>
+</view>
+
+<!-- 云函数测试弹窗 -->
+<view wx:if="{{showCloudFunctionTest}}" class="cloud-test-modal">
+  <view class="modal-mask" bindtap="hideCloudFunctionTest"></view>
+  <view class="test-content">
+    <view class="test-header">
+      <view class="test-title">云函数测试</view>
+      <view class="test-close" bindtap="hideCloudFunctionTest">×</view>
+    </view>
+    
+    <view class="test-body">
+      <!-- 云函数选择 -->
+      <view class="test-section">
+        <view class="section-title">选择云函数</view>
+        <picker class="function-picker" 
+                range="{{cloudFunctions}}" 
+                range-key="name"
+                value="{{selectedFunctionIndex}}"
+                bindchange="onCloudFunctionChange">
+          <view class="picker-display">
+            <view class="picker-text">
+              {{selectedCloudFunction ? selectedCloudFunction.name : '请选择云函数'}}
+            </view>
+            <view class="picker-arrow">▼</view>
+          </view>
+        </picker>
+        
+        <view wx:if="{{selectedCloudFunction}}" class="function-info">
+          <view class="info-item">
+            <view class="info-label">功能描述:</view>
+            <view class="info-value">{{selectedCloudFunction.description}}</view>
+          </view>
+          <view class="info-item">
+            <view class="info-label">API路径:</view>
+            <view class="info-value">{{selectedCloudFunction.apiPath}}</view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 测试参数 -->
+      <view wx:if="{{selectedCloudFunction}}" class="test-section">
+        <view class="section-title">测试参数</view>
+        <textarea class="param-textarea" 
+                  value="{{testParams}}" 
+                  placeholder="请输入JSON格式的测试参数"
+                  bindinput="onTestParamsInput" />
+      </view>
+      
+      <!-- 测试按钮 -->
+      <view class="test-actions">
+        <button class="test-btn primary {{testLoading ? 'loading' : ''}}" 
+                bindtap="startCloudFunctionTest"
+                disabled="{{!selectedCloudFunction || testLoading}}">
+          <view wx:if="{{testLoading}}" class="loading-icon">⏳</view>
+          <view class="btn-text">{{testLoading ? '测试中...' : '开始测试'}}</view>
+        </button>
+        <button class="test-btn" bindtap="clearTestResult">清空结果</button>
+      </view>
+      
+      <!-- 测试结果 -->
+      <view wx:if="{{testResult}}" class="test-result">
+        <view class="result-header">
+          <view class="result-title">测试结果</view>
+          <view class="result-status {{testResult.success ? 'success' : 'error'}}">
+            {{testResult.success ? '✅ 成功' : '❌ 失败'}}
+          </view>
+        </view>
+        
+        <view class="result-content">
+          <view class="result-item">
+            <view class="result-label">响应时间:</view>
+            <view class="result-value">{{testResult.duration}}ms</view>
+          </view>
+          <view class="result-item">
+            <view class="result-label">状态码:</view>
+            <view class="result-value">{{testResult.code}}</view>
+          </view>
+          
+          <view class="result-data">
+            <view class="data-title">返回数据:</view>
+            <scroll-view class="data-content" scroll-y>
+              <text class="data-text">{{testResult.dataText}}</text>
+            </scroll-view>
+          </view>
+          
+          <view wx:if="{{testResult.error}}" class="result-error">
+            <view class="error-title">错误信息:</view>
+            <view class="error-content">{{testResult.error}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 </view>

@@ -3,10 +3,12 @@ const app = getApp();
 
 /**
  * 检查用户是否已登录
+ * @returns {boolean} 是否已登录
  */
 function isLoggedIn() {
-  const userInfo = wx.getStorageSync('userInfo');
-  return !!(userInfo && userInfo.openid);
+  const userInfo = getUserInfo();
+  // 检查多种登录状态标识
+  return userInfo && (userInfo.openid || userInfo.id || userInfo.isLogin);
 }
 
 /**
@@ -108,9 +110,15 @@ function wxLogin() {
             success: (result) => {
               const { openid, session_key } = result.result;
               const userInfo = {
+                id: openid, // 添加id字段
                 openid,
                 session_key,
+                nickname: '微信用户',
+                nickName: '微信用户', // 统一字段名
+                avatar: '/images/default-avatar.png',
+                avatarUrl: '/images/default-avatar.png', // 统一字段名
                 role: 'user', // 默认为普通用户
+                isLogin: true, // 添加登录状态标识
                 loginTime: new Date().getTime()
               };
               setUserInfo(userInfo);
@@ -139,12 +147,17 @@ function getUserProfile() {
         const updatedUserInfo = {
           ...userInfo,
           ...res.userInfo,
+          id: res.userInfo.openid || userInfo.id || 'user_' + Date.now(), // 确保有id字段
+          nickname: res.userInfo.nickName, // 统一字段名
+          avatar: res.userInfo.avatarUrl, // 统一字段名
           avatarUrl: res.userInfo.avatarUrl,
           nickName: res.userInfo.nickName,
           gender: res.userInfo.gender,
           city: res.userInfo.city,
           province: res.userInfo.province,
-          country: res.userInfo.country
+          country: res.userInfo.country,
+          isLogin: true, // 添加登录状态标识
+          loginTime: new Date().getTime()
         };
         setUserInfo(updatedUserInfo);
         resolve(updatedUserInfo);

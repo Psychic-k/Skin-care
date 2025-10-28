@@ -38,7 +38,18 @@ Page({
         
         // 设置用户信息到全局
         const app = getApp();
-        app.setUserInfo(loginResult);
+        const userInfo = {
+          ...loginResult,
+          id: loginResult.openid || loginResult.id || 'cloud_' + Date.now(),
+          openid: loginResult.openid || 'cloud_' + Date.now(),
+          nickname: loginResult.nickName || loginResult.nickname || '微信用户',
+          nickName: loginResult.nickName || loginResult.nickname || '微信用户',
+          avatar: loginResult.avatarUrl || loginResult.avatar || '/images/default-avatar.png',
+          avatarUrl: loginResult.avatarUrl || loginResult.avatar || '/images/default-avatar.png',
+          isLogin: true
+        };
+        console.log('云开发登录成功，用户信息:', userInfo);
+        app.setUserInfo(userInfo);
         
         // 跳转到首页
         wx.switchTab({
@@ -53,7 +64,18 @@ Page({
         
         // 设置用户信息到全局
         const app = getApp();
-        app.setUserInfo(loginResult);
+        const userInfo = {
+          ...loginResult,
+          id: loginResult.openid || loginResult.id || 'auth_' + Date.now(),
+          openid: loginResult.openid || 'auth_' + Date.now(),
+          nickname: loginResult.nickName || loginResult.nickname || '微信用户',
+          nickName: loginResult.nickName || loginResult.nickname || '微信用户',
+          avatar: loginResult.avatarUrl || loginResult.avatar || '/images/default-avatar.png',
+          avatarUrl: loginResult.avatarUrl || loginResult.avatar || '/images/default-avatar.png',
+          isLogin: true
+        };
+        console.log('传统登录成功，用户信息:', userInfo);
+        app.setUserInfo(userInfo);
         
         // 跳转到首页
         wx.switchTab({
@@ -81,8 +103,11 @@ Page({
               // 创建临时用户信息
               const tempUser = {
                 id: 'guest_' + Date.now(),
+                openid: 'guest_' + Date.now(), // 添加openid用于登录状态判断
                 nickname: '游客用户',
+                nickName: '游客用户', // 统一字段名
                 avatar: '/images/default-avatar.png',
+                avatarUrl: '/images/default-avatar.png', // 统一字段名
                 isGuest: true,
                 isLogin: true
               };
@@ -180,9 +205,12 @@ Page({
     // 设置用户信息到本地存储
     const userInfo = {
       id: 'dev_' + Date.now(), // 添加用户ID
+      openid: 'dev_' + Date.now(), // 添加openid用于登录状态判断
       role: role,
       nickname: role === 'admin' ? '管理员' : '普通用户',
+      nickName: role === 'admin' ? '管理员' : '普通用户', // 统一字段名
       avatar: '/images/default-avatar.png',
+      avatarUrl: '/images/default-avatar.png', // 统一字段名
       isDev: true, // 标记为开发模式用户
       isLogin: true
     };

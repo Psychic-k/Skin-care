@@ -1,7 +1,7 @@
 {
   "navigationBarTitleText": "产品数据管理",
-  "navigationBarBackgroundColor": "#4CAF50",
-  "navigationBarTextStyle": "white",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
   "backgroundColor": "#f5f7fa",
   "enablePullDownRefresh": true,
   "onReachBottomDistance": 50

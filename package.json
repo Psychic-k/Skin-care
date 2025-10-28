@@ -1,0 +1,22 @@
+{
+  "name": "skincare-miniprogram",
+  "version": "1.0.0",
+  "description": "AI皮肤检测护肤小程序",
+  "main": "app.js",
+  "scripts": {
+    "dev": "echo '微信小程序项目，请使用微信开发者工具打开项目目录进行开发和调试'",
+    "build": "echo '微信小程序项目，请使用微信开发者工具进行编译和发布'",
+    "test": "echo '暂无测试脚本'"
+  },
+  "keywords": [
+    "miniprogram",
+    "skincare",
+    "ai",
+    "detection"
+  ],
+  "author": "SkinCare Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/wechat-miniprogram": "^3.4.0"
+  }
+}

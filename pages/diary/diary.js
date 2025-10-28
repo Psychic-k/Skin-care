@@ -148,16 +148,12 @@ Page({
       console.log('开始加载日记列表，用户ID:', userInfo.id)
 
       // 修改API调用方式，直接传递userId作为参数
-      const res = await request({
-        url: '/api/diary/list',
-        method: 'GET',
-        data: {
-          userId: userInfo.id,
-          page: refresh ? 1 : this.data.currentPage,
-          limit: 10,
-          filterType: this.data.filterType,
-          sortBy: this.data.sortBy
-        }
+      const res = await request.get('/api/diary/list', {
+        userId: userInfo.id,
+        page: refresh ? 1 : this.data.currentPage,
+        limit: 10,
+        filterType: this.data.filterType,
+        sortBy: this.data.sortBy
       })
 
       console.log('日记列表API响应:', res)
@@ -224,10 +220,7 @@ Page({
       const userInfo = app.globalData.userInfo
       if (!userInfo) return
 
-      const res = await request({
-        url: `/api/diary/stats/${userInfo.id}`,
-        method: 'GET'
-      })
+      const res = await request.get(`/api/diary/stats/${userInfo.id}`)
 
       if (res.success) {
         this.setData({
@@ -470,11 +463,9 @@ Page({
         userId: userInfo.id
       }
 
-      const res = await request({
-        url: editingId ? `/api/diary/${editingId}` : '/api/diary/create',
-        method: editingId ? 'PUT' : 'POST',
-        data: requestData
-      })
+      const res = editingId 
+        ? await request.put(`/api/diary/${editingId}`, requestData)
+        : await request.post('/api/diary/create', requestData)
 
       if (res.success) {
         showToast(editingId ? '更新成功' : '保存成功')
@@ -504,10 +495,7 @@ Page({
           try {
             showLoading('删除中...')
             
-            const result = await request({
-              url: `/api/diary/${diaryId}`,
-              method: 'DELETE'
-            })
+            const result = await request.delete(`/api/diary/${diaryId}`)
 
             if (result.success) {
               showToast('删除成功')
@@ -557,10 +545,7 @@ Page({
       const userInfo = app.globalData.userInfo
       if (!userInfo) return
 
-      const res = await request({
-        url: `/api/diary/export/${userInfo.id}`,
-        method: 'GET'
-      })
+      const res = await request.get(`/api/diary/export/${userInfo.id}`)
 
       if (res.success) {
         showToast('导出成功')

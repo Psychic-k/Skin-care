@@ -109,33 +109,59 @@ Page({
     try {
       // 先从本地存储获取
       const localUserInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo
-      if (localUserInfo) {
+      console.log('本地用户信息:', localUserInfo)
+      
+      if (localUserInfo && (localUserInfo.openid || localUserInfo.id || localUserInfo.isLogin)) {
         this.setData({
           userInfo: {
             ...this.data.userInfo,
-            ...localUserInfo
+            ...localUserInfo,
+            // 统一字段名处理
+            nickName: localUserInfo.nickName || localUserInfo.nickname || '未登录',
+            avatarUrl: localUserInfo.avatarUrl || localUserInfo.avatar || '/images/default-avatar.png'
+          }
+        })
+        console.log('用户已登录，显示用户信息:', this.data.userInfo)
+      } else {
+        console.log('用户未登录，显示默认状态')
+        this.setData({
+          userInfo: {
+            ...this.data.userInfo,
+            nickName: '未登录',
+            avatarUrl: '/images/default-avatar.png'
           }
         })
       }
 
-      // 如果云开发可用，从云端获取最新用户信息
-      if (app.globalData.cloudEnabled) {
-        const cloudUserInfo = await cloudApi.getUserInfo()
-        this.setData({
-          userInfo: {
+      // 如果云开发可用且用户已登录，从云端获取最新用户信息
+      if (app.globalData.cloudEnabled && localUserInfo && (localUserInfo.openid || localUserInfo.id)) {
+        try {
+          const cloudUserInfo = await cloudApi.getUserInfo()
+          console.log('云端用户信息:', cloudUserInfo)
+          
+          const mergedUserInfo = {
             ...this.data.userInfo,
-            ...cloudUserInfo
+            ...cloudUserInfo,
+            // 统一字段名处理
+            nickName: cloudUserInfo.nickName || cloudUserInfo.nickname || localUserInfo.nickName || '未登录',
+            avatarUrl: cloudUserInfo.avatarUrl || cloudUserInfo.avatar || localUserInfo.avatarUrl || '/images/default-avatar.png'
           }
-        })
-        wx.setStorageSync('userInfo', cloudUserInfo)
-        
-        // 如果是新用户，显示欢迎提示
-        if (cloudUserInfo.nickname === '新用户') {
-          wx.showToast({
-            title: '欢迎使用护肤小程序！',
-            icon: 'success',
-            duration: 2000
+          
+          this.setData({
+            userInfo: mergedUserInfo
           })
+          wx.setStorageSync('userInfo', mergedUserInfo)
+          
+          // 如果是新用户，显示欢迎提示
+          if (cloudUserInfo.nickname === '新用户') {
+            wx.showToast({
+              title: '欢迎使用护肤小程序！',
+              icon: 'success',
+              duration: 2000
+            })
+          }
+        } catch (cloudError) {
+          console.log('云端获取用户信息失败，使用本地信息:', cloudError)
         }
       }
     } catch (error) {
@@ -159,16 +185,28 @@ Page({
       }
       
       // 使用本地存储的用户信息作为备用
-      const localUserInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo
-      if (localUserInfo) {
+      const fallbackUserInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo
+      if (fallbackUserInfo && (fallbackUserInfo.openid || fallbackUserInfo.id || fallbackUserInfo.isLogin)) {
         this.setData({
           userInfo: {
             ...this.data.userInfo,
-            ...localUserInfo
+            ...fallbackUserInfo,
+            // 统一字段名处理
+            nickName: fallbackUserInfo.nickName || fallbackUserInfo.nickname || '未登录',
+            avatarUrl: fallbackUserInfo.avatarUrl || fallbackUserInfo.avatar || '/images/default-avatar.png'
           }
         })
+        console.log('使用备用用户信息:', this.data.userInfo)
       } else {
         // 如果没有任何用户信息，显示默认状态
+        console.log('没有用户信息，显示未登录状态')
+        this.setData({
+          userInfo: {
+            ...this.data.userInfo,
+            nickName: '未登录',
+            avatarUrl: '/images/default-avatar.png'
+          }
+        })
         wx.showToast({
           title: '请先登录',
           icon: 'none',

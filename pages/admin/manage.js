@@ -47,6 +47,108 @@ Page({
     showBatchActions: false,
     currentProduct: null,
     
+    // 云函数测试相关
+    showCloudFunctionTest: false,
+    selectedCloudFunction: null,
+    selectedFunctionIndex: 0,
+    testParams: '',
+    testResult: null,
+    testLoading: false,
+    testError: null,
+    cloudFunctions: [
+      {
+        name: 'diaryStats',
+        displayName: '日记统计',
+        description: '获取用户日记统计数据',
+        apiPath: '/api/diary/stats?userId={userId}',
+        defaultParams: '{"userId": "user_001_id"}'
+      },
+      {
+        name: 'getUserProducts',
+        displayName: '用户产品',
+        description: '获取用户的产品列表',
+        apiPath: '/api/products/user-products',
+        defaultParams: '{"userId": "user_001_id", "type": "all", "page": 1, "limit": 10}'
+      },
+      {
+        name: 'productsSearch',
+        displayName: '产品搜索',
+        description: '搜索产品信息',
+        apiPath: '/api/products/search',
+        defaultParams: '{"keyword": "洁面", "page": 1, "limit": 10}'
+      },
+      {
+        name: 'userProfile',
+        displayName: '用户资料',
+        description: '获取用户详细资料',
+        apiPath: '/api/user/profile',
+        defaultParams: '{"action": "get", "userId": "user_001_id"}'
+      },
+      {
+        name: 'aiDetection',
+        displayName: 'AI检测',
+        description: '皮肤AI检测分析',
+        apiPath: '/api/detection/analyze',
+        defaultParams: '{"imageUrl": "https://example.com/test-image.jpg", "userId": "user_001_id", "detectionType": "comprehensive"}'
+      },
+      {
+        name: 'diaryCreate',
+        displayName: '创建日记',
+        description: '创建护肤日记',
+        apiPath: '/api/diary/create',
+        defaultParams: '{"userId": "user_001_id", "date": "2024-01-01", "skinCondition": 8, "mood": "good", "weather": "sunny", "products": [], "notes": "这是一个测试日记", "photos": []}'
+      },
+      {
+        name: 'diaryList',
+        displayName: '日记列表',
+        description: '获取用户日记列表',
+        apiPath: '/api/diary/list?userId={userId}&page={page}&limit={limit}',
+        defaultParams: '{"userId": "user_001_id", "page": 1, "limit": 10}'
+      },
+      {
+        name: 'diaryUpdate',
+        displayName: '更新日记',
+        description: '更新护肤日记',
+        apiPath: '/api/diary/update',
+        defaultParams: '{"diaryId": "test_diary_id", "userId": "user_001_id", "date": "2024-01-01", "skinCondition": 9, "mood": "excellent", "weather": "cloudy", "products": [], "notes": "这是更新后的测试日记内容", "photos": []}'
+      },
+      {
+        name: 'detectionHistory',
+        displayName: '检测历史',
+        description: '获取AI检测历史记录',
+        apiPath: '/api/detection/history?userId={userId}&page={page}&limit={limit}',
+        defaultParams: '{"userId": "user_001_id", "page": 1, "limit": 10}'
+      },
+      {
+        name: 'getProductRecommendations',
+        displayName: '产品推荐',
+        description: '获取产品推荐',
+        apiPath: '/api/products/recommendations',
+        defaultParams: '{"skinType": "oily", "skinConcerns": ["acne", "pores"], "ageRange": "20-30", "budget": "medium", "category": "all", "limit": 10, "page": 1}'
+      },
+      {
+        name: 'uploadFile',
+        displayName: '文件上传',
+        description: '上传文件到云存储',
+        apiPath: '/api/upload/file',
+        defaultParams: '{"fileName": "test-image.jpg", "fileType": "image/jpeg", "fileSize": 1024000, "category": "test", "description": "测试文件上传", "metadata": {"source": "admin_test"}}'
+      },
+      {
+        name: 'getUserInfo',
+        displayName: '用户信息',
+        description: '获取用户基本信息',
+        apiPath: '/api/user/info',
+        defaultParams: '{"action": "get", "userId": "user_001_id"}'
+      },
+      {
+        name: 'updateUserInfo',
+        displayName: '更新用户信息',
+        description: '更新用户基本信息',
+        apiPath: '/api/user/profile',
+        defaultParams: '{"action": "update", "userId": "user_001_id", "profileData": {"nickname": "测试用户", "avatar": "https://example.com/avatar.jpg"}}'
+      }
+    ],
+    
     // 加载状态
     loading: false,
     refreshing: false
@@ -740,6 +842,311 @@ Page({
   goToUpload() {
     wx.navigateTo({
       url: '/pages/admin/upload'
+    });
+  },
+
+  // 显示云函数测试弹窗
+  showCloudFunctionTest() {
+    console.log('showCloudFunctionTest 方法被调用');
+    this.setData({ 
+      showCloudFunctionTest: true,
+      selectedCloudFunction: null,
+      selectedFunctionIndex: 0,
+      testParams: '',
+      testResult: null,
+      testLoading: false,
+      testError: null
+    });
+    console.log('showCloudFunctionTest 数据设置完成:', this.data.showCloudFunctionTest);
+  },
+
+  // 隐藏云函数测试弹窗
+  hideCloudFunctionTest() {
+    this.setData({ showCloudFunctionTest: false });
+  },
+
+  // 选择云函数
+  onCloudFunctionChange(e) {
+    const index = e.detail.value;
+    const cloudFunction = this.data.cloudFunctions[index];
+    this.setData({ 
+      selectedCloudFunction: cloudFunction,
+      testParams: cloudFunction.defaultParams || ''
+    });
+  },
+
+  // 测试参数输入
+  onTestParamsInput(e) {
+    this.setData({ testParams: e.detail.value });
+  },
+
+  // 开始测试云函数
+  async startCloudFunctionTest() {
+    if (!this.data.selectedCloudFunction) {
+      wx.showToast({
+        title: '请选择云函数',
+        icon: 'none'
+      });
+      return;
+    }
+
+    this.setData({ 
+      testLoading: true,
+      testResult: null,
+      testError: null
+    });
+
+    const startTime = Date.now();
+    
+    try {
+      const cloudFunction = this.data.selectedCloudFunction;
+      let result;
+      
+      // 根据云函数类型调用不同的测试方法
+      switch (cloudFunction.name) {
+        case 'diaryStats':
+          result = await this.testDiaryStats();
+          break;
+        case 'getUserProducts':
+          result = await this.testGetUserProducts();
+          break;
+        case 'productsSearch':
+          result = await this.testProductsSearch();
+          break;
+        case 'userProfile':
+          result = await this.testUserProfile();
+          break;
+        case 'aiDetection':
+          result = await this.testAiDetection();
+          break;
+        case 'diaryCreate':
+          result = await this.testDiaryCreate();
+          break;
+        case 'diaryList':
+          result = await this.testDiaryList();
+          break;
+        case 'diaryUpdate':
+          result = await this.testDiaryUpdate();
+          break;
+        case 'detectionHistory':
+          result = await this.testDetectionHistory();
+          break;
+        case 'getProductRecommendations':
+          result = await this.testGetProductRecommendations();
+          break;
+        case 'uploadFile':
+          result = await this.testUploadFile();
+          break;
+        case 'getUserInfo':
+          result = await this.testGetUserInfo();
+          break;
+        case 'updateUserInfo':
+          result = await this.testUpdateUserInfo();
+          break;
+        default:
+          throw new Error('未知的云函数类型');
+      }
+
+      const responseTime = Date.now() - startTime;
+      
+      this.setData({
+        testResult: {
+          success: true,
+          responseTime,
+          statusCode: result.code || 0,
+          data: result,
+          timestamp: new Date().toLocaleString()
+        }
+      });
+
+      wx.showToast({
+        title: '测试完成',
+        icon: 'success'
+      });
+
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      
+      this.setData({
+        testResult: {
+          success: false,
+          responseTime,
+          error: error.message || '测试失败',
+          timestamp: new Date().toLocaleString()
+        },
+        testError: error.message || '测试失败'
+      });
+
+      wx.showToast({
+        title: '测试失败',
+        icon: 'error'
+      });
+    } finally {
+      this.setData({ testLoading: false });
+    }
+  },
+
+  // 清空测试结果
+  clearTestResult() {
+    this.setData({ 
+      testResult: null,
+      testError: null
+    });
+  },
+
+  // 测试 diaryStats 云函数
+  async testDiaryStats() {
+    const request = require('../../utils/request.js');
+    const testUserId = 'user_001_id';
+    return await request.get('/api/diary/stats', {
+      userId: testUserId
+    });
+  },
+
+  // 测试 getUserProducts 云函数
+  async testGetUserProducts() {
+    const request = require('../../utils/request.js');
+    const testUserId = 'user_001_id';
+    return await request.get('/api/products/user-products', {
+      userId: testUserId,
+      type: 'all',
+      page: 1,
+      limit: 10
+    });
+  },
+
+  // 测试 productsSearch 云函数
+  async testProductsSearch() {
+    const request = require('../../utils/request.js');
+    return await request.get('/api/products/search', {
+      keyword: '洁面',
+      page: 1,
+      limit: 10
+    });
+  },
+
+  // 测试 userProfile 云函数
+  async testUserProfile() {
+    const request = require('../../utils/request.js');
+    const testUserId = 'user_001_id';
+    return await request.post('/api/user/profile', {
+      action: 'get',
+      userId: testUserId
+    });
+  },
+
+  // 测试 aiDetection 云函数 (实际使用 detectionAnalyze)
+  async testAiDetection() {
+    const request = require('../../utils/request.js');
+    return await request.post('/api/detection/analyze', {
+      imageUrl: 'https://example.com/test-image.jpg',
+      userId: 'user_001_id',
+      detectionType: 'comprehensive'
+    });
+  },
+
+  // 测试 diaryCreate 云函数
+  async testDiaryCreate() {
+    const request = require('../../utils/request.js');
+    return await request.post('/api/diary/create', {
+      userId: 'user_001_id',
+      date: new Date().toISOString().split('T')[0],
+      skinCondition: 8,
+      mood: 'good',
+      weather: 'sunny',
+      products: [],
+      notes: '这是一个测试日记',
+      photos: []
+    });
+  },
+
+  // 测试 diaryList 云函数
+  async testDiaryList() {
+    const request = require('../../utils/request.js');
+    const testUserId = 'user_001_id';
+    return await request.get('/api/diary/list', {
+      userId: testUserId,
+      page: 1,
+      limit: 10
+    });
+  },
+
+  // 测试 diaryUpdate 云函数
+  async testDiaryUpdate() {
+    const request = require('../../utils/request.js');
+    return await request.post('/api/diary/update', {
+      diaryId: 'test_diary_id',
+      userId: 'user_001_id',
+      date: new Date().toISOString().split('T')[0],
+      skinCondition: 9,
+      mood: 'excellent',
+      weather: 'cloudy',
+      products: [],
+      notes: '这是更新后的测试日记内容',
+      photos: []
+    });
+  },
+
+  // 测试 detectionHistory 云函数
+  async testDetectionHistory() {
+    const request = require('../../utils/request.js');
+    const testUserId = 'user_001_id';
+    return await request.get('/api/detection/history', {
+      userId: testUserId,
+      page: 1,
+      limit: 10
+    });
+  },
+
+  // 测试 getProductRecommendations 云函数
+  async testGetProductRecommendations() {
+    const request = require('../../utils/request.js');
+    return await request.post('/api/products/recommendations', {
+      skinType: 'oily',
+      skinConcerns: ['acne', 'pores'],
+      ageRange: '20-30',
+      budget: 'medium',
+      category: 'all',
+      limit: 10,
+      page: 1
+    });
+  },
+
+  // 测试 uploadFile 云函数
+  async testUploadFile() {
+    const request = require('../../utils/request.js');
+    return await request.post('/api/upload/file', {
+      fileName: 'test-image.jpg',
+      fileType: 'image/jpeg',
+      fileSize: 1024000,
+      category: 'test',
+      description: '测试文件上传',
+      metadata: {
+        source: 'admin_test'
+      }
+    });
+  },
+
+  // 测试 getUserInfo 云函数
+  async testGetUserInfo() {
+    const request = require('../../utils/request.js');
+    const testUserId = 'user_001_id';
+    return await request.post('/api/user/info', {
+      action: 'get',
+      userId: testUserId
+    });
+  },
+
+  // 测试 updateUserInfo 云函数 (实际使用 userProfile 的 update 操作)
+  async testUpdateUserInfo() {
+    const request = require('../../utils/request.js');
+    return await request.post('/api/user/profile', {
+      action: 'update',
+      userId: 'user_001_id',
+      profileData: {
+        nickname: '测试用户',
+        avatar: 'https://example.com/avatar.jpg'
+      }
     });
   }
 });

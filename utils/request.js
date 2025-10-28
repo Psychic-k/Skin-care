@@ -16,19 +16,33 @@ class Request {
   // 云函数调用方法
   callCloudFunction(name, data = {}) {
     return new Promise((resolve, reject) => {
+      // 检查云开发是否可用
+      const app = getApp();
+      if (!app.globalData.cloudEnabled) {
+        console.warn('云开发不可用，尝试降级处理');
+        reject({ code: -1, message: '云开发服务不可用' });
+        return;
+      }
+
+      console.log(`调用云函数: ${name}`, data);
+      
       wx.cloud.callFunction({
         name,
         data,
         success: (res) => {
+          console.log(`云函数 ${name} 调用成功:`, res);
           if (res.result && res.result.code === 0) {
             resolve(res.result);
           } else {
-            this.handleError(res.result || { code: -1, message: '云函数调用失败' });
-            reject(res.result || { code: -1, message: '云函数调用失败' });
+            const error = res.result || { code: -1, message: '云函数调用失败' };
+            console.error(`云函数 ${name} 返回错误:`, error);
+            this.handleError(error, name);
+            reject(error);
           }
         },
         fail: (err) => {
-          this.handleNetworkError(err);
+          console.error(`云函数 ${name} 调用失败:`, err);
+          this.handleNetworkError(err, name);
           reject(err);
         }
       });
@@ -84,68 +98,107 @@ class Request {
     });
   }
 
-  // URL转换为云函数名称
-  urlToFunctionName(url, method) {
-    // 移除开头的斜杠
-    const cleanUrl = url.replace(/^\/+/, '');
+  // 获取云函数名称
+  getCloudFunctionName(url, method) {
+    // 移除开头的斜杠和结尾的斜杠
+    const cleanUrl = url.replace(/^\/+/, '').replace(/\/+$/, '');
     
-    // 处理带参数的URL路径（如 /api/diary/list/123）
-    let normalizedUrl = cleanUrl;
-    
-    // 移除动态参数，保留基础路径
-    normalizedUrl = normalizedUrl.replace(/\/[a-f0-9]{24}$/, ''); // 移除MongoDB ObjectId
-    normalizedUrl = normalizedUrl.replace(/\/\d+$/, ''); // 移除数字ID
-    normalizedUrl = normalizedUrl.replace(/\/[^\/]+$/, function(match) {
-      // 如果最后一段看起来像ID，则移除
-      if (/^\/[a-zA-Z0-9_-]{8,}$/.test(match)) {
-        return '';
-      }
-      return match;
-    });
-    
-    // 将URL路径转换为云函数名称
-    const parts = normalizedUrl.split('/');
-    let functionName = parts.join('_');
-    
-    // 添加方法前缀
-    if (method !== 'GET') {
-      functionName = method.toLowerCase() + '_' + functionName;
-    }
-    
-    // 处理常见的API路径映射
+    // 完整的API路径映射表，基于云开发控制台的实际云函数名称
     const apiMappings = {
+      // 用户相关
       'api/user/login': 'login',
+      'api/user/info': 'getUserInfo',
       'api/user/profile': 'userProfile',
+      'user/login': 'login',
+      'user/info': 'getUserInfo',
+      'user/profile': 'userProfile',
+      
+      // 检测相关
       'api/detection/analyze': 'detectionAnalyze',
       'api/detection/history': 'detectionHistory',
+      'detection/analyze': 'detectionAnalyze',
+      'detection/history': 'detectionHistory',
+      
+      // 日记相关
       'api/diary/list': 'diaryList',
       'api/diary/create': 'diaryCreate',
       'api/diary/update': 'diaryUpdate',
       'api/diary/stats': 'diaryStats',
-      'api/products/list': 'getProductRecommendations',
-      'api/products/user-products': 'getUserProducts',
-      'api/products/search': 'productsSearch',
-      'user/login': 'login',
-      'user/profile': 'userProfile',
-      'detection/analyze': 'detectionAnalyze',
-      'detection/history': 'detectionHistory',
       'diary/list': 'diaryList',
       'diary/create': 'diaryCreate',
       'diary/update': 'diaryUpdate',
       'diary/stats': 'diaryStats',
+      
+      // 产品相关
+      'api/products/list': 'getProductRecommendations',
+      'api/products/recommendations': 'getProductRecommendations',
+      'api/products/user-products': 'getUserProducts',
+      'api/products/search': 'productsSearch',
       'products/list': 'getProductRecommendations',
+      'products/recommendations': 'getProductRecommendations',
       'products/user-products': 'getUserProducts',
-      'products/search': 'productsSearch'
+      'products/search': 'productsSearch',
+      
+      // 文件上传
+      'api/upload/file': 'uploadFile',
+      'upload/file': 'uploadFile'
     };
     
-    console.log('URL映射调试:', {
+    // 处理带参数的URL路径，移除动态参数
+    let normalizedUrl = cleanUrl;
+    
+    // 移除常见的动态参数模式
+    normalizedUrl = normalizedUrl.replace(/\/[a-f0-9]{24}$/, ''); // 移除MongoDB ObjectId
+    normalizedUrl = normalizedUrl.replace(/\/\d+$/, ''); // 移除数字ID
+    normalizedUrl = normalizedUrl.replace(/\/[a-zA-Z0-9_-]{8,}$/, ''); // 移除其他ID格式
+    
+    // 优先使用精确匹配
+    if (apiMappings[normalizedUrl]) {
+      console.log('URL映射调试:', {
+        originalUrl: url,
+        cleanUrl: cleanUrl,
+        normalizedUrl: normalizedUrl,
+        mappedFunction: apiMappings[normalizedUrl],
+        method: method
+      });
+      return apiMappings[normalizedUrl];
+    }
+    
+    // 如果没有精确匹配，尝试匹配原始URL
+    if (apiMappings[cleanUrl]) {
+      console.log('URL映射调试:', {
+        originalUrl: url,
+        cleanUrl: cleanUrl,
+        normalizedUrl: normalizedUrl,
+        mappedFunction: apiMappings[cleanUrl],
+        method: method
+      });
+      return apiMappings[cleanUrl];
+    }
+    
+    // 如果仍然没有匹配，记录警告并返回默认函数名
+    console.warn('未找到匹配的云函数映射:', {
       originalUrl: url,
       cleanUrl: cleanUrl,
       normalizedUrl: normalizedUrl,
-      mappedFunction: apiMappings[normalizedUrl] || functionName || 'defaultFunction'
+      method: method,
+      availableMappings: Object.keys(apiMappings)
     });
     
-    return apiMappings[normalizedUrl] || functionName || 'defaultFunction';
+    // 作为最后的备选方案，生成一个基于路径的函数名（但这通常不应该被使用）
+    const fallbackName = normalizedUrl.replace(/\//g, '_').replace(/^api_/, '') || 'defaultFunction';
+    
+    console.log('使用备选函数名:', {
+      originalUrl: url,
+      fallbackName: fallbackName
+    });
+    
+    return fallbackName;
+  }
+
+  // URL转换为云函数名称（保持向后兼容）
+  urlToFunctionName(url, method) {
+    return this.getCloudFunctionName(url, method);
   }
 
   // GET请求
@@ -221,29 +274,66 @@ class Request {
   }
 
   // 处理错误
-  handleError(error, url) {
+  handleError(error, context = '') {
     console.error('请求错误详情:', {
-      url: url,
+      context: context,
       error: error,
       errorType: typeof error,
       errorKeys: Object.keys(error || {})
-    })
+    });
+    
+    // 显示用户友好的错误提示
+    let userMessage = '操作失败，请稍后重试';
     
     if (error.errCode) {
       // 云函数错误
-      console.error('云函数调用失败:', error)
-      return {
-        code: -1,
-        message: error.errMsg || '云函数调用失败',
-        data: null,
-        error: error
-      }
+      console.error('云函数调用失败:', error);
+      userMessage = error.errMsg || '服务暂时不可用';
     } else if (error.statusCode) {
       // HTTP错误
-      return this.handleHttpError(error)
+      userMessage = this.getHttpErrorMessage(error.statusCode);
+    } else if (error.code === -1) {
+      // 自定义错误
+      userMessage = error.message || '服务异常';
     } else {
       // 网络错误
-      return this.handleNetworkError(error)
+      userMessage = '网络连接异常，请检查网络设置';
+    }
+    
+    // 显示错误提示
+    wx.showToast({
+      title: userMessage,
+      icon: 'error',
+      duration: 2000
+    });
+    
+    return {
+      code: -1,
+      message: userMessage,
+      data: null,
+      error: error
+    };
+  }
+
+  // 获取HTTP错误消息
+  getHttpErrorMessage(statusCode) {
+    switch (statusCode) {
+      case 400:
+        return '请求参数错误';
+      case 401:
+        return '请先登录';
+      case 403:
+        return '权限不足';
+      case 404:
+        return '服务不存在';
+      case 500:
+        return '服务器内部错误';
+      case 502:
+        return '网关错误';
+      case 503:
+        return '服务暂时不可用';
+      default:
+        return '网络请求失败';
     }
   }
 
@@ -292,8 +382,10 @@ class Request {
   }
 
   // 网络错误处理
-  handleNetworkError(error) {
+  handleNetworkError(error, context = '') {
     let message = '网络连接失败';
+    console.error(`网络错误 [${context}]:`, error);
+    
     if (error.errMsg) {
       if (error.errMsg.includes('timeout')) {
         message = '请求超时，请重试';

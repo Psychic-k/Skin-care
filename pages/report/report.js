@@ -25,13 +25,30 @@ Page({
   },
 
   onLoad(options) {
+    console.log('报告页面接收参数:', options)
+    
     if (options.detectionId) {
       this.setData({
         detectionId: options.detectionId
       })
       this.loadReportData()
+    } else if (options.mockData) {
+      // 处理本地模拟数据
+      try {
+        const mockResult = JSON.parse(decodeURIComponent(options.mockData))
+        console.log('使用本地模拟数据:', mockResult)
+        this.setData({
+          reportData: mockResult,
+          isLoading: false
+        })
+        this.animateScore()
+      } catch (error) {
+        console.error('解析模拟数据失败:', error)
+        showToast('数据解析失败')
+        wx.navigateBack()
+      }
     } else {
-      showToast('检测ID不存在')
+      showToast('检测数据不存在')
       wx.navigateBack()
     }
   },
@@ -48,12 +65,11 @@ Page({
     try {
       showLoading('加载报告中...')
       
-      const res = await request({
-        url: `/api/detection/report/${this.data.detectionId}`,
-        method: 'GET'
-      })
+      const res = await request.get(`/api/detection/report/${this.data.detectionId}`)
 
-      if (res.success) {
+      console.log('报告数据加载结果:', res)
+
+      if (res.code === 0 && res.data) {
         this.setData({
           reportData: res.data,
           isLoading: false

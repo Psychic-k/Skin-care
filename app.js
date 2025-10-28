@@ -36,19 +36,60 @@ App({
     // 检查云开发能力
     if (!wx.cloud) {
       console.error('请使用 2.2.3 或以上的基础库以使用云能力');
+      wx.showToast({
+        title: '云开发不支持',
+        icon: 'error',
+        duration: 2000
+      });
+      this.globalData.cloudEnabled = false;
+      return;
+    }
+
+    // 验证云环境ID配置
+    if (!config.cloudEnvId) {
+      console.error('云环境ID未配置');
+      wx.showToast({
+        title: '云环境配置错误',
+        icon: 'error',
+        duration: 2000
+      });
+      this.globalData.cloudEnabled = false;
       return;
     }
 
     try {
       wx.cloud.init({
-        env: config.cloudEnvId, // 云开发环境ID，需要在微信开发者工具中配置
+        env: config.cloudEnvId, // 云开发环境ID
         traceUser: true
       });
-      console.log('云开发初始化成功');
+      console.log('云开发初始化成功，环境ID:', config.cloudEnvId);
       this.globalData.cloudEnabled = true;
+      
+      // 测试云开发连接
+      this.testCloudConnection();
     } catch (error) {
       console.error('云开发初始化失败:', error);
+      wx.showToast({
+        title: '云开发初始化失败',
+        icon: 'error',
+        duration: 2000
+      });
       this.globalData.cloudEnabled = false;
+    }
+  },
+
+  // 测试云开发连接
+  async testCloudConnection() {
+    try {
+      // 测试云函数调用
+      const result = await wx.cloud.callFunction({
+        name: 'login',
+        data: {}
+      });
+      console.log('云开发连接测试成功:', result);
+    } catch (error) {
+      console.warn('云开发连接测试失败:', error);
+      // 不影响应用启动，仅记录警告
     }
   },
 
@@ -126,8 +167,10 @@ App({
   // 全局方法
   // 设置用户信息
   setUserInfo(userInfo) {
+    console.log('App.setUserInfo 被调用，用户信息:', userInfo);
     this.globalData.userInfo = userInfo;
     Storage.saveUserInfo(userInfo);
+    console.log('用户信息已保存到全局和本地存储');
   },
 
   // 获取用户信息
