@@ -1,17 +1,20 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/login/login",
-    "pages/detection/detection",
-    "pages/report/report",
-    "pages/profile/profile",
     "pages/diary/diary",
     "pages/products/products",
-    "pages/expert/expert",
-    "pages/user/user"
+    "pages/user/user",
+    "pages/detection/detection",
+    "pages/login/login",
+    "pages/profile/profile",
+    "pages/report/report",
+    "pages/ingredients/ingredients",
+    "pages/brands/brands",
+    "pages/admin/manage",
+    "pages/admin/upload"
   ],
   "tabBar": {
-    "color": "#666666",
+    "color": "#999999",
     "selectedColor": "#4CAF50",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
@@ -21,12 +24,6 @@
         "text": "首页",
         "iconPath": "images/tab/home.png",
         "selectedIconPath": "images/tab/home-active.png"
-      },
-      {
-        "pagePath": "pages/detection/detection",
-        "text": "检测",
-        "iconPath": "images/tab/detection.png",
-        "selectedIconPath": "images/tab/detection-active.png"
       },
       {
         "pagePath": "pages/diary/diary",
@@ -49,18 +46,16 @@
     ]
   },
   "window": {
-    "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "谷雨护肤",
-    "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#f8f9fa",
     "backgroundTextStyle": "light",
-    "enablePullDownRefresh": false
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "SkinCare",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f5f5"
   },
   "requiredPrivateInfos": [
-    "chooseAddress"
+    "chooseLocation",
+    "getLocation"
   ],
-  "style": "v2",
-  "sitemapLocation": "sitemap.json",
   "networkTimeout": {
     "request": 10000,
     "downloadFile": 10000

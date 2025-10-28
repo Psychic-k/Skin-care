@@ -1,105 +1,97 @@
-// 个人中心页面
+// pages/user/user.js
 const app = getApp()
+const cloudApi = require('../../utils/cloudApi')
 
 Page({
   data: {
+    // 用户信息
     userInfo: {
-      avatarUrl: '',
-      nickName: '',
+      avatar: '/images/default-avatar.png',
+      nickname: '未登录',
       level: 1,
-      points: 0,
-      vipLevel: 0,
-      vipExpireTime: ''
+      
     },
+    
+    // 统计数据
     stats: {
       detectionCount: 0,
       diaryCount: 0,
       reportCount: 0,
       favoriteCount: 0
     },
+    
+    // 菜单项
     menuItems: [
       {
         id: 'detection-history',
+        name: '检测历史',
         icon: '🔍',
-        title: '检测历史',
-        subtitle: '查看历史检测记录',
-        arrow: true
+        count: 0,
+        color: '#FF6B6B'
       },
       {
         id: 'my-diary',
-        icon: '📖',
-        title: '我的护肤日记',
-        subtitle: '记录护肤心得',
-        arrow: true
+        name: '护肤日记',
+        icon: '📝',
+        count: 0,
+        color: '#4ECDC4'
       },
       {
         id: 'my-reports',
+        name: '检测报告',
         icon: '📊',
-        title: '我的报告',
-        subtitle: '查看体验报告',
-        arrow: true
+        count: 0,
+        color: '#45B7D1'
       },
       {
         id: 'favorites',
+        name: '我的收藏',
         icon: '❤️',
-        title: '我的收藏',
-        subtitle: '收藏的产品和文章',
-        arrow: true
+        count: 0,
+        color: '#96CEB4'
       },
       {
         id: 'achievements',
+        name: '成就徽章',
         icon: '🏆',
-        title: '成就中心',
-        subtitle: '查看获得的成就',
-        arrow: true
+        count: 0,
+        color: '#FFEAA7'
       },
       {
         id: 'settings',
+        name: '设置',
         icon: '⚙️',
-        title: '设置',
-        subtitle: '个人设置和隐私',
-        arrow: true
+        count: 0,
+        color: '#DDA0DD'
       }
     ],
+    
+    // 服务项
     serviceItems: [
       {
         id: 'feedback',
+        name: '意见反馈',
         icon: '💬',
-        title: '意见反馈',
-        subtitle: '帮助我们改进产品'
+        color: '#74B9FF'
       },
       {
         id: 'help',
+        name: '帮助中心',
         icon: '❓',
-        title: '帮助中心',
-        subtitle: '常见问题解答'
+        color: '#A29BFE'
       },
       {
         id: 'about',
+        name: '关于我们',
         icon: 'ℹ️',
-        title: '关于我们',
-        subtitle: '了解谷雨品牌'
+        color: '#FD79A8'
       }
     ],
-    showVipModal: false,
-    vipPlans: [
-      {
-        id: 'monthly',
-        name: '月度会员',
-        price: 19.9,
-        originalPrice: 29.9,
-        duration: '1个月',
-        benefits: ['无限次AI检测', '专属护肤方案', '优先客服支持', '会员专享内容']
-      },
-      {
-        id: 'yearly',
-        name: '年度会员',
-        price: 199,
-        originalPrice: 299,
-        duration: '12个月',
-        benefits: ['无限次AI检测', '专属护肤方案', '优先客服支持', '会员专享内容', '生日专属礼品', '线下活动优先']
-      }
-    ]
+    
+
+    
+    // 是否显示登录弹窗
+    showLoginModal: false
   },
 
   onLoad() {
@@ -112,106 +104,208 @@ Page({
     this.loadUserStats()
   },
 
-  // 加载用户信息
-  loadUserInfo() {
-    const userInfo = wx.getStorageSync('userInfo') || {}
-    this.setData({
-      userInfo: {
-        ...this.data.userInfo,
-        ...userInfo
+  // 加载用户信息 - 使用云开发API
+  async loadUserInfo() {
+    try {
+      // 先从本地存储获取
+      const localUserInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo
+      if (localUserInfo) {
+        this.setData({
+          userInfo: {
+            ...this.data.userInfo,
+            ...localUserInfo
+          }
+        })
       }
-    })
+
+      // 如果云开发可用，从云端获取最新用户信息
+      if (app.globalData.cloudEnabled) {
+        const cloudUserInfo = await cloudApi.getUserInfo()
+        this.setData({
+          userInfo: {
+            ...this.data.userInfo,
+            ...cloudUserInfo
+          }
+        })
+        wx.setStorageSync('userInfo', cloudUserInfo)
+        
+        // 如果是新用户，显示欢迎提示
+        if (cloudUserInfo.nickname === '新用户') {
+          wx.showToast({
+            title: '欢迎使用护肤小程序！',
+            icon: 'success',
+            duration: 2000
+          })
+        }
+      }
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+// 如果是用户不存在的错误，提示用户登录
+      if (error.message && error.message.includes('用户不存在')) {
+        wx.showModal({
+          title: '提示',
+          content: '检测到您是新用户，请先完成登录授权',
+          showCancel: false,
+          confirmText: '去登录',
+          success: (res) => {
+            if (res.confirm) {
+              wx.navigateTo({
+                url: '/pages/login/login'
+              })
+            }
+          }
+        })
+        return
+      }
+      
+      // 使用本地存储的用户信息作为备用
+      const localUserInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo
+      if (localUserInfo) {
+        this.setData({
+          userInfo: {
+            ...this.data.userInfo,
+            ...localUserInfo
+          }
+        })
+      } else {
+        // 如果没有任何用户信息，显示默认状态
+        wx.showToast({
+          title: '请先登录',
+          icon: 'none',
+          duration: 2000
+        })
+      }
+    }
   },
 
-  // 加载用户统计数据
-  loadUserStats() {
-    // 模拟数据，实际应从服务器获取
-    const stats = {
-      detectionCount: 15,
-      diaryCount: 8,
-      reportCount: 3,
-      favoriteCount: 12
-    }
+  // 加载用户统计数据 - 使用云开发API
+  async loadUserStats() {
+    if (this.data.loading) return
     
-    this.setData({ stats })
+    this.setData({ loading: true })
+    
+    try {
+      let stats = {
+        detectionCount: 0,
+        diaryCount: 0,
+        reportCount: 0,
+        favoriteCount: 0
+      }
+
+      if (app.globalData.cloudEnabled && this.data.userInfo && this.data.userInfo.openid) {
+        // 使用云开发API获取用户统计数据
+        const userInfo = await cloudApi.getUserInfo()
+        stats = {
+          detectionCount: userInfo.stats?.detectionCount || 0,
+          diaryCount: userInfo.stats?.diaryCount || 0,
+          reportCount: userInfo.stats?.reportCount || 0,
+          favoriteCount: userInfo.stats?.favoriteCount || 0
+        }
+      } else {
+        // 云开发不可用时使用模拟数据
+        stats = await this.mockUserStatsAPI()
+      }
+      
+      // 更新菜单项的计数
+      const updatedMenuItems = this.data.menuItems.map(item => {
+        switch (item.id) {
+          case 'detection-history':
+            return { ...item, count: stats.detectionCount }
+          case 'my-diary':
+            return { ...item, count: stats.diaryCount }
+          case 'my-reports':
+            return { ...item, count: stats.reportCount }
+          case 'favorites':
+            return { ...item, count: stats.favoriteCount }
+          default:
+            return item
+        }
+      })
+      
+      this.setData({ 
+        stats,
+        menuItems: updatedMenuItems
+      })
+    } catch (error) {
+      console.error('加载用户统计数据失败:', error)
+      
+      // 错误时使用模拟数据作为备用
+      try {
+        const stats = await this.mockUserStatsAPI()
+        
+        const updatedMenuItems = this.data.menuItems.map(item => {
+          switch (item.id) {
+            case 'detection-history':
+              return { ...item, count: stats.detectionCount }
+            case 'my-diary':
+              return { ...item, count: stats.diaryCount }
+            case 'my-reports':
+              return { ...item, count: stats.reportCount }
+            case 'favorites':
+              return { ...item, count: stats.favoriteCount }
+            default:
+              return item
+          }
+        })
+        
+        this.setData({ 
+          stats,
+          menuItems: updatedMenuItems
+        })
+      } catch (mockError) {
+        wx.showToast({
+          title: '加载失败',
+          icon: 'error'
+        })
+      }
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  // 模拟用户统计数据API
+  mockUserStatsAPI() {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          detectionCount: 15,
+          diaryCount: 8,
+          reportCount: 3,
+          favoriteCount: 12
+        })
+      }, 300)
+    })
   },
 
   // 编辑个人资料
   onEditProfile() {
+    if (!this.data.userInfo.openid) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      return
+    }
+    
     wx.navigateTo({
       url: '/pages/profile/profile'
     })
   },
 
-  // 升级VIP
-  onUpgradeVip() {
-    this.setData({
-      showVipModal: true
-    })
-  },
 
-  // 关闭VIP弹窗
-  onCloseVipModal() {
-    this.setData({
-      showVipModal: false
-    })
-  },
-
-  // 选择VIP套餐
-  onSelectVipPlan(e) {
-    const { plan } = e.currentTarget.dataset
-    
-    wx.showModal({
-      title: '确认购买',
-      content: `确认购买${plan.name}（¥${plan.price}）？`,
-      success: (res) => {
-        if (res.confirm) {
-          this.purchaseVip(plan)
-        }
-      }
-    })
-  },
-
-  // 购买VIP
-  purchaseVip(plan) {
-    wx.showLoading({
-      title: '处理中...'
-    })
-
-    // 模拟支付流程
-    setTimeout(() => {
-      wx.hideLoading()
-      wx.showToast({
-        title: '购买成功',
-        icon: 'success'
-      })
-      
-      // 更新用户VIP状态
-      const userInfo = { ...this.data.userInfo }
-      userInfo.vipLevel = 1
-      userInfo.vipExpireTime = this.getVipExpireTime(plan.duration)
-      
-      this.setData({ userInfo })
-      wx.setStorageSync('userInfo', userInfo)
-      
-      this.onCloseVipModal()
-    }, 2000)
-  },
-
-  // 计算VIP到期时间
-  getVipExpireTime(duration) {
-    const now = new Date()
-    if (duration === '1个月') {
-      now.setMonth(now.getMonth() + 1)
-    } else if (duration === '12个月') {
-      now.setFullYear(now.getFullYear() + 1)
-    }
-    return now.toISOString().split('T')[0]
-  },
 
   // 菜单项点击
   onMenuItemTap(e) {
     const { item } = e.currentTarget.dataset
+    
+    // 检查是否需要登录
+    if (!this.data.userInfo.openid && ['detection-history', 'my-diary', 'my-reports', 'favorites'].includes(item.id)) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      return
+    }
     
     switch (item.id) {
       case 'detection-history':
@@ -270,10 +364,76 @@ Page({
     }
   },
 
+  // 登录
+  async onLogin() {
+    try {
+      wx.showLoading({
+        title: '登录中...'
+      })
+
+      if (app.globalData.cloudEnabled) {
+        // 使用云开发API登录
+        const loginResult = await cloudApi.login()
+        
+        this.setData({
+          userInfo: {
+            ...this.data.userInfo,
+            ...loginResult.userInfo
+          }
+        })
+        
+        wx.setStorageSync('userInfo', loginResult.userInfo)
+        app.globalData.userInfo = loginResult.userInfo
+        
+        wx.showToast({
+          title: '登录成功',
+          icon: 'success'
+        })
+        
+        // 重新加载用户统计数据
+        this.loadUserStats()
+      } else {
+        // 云开发不可用时的模拟登录
+        const mockUserInfo = {
+          openid: 'mock_openid_' + Date.now(),
+          nickname: '用户' + Math.floor(Math.random() * 1000),
+          avatar: '/images/default-avatar.png',
+          level: 1,
+          // 
+        }
+        
+        this.setData({
+          userInfo: {
+            ...this.data.userInfo,
+            ...mockUserInfo
+          }
+        })
+        
+        wx.setStorageSync('userInfo', mockUserInfo)
+        app.globalData.userInfo = mockUserInfo
+        
+        wx.showToast({
+          title: '登录成功',
+          icon: 'success'
+        })
+        
+        this.loadUserStats()
+      }
+    } catch (error) {
+      console.error('登录失败:', error)
+      wx.showToast({
+        title: '登录失败',
+        icon: 'error'
+      })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
   // 分享
   onShareAppMessage() {
     return {
-      title: '谷雨护肤小程序 - 专业的AI护肤助手',
+      title: 'SkinCare小程序 - 专业的AI护肤助手',
       path: '/pages/index/index',
       imageUrl: '/images/share-cover.jpg'
     }
@@ -282,7 +442,7 @@ Page({
   // 分享到朋友圈
   onShareTimeline() {
     return {
-      title: '谷雨护肤小程序 - 专业的AI护肤助手',
+      title: 'SkinCare小程序 - 专业的AI护肤助手',
       imageUrl: '/images/share-cover.jpg'
     }
   },

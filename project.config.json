@@ -1,5 +1,8 @@
 {
+  "miniprogramRoot": "./",
+  "cloudfunctionRoot": "./cloudfunctions/",
   "setting": {
+    "urlCheck": false,
     "es6": true,
     "postcss": true,
     "minified": true,
@@ -21,6 +24,10 @@
     "include": []
   },
   "appid": "wxfdbb0cd8b2a0995c",
+  "projectname": "SkinCare",
   "editorSetting": {},
-  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/"
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
+  "watchOptions": {
+    "ignore": []
+  }
 }

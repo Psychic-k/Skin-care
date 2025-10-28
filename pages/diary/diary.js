@@ -1,6 +1,6 @@
 // pages/diary/diary.js
 const app = getApp()
-const { request } = require('../../utils/request')
+const request = require('../../utils/request')
 const { showToast, showLoading, hideLoading, formatDate } = require('../../utils/utils')
 
 Page({
@@ -41,6 +41,8 @@ Page({
     showProductModal: false,
     availableProducts: [],
     selectedProducts: [],
+    filteredProducts: [],
+    productSearchText: '',
     
     // 天气选项
     weatherOptions: [
@@ -92,10 +94,11 @@ Page({
 
   // 获取用户信息
   getUserInfo() {
-    const userInfo = app.globalData.userInfo
-    if (userInfo) {
+    const userInfo = app.getUserInfo()
+    if (userInfo && userInfo.id) {
       this.setData({ userInfo })
     } else {
+      console.log('用户信息不存在，跳转到登录页')
       wx.navigateTo({
         url: '/pages/login/login'
       })
@@ -133,13 +136,23 @@ Page({
       
       showLoading('加载中...')
       
-      const userInfo = app.globalData.userInfo
-      if (!userInfo) return
+      const userInfo = app.getUserInfo()
+      if (!userInfo || !userInfo.id) {
+        console.log('用户信息不存在，跳转到登录页')
+        wx.navigateTo({
+          url: '/pages/login/login'
+        })
+        return
+      }
 
+      console.log('开始加载日记列表，用户ID:', userInfo.id)
+
+      // 修改API调用方式，直接传递userId作为参数
       const res = await request({
-        url: `/api/diary/list/${userInfo.id}`,
+        url: '/api/diary/list',
         method: 'GET',
         data: {
+          userId: userInfo.id,
           page: refresh ? 1 : this.data.currentPage,
           limit: 10,
           filterType: this.data.filterType,
@@ -147,7 +160,9 @@ Page({
         }
       })
 
-      if (res.success) {
+      console.log('日记列表API响应:', res)
+
+      if (res && res.code === 0) {
         const newList = res.data.diaries || []
         this.setData({
           diaryList: refresh ? newList : [...this.data.diaryList, ...newList],
@@ -157,10 +172,14 @@ Page({
         
         // 更新日历数据
         this.updateCalendarData(newList)
+        console.log('日记列表加载成功，数量:', newList.length)
+      } else {
+        console.error('日记列表API返回错误:', res)
+        showToast(res?.message || '加载失败')
       }
     } catch (error) {
-      showToast('加载失败')
       console.error('加载日记列表失败:', error)
+      showToast('网络连接失败，请检查网络设置')
     } finally {
       hideLoading()
     }
@@ -187,10 +206,7 @@ Page({
   // 加载可用产品
   async loadAvailableProducts() {
     try {
-      const res = await request({
-        url: '/api/products/user-products',
-        method: 'GET'
-      })
+      const res = await request.get('/api/products/user-products')
 
       if (res.success) {
         this.setData({
@@ -339,14 +355,47 @@ Page({
   showProductSelector() {
     this.setData({
       showProductModal: true,
-      selectedProducts: [...this.data.newDiary.products]
+      selectedProducts: [...this.data.newDiary.products],
+      filteredProducts: [...this.data.availableProducts],
+      productSearchText: ''
     })
   },
 
   // 关闭产品选择弹窗
   closeProductModal() {
     this.setData({
-      showProductModal: false
+      showProductModal: false,
+      productSearchText: '',
+      filteredProducts: []
+    })
+  },
+
+  // 产品搜索
+  onProductSearch(e) {
+    const searchText = e.detail.value.toLowerCase()
+    this.setData({
+      productSearchText: searchText
+    })
+    
+    if (searchText.trim() === '') {
+      this.setData({
+        filteredProducts: [...this.data.availableProducts]
+      })
+    } else {
+      const filtered = this.data.availableProducts.filter(product => {
+        return product.name.toLowerCase().includes(searchText) ||
+               product.brand.toLowerCase().includes(searchText)
+      })
+      this.setData({
+        filteredProducts: filtered
+      })
+    }
+  },
+
+  // 清空所有选择
+  clearAllProducts() {
+    this.setData({
+      selectedProducts: []
     })
   },
 

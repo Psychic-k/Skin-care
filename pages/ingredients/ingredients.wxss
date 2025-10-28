@@ -1,0 +1,872 @@
+/* pages/ingredients/ingredients.wxss */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #E8F5E8 0%, #F0F8F0 100%);
+}
+
+/* 页面头部 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  background: #fff;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.header-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.search-btn, .filter-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.search-btn:active, .filter-btn:active {
+  background: #e9ecef;
+  transform: scale(0.95);
+}
+
+.icon {
+  font-size: 32rpx;
+}
+
+/* 搜索栏 */
+.search-bar {
+  background: #fff;
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid #eee;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.search-bar.show {
+  transform: translateY(0);
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 70rpx;
+  padding: 0 20rpx;
+  border: 2rpx solid #e9ecef;
+  border-radius: 35rpx;
+  font-size: 28rpx;
+  background: #f8f9fa;
+}
+
+.search-actions {
+  display: flex;
+  gap: 15rpx;
+}
+
+.search-btn, .cancel-btn {
+  padding: 10rpx 20rpx;
+  font-size: 28rpx;
+  border-radius: 20rpx;
+  transition: all 0.3s ease;
+}
+
+.search-btn {
+  background: #007bff;
+  color: #fff;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: #fff;
+}
+
+/* 搜索建议 */
+.search-suggestions {
+  background: #fff;
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.suggestion-section {
+  margin-bottom: 30rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.clear-btn {
+  font-size: 24rpx;
+  color: #6c757d;
+  padding: 5rpx 10rpx;
+}
+
+.hot-searches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15rpx;
+}
+
+.hot-search-item {
+  padding: 10rpx 20rpx;
+  background: #f8f9fa;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  color: #495057;
+  transition: all 0.3s ease;
+}
+
+.hot-search-item:active {
+  background: #e9ecef;
+  transform: scale(0.95);
+}
+
+.search-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+  padding: 15rpx 0;
+  border-bottom: 1rpx solid #f8f9fa;
+}
+
+.history-icon {
+  font-size: 24rpx;
+  color: #6c757d;
+}
+
+.history-text {
+  font-size: 28rpx;
+  color: #495057;
+}
+
+/* 统计信息 */
+.stats-section {
+  background: #fff;
+  margin: 20rpx;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20rpx;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx;
+  border-radius: 15rpx;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.stat-item.safe {
+  background: #d4edda;
+}
+
+.stat-item.caution {
+  background: #fff3cd;
+}
+
+.stat-item.danger {
+  background: #f8d7da;
+}
+
+.stat-number {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.stat-item.safe .stat-number {
+  color: #155724;
+}
+
+.stat-item.caution .stat-number {
+  color: #856404;
+}
+
+.stat-item.danger .stat-number {
+  color: #721c24;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #6c757d;
+}
+
+/* 工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #eee;
+}
+
+.sort-picker {
+  display: flex;
+  align-items: center;
+}
+
+.picker-display {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 10rpx 20rpx;
+  background: #f8f9fa;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+.arrow {
+  font-size: 20rpx;
+  color: #6c757d;
+}
+
+.result-count {
+  font-size: 24rpx;
+  color: #6c757d;
+}
+
+/* 内容区域 */
+.content {
+  height: calc(100vh - 400rpx);
+  padding: 20rpx;
+}
+
+/* 加载和空状态 */
+.loading, .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 0;
+}
+
+.loading-text, .empty-text {
+  font-size: 28rpx;
+  color: #6c757d;
+  margin-top: 20rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  opacity: 0.5;
+}
+
+/* 成分列表 */
+.ingredient-items {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.ingredient-item {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.ingredient-item:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 6rpx 25rpx rgba(0, 0, 0, 0.15);
+}
+
+/* 成分头部 */
+.ingredient-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+.ingredient-names {
+  flex: 1;
+}
+
+.ingredient-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+  word-wrap: break-word;
+  overflow: break-word;
+}
+
+.ingredient-english {
+  font-size: 24rpx;
+  color: #6c757d;
+  display: block;
+  word-wrap: break-word;
+  overflow: break-word;
+}
+
+.ingredient-actions {
+  display: flex;
+  gap: 10rpx;
+}
+
+.favorite-btn {
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: 2rpx solid #e9ecef;
+}
+
+.favorite-btn.active {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: #dc3545;
+}
+
+.favorite-icon {
+  font-size: 28rpx;
+}
+
+/* 安全性评级 */
+.ingredient-safety {
+  margin-bottom: 20rpx;
+}
+
+.safety-level {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 15rpx 20rpx;
+  border-radius: 15rpx;
+  background: #d4edda;
+}
+
+.safety-level.caution {
+  background: #fff3cd;
+}
+
+.safety-level.danger {
+  background: #f8d7da;
+}
+
+.safety-icon {
+  font-size: 24rpx;
+}
+
+.safety-text {
+  font-size: 26rpx;
+  color: #155724;
+  flex: 1;
+}
+
+.safety-level.caution .safety-text {
+  color: #856404;
+}
+
+.safety-level.danger .safety-text {
+  color: #721c24;
+}
+
+.safety-score {
+  font-size: 24rpx;
+  font-weight: bold;
+  color: #155724;
+}
+
+.safety-level.caution .safety-score {
+  color: #856404;
+}
+
+.safety-level.danger .safety-score {
+  color: #721c24;
+}
+
+/* 功效标签 */
+.ingredient-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 20rpx;
+}
+
+.effect-tag {
+  padding: 8rpx 15rpx;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 15rpx;
+  font-size: 22rpx;
+}
+
+/* 成分描述 */
+.ingredient-description {
+  font-size: 26rpx;
+  color: #495057;
+  line-height: 1.6;
+  margin-bottom: 20rpx;
+}
+
+/* 成分元信息 */
+.ingredient-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.meta-label {
+  font-size: 22rpx;
+  color: #6c757d;
+}
+
+.meta-value {
+  font-size: 22rpx;
+  color: #495057;
+  font-weight: 500;
+}
+
+/* 筛选面板 */
+.filter-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.filter-panel.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.filter-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.filter-content {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 600rpx;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.filter-panel.show .filter-content {
+  transform: translateX(0);
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.filter-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.filter-reset {
+  font-size: 28rpx;
+  color: #007bff;
+  padding: 10rpx;
+}
+
+.filter-body {
+  flex: 1;
+  padding: 20rpx 0;
+}
+
+.filter-section {
+  margin-bottom: 40rpx;
+}
+
+.filter-section-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  padding: 0 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15rpx;
+  padding: 0 30rpx;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 15rpx 20rpx;
+  border: 2rpx solid #e9ecef;
+  border-radius: 25rpx;
+  font-size: 26rpx;
+  color: #495057;
+  transition: all 0.3s ease;
+}
+
+.filter-option.active {
+  border-color: #007bff;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.option-icon {
+  font-size: 24rpx;
+}
+
+.filter-footer {
+  display: flex;
+  gap: 20rpx;
+  padding: 30rpx;
+  border-top: 1rpx solid #eee;
+}
+
+.filter-cancel, .filter-confirm {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  border: none;
+}
+
+.filter-cancel {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.filter-confirm {
+  background: #007bff;
+  color: #fff;
+}
+
+/* 详情弹窗 */
+.ingredient-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.ingredient-detail-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 30rpx 30rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.ingredient-detail-modal.show .modal-content {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+  box-sizing: border-box;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 36rpx;
+  color: #6c757d;
+  padding: 10rpx;
+}
+
+.modal-body {
+  flex: 1;
+  padding: 30rpx;
+  overflow-y: auto;
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* 成分详情内容 */
+.ingredient-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ingredient-header {
+  text-align: center;
+}
+
+.ingredient-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.ingredient-english {
+  font-size: 28rpx;
+  color: #6c757d;
+}
+
+.ingredient-safety {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 20rpx;
+  box-sizing: border-box;
+}
+
+.safety-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.score-label {
+  font-size: 24rpx;
+  color: #6c757d;
+  margin-bottom: 5rpx;
+}
+
+.score-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #28a745;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.effect-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.description-text, .usage-text, .precautions-text {
+  font-size: 28rpx;
+  color: #495057;
+  line-height: 1.6;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.tech-params {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+}
+
+.param-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15rpx 20rpx;
+  background: #f8f9fa;
+  border-radius: 15rpx;
+  word-wrap: break-word;
+}
+
+.param-label {
+  font-size: 26rpx;
+  color: #6c757d;
+}
+
+.param-value {
+  font-size: 26rpx;
+  color: #495057;
+  font-weight: 500;
+  word-wrap: break-word;
+  word-break: break-all;
+  flex: 1;
+  text-align: right;
+  margin-left: 20rpx;
+}
+
+.related-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.product-tag {
+  padding: 10rpx 15rpx;
+  background: #e8f5e8;
+  color: #28a745;
+  border-radius: 15rpx;
+  font-size: 24rpx;
+  transition: all 0.3s ease;
+}
+
+.product-tag:active {
+  background: #d4edda;
+  transform: scale(0.95);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 20rpx;
+  padding: 30rpx;
+  border-top: 1rpx solid #eee;
+  box-sizing: border-box;
+}
+
+.favorite-btn, .share-btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  border: none;
+}
+
+.favorite-btn {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.favorite-btn.active {
+  background: #dc3545;
+  color: #fff;
+}
+
+.share-btn {
+  background: #007bff;
+  color: #fff;
+}
+
+/* 加载更多和无更多数据 */
+.load-more, .no-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40rpx 0;
+}
+
+.load-text, .no-more-text {
+  font-size: 24rpx;
+  color: #adb5bd;
+}
+
+/* 响应式设计 */
+@media (max-width: 750rpx) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .filter-content {
+    width: 100%;
+  }
+}

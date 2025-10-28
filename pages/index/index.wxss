@@ -1,7 +1,7 @@
 /* index.wxss */
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #a8e6cf 0%, #4caf50 100%);
+  background: linear-gradient(135deg, #E8F5E8 0%, #F0F8F0 100%);
   position: relative;
   overflow: hidden;
 }
@@ -45,7 +45,7 @@
   display: block;
   font-size: 32px;
   font-weight: bold;
-  color: #ffffff;
+  color: #4CAF50;
   margin-bottom: 8px;
   letter-spacing: 2px;
 }
@@ -53,7 +53,7 @@
 .subtitle {
   display: block;
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.8);
+  color: #4CAF50;
   margin-bottom: 20px;
 }
 
@@ -197,28 +197,6 @@
 }
 
 /* 底部提示 */
-/* 测试按钮区域 */
-.test-section {
-  padding: 20px 30px;
-  text-align: center;
-}
-
-.test-button {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 25px;
-  padding: 12px 30px;
-  font-size: 16px;
-  font-weight: 500;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.test-button:active {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(0.98);
-}
 
 .bottom-tip {
   text-align: center;
@@ -227,7 +205,7 @@
 
 .tip-text {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
+  color: #4CAF50;
   font-style: italic;
 }
 

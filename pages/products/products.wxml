@@ -1,325 +1,550 @@
-<!--产品知识库页面-->
+<!--pages/products/products.wxml-->
 <view class="container">
+  <!-- 页面头部 -->
+  <view class="header">
+    <view class="title">产品知识库</view>
+    <view class="header-actions">
+      <view class="search-btn" bindtap="showSearchBar">
+        <text class="icon">🔍</text>
+      </view>
+      <view class="filter-btn" bindtap="showFilterPanel">
+        <text class="icon">🔧</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 搜索栏 -->
-  <view class="search-section">
-    <view class="search-bar">
+  <view class="search-bar {{showSearch ? 'show' : ''}}" wx:if="{{showSearch}}">
+    <view class="search-input-wrapper">
       <input 
         class="search-input" 
-        placeholder="搜索产品、成分、品牌..." 
+        placeholder="搜索产品、品牌、成分..." 
         value="{{searchKeyword}}"
         bindinput="onSearchInput"
-        bindconfirm="onSearch"
+        bindconfirm="performSearch"
+        focus="{{showSearch}}"
       />
-      <view class="search-btn" bindtap="onSearch">
-        <text class="iconfont icon-search">🔍</text>
+      <view class="search-actions">
+        <text class="search-btn" bindtap="performSearch">搜索</text>
+        <text class="cancel-btn" bindtap="hideSearchBar">取消</text>
       </view>
     </view>
     
-    <!-- 搜索历史和热门搜索 -->
-    <view class="search-suggestions" wx:if="{{showSuggestions}}">
-      <view class="suggestion-section" wx:if="{{searchHistory.length > 0}}">
-        <view class="suggestion-title">搜索历史</view>
-        <view class="suggestion-tags">
+    <!-- 搜索建议 -->
+    <view class="search-suggestions" wx:if="{{!searchKeyword}}">
+      <!-- 热门搜索 -->
+      <view class="suggestion-section">
+        <view class="section-title">热门搜索</view>
+        <view class="hot-searches">
           <text 
-            class="suggestion-tag" 
-            wx:for="{{searchHistory}}" 
-            wx:key="index"
-            bindtap="onSelectSuggestion"
+            class="hot-search-item" 
+            wx:for="{{hotSearches}}" 
+            wx:key="*this"
             data-keyword="{{item}}"
+            bindtap="onHotSearchTap"
           >{{item}}</text>
         </view>
       </view>
       
-      <view class="suggestion-section">
-        <view class="suggestion-title">热门搜索</view>
-        <view class="suggestion-tags">
-          <text 
-            class="suggestion-tag hot" 
-            wx:for="{{hotSearches}}" 
-            wx:key="index"
-            bindtap="onSelectSuggestion"
+      <!-- 搜索历史 -->
+      <view class="suggestion-section" wx:if="{{searchHistory.length > 0}}">
+        <view class="section-header">
+          <view class="section-title">搜索历史</view>
+          <text class="clear-btn" bindtap="clearSearchHistory">清空</text>
+        </view>
+        <view class="search-history">
+          <view 
+            class="history-item" 
+            wx:for="{{searchHistory}}" 
+            wx:key="*this"
             data-keyword="{{item}}"
-          >{{item}}</text>
+            bindtap="onSearchHistoryTap"
+          >
+            <text class="history-icon">🕐</text>
+            <text class="history-text">{{item}}</text>
+          </view>
         </view>
       </view>
     </view>
   </view>
 
   <!-- 标签页导航 -->
-  <view class="tabs">
+  <view class="tab-nav">
     <view 
-      class="tab-item {{currentTab === index ? 'active' : ''}}"
-      wx:for="{{tabs}}" 
-      wx:key="index"
-      bindtap="onTabChange"
-      data-index="{{index}}"
+      class="tab-item {{currentTab === 'products' ? 'active' : ''}}"
+      data-tab="products"
+      bindtap="switchTab"
     >
-      {{item.name}}
-      <view class="tab-indicator" wx:if="{{currentTab === index}}"></view>
+      <text class="tab-icon">🧴</text>
+      <text class="tab-text">产品</text>
+    </view>
+    <view 
+      class="tab-item {{currentTab === 'ingredients' ? 'active' : ''}}"
+      data-tab="ingredients"
+      bindtap="switchTab"
+    >
+      <text class="tab-icon">🧪</text>
+      <text class="tab-text">成分</text>
+    </view>
+    <view 
+      class="tab-item {{currentTab === 'brands' ? 'active' : ''}}"
+      data-tab="brands"
+      bindtap="switchTab"
+    >
+      <text class="tab-icon">🏷️</text>
+      <text class="tab-text">品牌</text>
+    </view>
+    <view 
+      class="tab-item {{currentTab === 'favorites' ? 'active' : ''}}"
+      data-tab="favorites"
+      bindtap="switchTab"
+    >
+      <text class="tab-icon">❤️</text>
+      <text class="tab-text">收藏</text>
     </view>
   </view>
 
-  <!-- 筛选栏 -->
-  <view class="filter-section" wx:if="{{currentTab !== 3}}">
-    <scroll-view class="filter-scroll" scroll-x="true">
-      <view class="filter-item" bindtap="onShowFilter">
-        <text>筛选</text>
-        <text class="filter-icon">⚙️</text>
+  <!-- 排序和筛选工具栏 -->
+  <view class="toolbar" wx:if="{{currentTab === 'products'}}">
+    <picker 
+      class="sort-picker"
+      mode="selector"
+      range="{{sortOptions}}"
+      range-key="name"
+      bindchange="onSortChange"
+    >
+      <view class="picker-display">
+        <text class="sort-text">{{sortOptions[currentSort] || '默认排序'}}</text>
+        <text class="arrow">▼</text>
       </view>
-      <view class="filter-item" wx:if="{{currentTab === 0}}">
-        <text>分类</text>
-        <text class="filter-icon">📋</text>
-      </view>
-      <view class="filter-item" wx:if="{{currentTab === 0}}">
-        <text>肌肤类型</text>
-        <text class="filter-icon">👤</text>
-      </view>
-      <view class="filter-item" wx:if="{{currentTab === 0}}">
-        <text>价格</text>
-        <text class="filter-icon">💰</text>
-      </view>
-    </scroll-view>
+    </picker>
+    
+    <view class="result-count">
+      共{{filteredProducts.length}}个产品
+    </view>
   </view>
 
   <!-- 内容区域 -->
-  <scroll-view class="content-scroll" scroll-y="true" bindscrolltolower="onLoadMore">
+  <scroll-view class="content" scroll-y="{{true}}" bindscrolltolower="onReachBottom">
     <!-- 产品列表 -->
-    <view class="product-list" wx:if="{{currentTab === 0}}">
-      <view 
-        class="product-card"
-        wx:for="{{filteredProducts}}" 
-        wx:key="id"
-        bindtap="onProductDetail"
-        data-product="{{item}}"
-      >
-        <image class="product-image" src="{{item.image}}" mode="aspectFill" />
-        <view class="product-info">
-          <view class="product-name">{{item.name}}</view>
-          <view class="product-brand">{{item.brand}}</view>
-          <view class="product-price">¥{{item.price}}</view>
-          <view class="product-tags">
-            <text class="product-tag" wx:for="{{item.tags}}" wx:key="index" wx:for-item="tag">{{tag}}</text>
+    <view class="product-list" wx:if="{{currentTab === 'products'}}">
+      <view class="loading" wx:if="{{loading && productList.length === 0}}">
+        <text class="loading-text">加载中...</text>
+      </view>
+      
+      <view class="empty" wx:elif="{{filteredProducts.length === 0 && !loading}}">
+        <text class="empty-icon">📦</text>
+        <text class="empty-text">暂无产品数据</text>
+      </view>
+      
+      <view class="product-grid" wx:else>
+        <view 
+          class="product-item"
+          wx:for="{{filteredProducts}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="viewProductDetail"
+        >
+          <!-- 产品图片 -->
+          <view class="product-image-wrapper">
+            <image class="product-image" src="{{item.image}}" mode="aspectFill" />
+            <view class="product-badges">
+              <text class="badge new" wx:if="{{item.isNew}}">新品</text>
+              <text class="badge hot" wx:if="{{item.isHot}}">热销</text>
+              <text class="badge discount" wx:if="{{item.discount}}">-{{item.discount}}%</text>
+            </view>
+            <view 
+              class="favorite-btn {{item.isFavorite ? 'active' : ''}}"
+              data-id="{{item.id}}"
+              bindtap="toggleFavorite"
+              catchtap="true"
+            >
+              <text class="favorite-icon">{{item.isFavorite ? '❤️' : '🤍'}}</text>
+            </view>
+          </view>
+          
+          <!-- 产品信息 -->
+          <view class="product-info">
+            <view class="product-name">{{item.name}}</view>
+            <view class="product-brand">{{item.brand}}</view>
+            <view class="product-category">{{item.categoryName}}</view>
+            
+            <view class="product-rating">
+              <text class="rating-stars">⭐</text>
+              <text class="rating-score">{{item.rating}}</text>
+              <text class="rating-count">({{item.sales}})</text>
+            </view>
+            
+            <view class="product-price">
+              <text class="current-price">¥{{item.price}}</text>
+              <text class="original-price" wx:if="{{item.originalPrice !== item.price}}">¥{{item.originalPrice}}</text>
+            </view>
+            
+            <view class="product-effects">
+              <text class="effect-tag">{{item.effects}}</text>
+            </view>
           </view>
         </view>
-        <view class="product-actions">
-          <view 
-            class="action-btn favorite {{item.isFavorite ? 'active' : ''}}"
-            bindtap="onToggleFavorite"
-            data-id="{{item.id}}"
-            catchtap="true"
-          >
-            <text class="action-icon">{{item.isFavorite ? '❤️' : '🤍'}}</text>
-          </view>
-          <view 
-            class="action-btn share"
-            bindtap="onShare"
-            data-product="{{item}}"
-            catchtap="true"
-          >
-            <text class="action-icon">📤</text>
-          </view>
-        </view>
+      </view>
+      
+      <!-- 加载更多 -->
+      <view class="load-more" wx:if="{{loading && productList.length > 0}}">
+        <text class="loading-text">加载中...</text>
+      </view>
+      
+      <view class="no-more" wx:if="{{!hasMore && filteredProducts.length > 0}}">
+        <text class="no-more-text">没有更多了</text>
       </view>
     </view>
 
     <!-- 成分列表 -->
-    <view class="ingredient-list" wx:if="{{currentTab === 1}}">
-      <view 
-        class="ingredient-card"
-        wx:for="{{filteredIngredients}}" 
-        wx:key="id"
-        bindtap="onIngredientDetail"
-        data-ingredient="{{item}}"
-      >
-        <view class="ingredient-header">
-          <view class="ingredient-name">{{item.name}}</view>
-          <view class="ingredient-safety {{item.safetyLevel}}">
-            <text class="safety-text">{{item.safetyText}}</text>
+    <view class="ingredient-list" wx:if="{{currentTab === 'ingredients'}}">
+      <view class="loading" wx:if="{{loading && ingredientList.length === 0}}">
+        <text class="loading-text">加载中...</text>
+      </view>
+      
+      <view class="empty" wx:elif="{{ingredientList.length === 0 && !loading}}">
+        <text class="empty-icon">🧪</text>
+        <text class="empty-text">暂无成分数据</text>
+      </view>
+      
+      <view class="ingredient-items" wx:else>
+        <view 
+          class="ingredient-item"
+          wx:for="{{ingredientList}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="viewIngredientDetail"
+        >
+          <view class="ingredient-header">
+            <view class="ingredient-name">{{item.name}}</view>
+            <view class="ingredient-english">{{item.englishName}}</view>
           </view>
-        </view>
-        <view class="ingredient-description">{{item.description}}</view>
-        <view class="ingredient-effects">
-          <text class="effect-tag" wx:for="{{item.effects}}" wx:key="index" wx:for-item="effect">{{effect}}</text>
+          
+          <view class="ingredient-safety">
+            <view class="safety-level {{item.safetyLevel}}">
+              <text class="safety-icon">{{item.safetyLevel === 'safe' ? '✅' : '⚠️'}}</text>
+              <text class="safety-text">安全评分: {{item.safetyScore}}</text>
+            </view>
+          </view>
+          
+          <view class="ingredient-effects">
+            <text 
+              class="effect-tag"
+              wx:for="{{item.effects}}"
+              wx:for-item="effect"
+              wx:key="*this"
+            >{{effect}}</text>
+          </view>
+          
+          <view class="ingredient-description">{{item.description}}</view>
         </view>
       </view>
     </view>
 
     <!-- 品牌列表 -->
-    <view class="brand-list" wx:if="{{currentTab === 2}}">
-      <view 
-        class="brand-card"
-        wx:for="{{filteredBrands}}" 
-        wx:key="id"
-        bindtap="onBrandDetail"
-        data-brand="{{item}}"
-      >
-        <image class="brand-logo" src="{{item.logo}}" mode="aspectFit" />
-        <view class="brand-info">
-          <view class="brand-name">{{item.name}}</view>
-          <view class="brand-description">{{item.description}}</view>
-          <view class="brand-stats">
-            <text class="stat-item">产品 {{item.productCount}}</text>
-            <text class="stat-item">关注 {{item.followCount}}</text>
+    <view class="brand-list" wx:if="{{currentTab === 'brands'}}">
+      <view class="loading" wx:if="{{loading && brandList.length === 0}}">
+        <text class="loading-text">加载中...</text>
+      </view>
+      
+      <view class="empty" wx:elif="{{brandList.length === 0 && !loading}}">
+        <text class="empty-icon">🏷️</text>
+        <text class="empty-text">暂无品牌数据</text>
+      </view>
+      
+      <view class="brand-items" wx:else>
+        <view 
+          class="brand-item"
+          wx:for="{{brandList}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="viewBrandDetail"
+        >
+          <view class="brand-logo">
+            <image class="logo-image" src="{{item.logo}}" mode="aspectFit" />
           </view>
-        </view>
-        <view class="brand-follow">
-          <view 
-            class="follow-btn {{item.isFollowed ? 'followed' : ''}}"
-            bindtap="onToggleFollow"
-            data-id="{{item.id}}"
-            catchtap="true"
-          >
-            {{item.isFollowed ? '已关注' : '关注'}}
+          
+          <view class="brand-info">
+            <view class="brand-header">
+              <view class="brand-name">{{item.name}}</view>
+              <view class="brand-english">{{item.englishName}}</view>
+              <text class="popular-badge" wx:if="{{item.isPopular}}">热门</text>
+            </view>
+            
+            <view class="brand-meta">
+              <text class="brand-country">{{item.country}}</text>
+              <text class="brand-founded">创立于{{item.founded}}年</text>
+            </view>
+            
+            <view class="brand-stats">
+              <text class="product-count">{{item.productCount}}个产品</text>
+              <view class="brand-rating">
+                <text class="rating-stars">⭐</text>
+                <text class="rating-score">{{item.rating}}</text>
+              </view>
+            </view>
+            
+            <view class="brand-description">{{item.description}}</view>
           </view>
         </view>
       </view>
     </view>
 
     <!-- 收藏列表 -->
-    <view class="favorite-list" wx:if="{{currentTab === 3}}">
-      <view class="favorite-tabs">
-        <view 
-          class="favorite-tab {{favoriteTab === index ? 'active' : ''}}"
-          wx:for="{{favoriteTabs}}" 
-          wx:key="index"
-          bindtap="onFavoriteTabChange"
-          data-index="{{index}}"
-        >
-          {{item}}
-        </view>
+    <view class="favorite-list" wx:if="{{currentTab === 'favorites'}}">
+      <view class="empty" wx:if="{{!userInfo}}">
+        <text class="empty-icon">👤</text>
+        <text class="empty-text">请先登录查看收藏</text>
       </view>
       
-      <view class="favorite-content">
-        <!-- 收藏的产品 -->
-        <view class="favorite-products" wx:if="{{favoriteTab === 0}}">
+      <view class="loading" wx:elif="{{loading && favoriteList.length === 0}}">
+        <text class="loading-text">加载中...</text>
+      </view>
+      
+      <view class="empty" wx:elif="{{favoriteList.length === 0 && !loading && userInfo}}">
+        <text class="empty-icon">❤️</text>
+        <text class="empty-text">暂无收藏产品</text>
+      </view>
+      
+      <view class="favorite-items" wx:else>
+        <view 
+          class="favorite-item"
+          wx:for="{{favoriteList}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="viewProductDetail"
+        >
+          <image class="favorite-image" src="{{item.image}}" mode="aspectFill" />
+          <view class="favorite-info">
+            <view class="favorite-name">{{item.name}}</view>
+            <view class="favorite-brand">{{item.brand}}</view>
+            <view class="favorite-price">¥{{item.price}}</view>
+          </view>
           <view 
-            class="product-card small"
-            wx:for="{{favoriteProducts}}" 
-            wx:key="id"
-            bindtap="onProductDetail"
-            data-product="{{item}}"
+            class="unfavorite-btn"
+            data-id="{{item.id}}"
+            bindtap="toggleFavorite"
+            catchtap="true"
           >
-            <image class="product-image" src="{{item.image}}" mode="aspectFill" />
-            <view class="product-info">
-              <view class="product-name">{{item.name}}</view>
-              <view class="product-price">¥{{item.price}}</view>
+            <text class="unfavorite-icon">💔</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 筛选面板 -->
+  <view class="filter-panel {{showFilter ? 'show' : ''}}" wx:if="{{showFilter}}">
+    <view class="filter-mask" bindtap="hideFilterPanel"></view>
+    <view class="filter-content">
+      <view class="filter-header">
+        <text class="filter-title">筛选条件</text>
+        <text class="filter-reset" bindtap="resetFilter">重置</text>
+      </view>
+      
+      <scroll-view class="filter-body" scroll-y="{{true}}">
+        <!-- 分类筛选 -->
+        <view class="filter-section">
+          <view class="filter-section-title">产品分类</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.category === item.id ? 'active' : ''}}"
+              wx:for="{{categories}}"
+              wx:key="id"
+              data-type="category"
+              data-value="{{item.id}}"
+              bindtap="onFilterChange"
+            >
+              <text class="option-icon">{{item.icon}}</text>
+              <text class="option-text">{{item.name}}</text>
             </view>
           </view>
         </view>
         
-        <!-- 收藏的成分 -->
-        <view class="favorite-ingredients" wx:if="{{favoriteTab === 1}}">
-          <view 
-            class="ingredient-card small"
-            wx:for="{{favoriteIngredients}}" 
-            wx:key="id"
-            bindtap="onIngredientDetail"
-            data-ingredient="{{item}}"
-          >
-            <view class="ingredient-name">{{item.name}}</view>
-            <view class="ingredient-description">{{item.description}}</view>
+        <!-- 肌肤类型筛选 -->
+        <view class="filter-section">
+          <view class="filter-section-title">肌肤类型</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.skinType === item.id ? 'active' : ''}}"
+              wx:for="{{skinTypes}}"
+              wx:key="id"
+              data-type="skinType"
+              data-value="{{item.id}}"
+              bindtap="onFilterChange"
+            >
+              <text class="option-text">{{item.name}}</text>
+            </view>
           </view>
         </view>
         
-        <!-- 关注的品牌 -->
-        <view class="favorite-brands" wx:if="{{favoriteTab === 2}}">
-          <view 
-            class="brand-card small"
-            wx:for="{{favoriteBrands}}" 
-            wx:key="id"
-            bindtap="onBrandDetail"
-            data-brand="{{item}}"
-          >
-            <image class="brand-logo" src="{{item.logo}}" mode="aspectFit" />
-            <view class="brand-name">{{item.name}}</view>
+        <!-- 价格区间筛选 -->
+        <view class="filter-section">
+          <view class="filter-section-title">价格区间</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.priceRange === item.id ? 'active' : ''}}"
+              wx:for="{{priceRanges}}"
+              wx:key="id"
+              data-type="priceRange"
+              data-value="{{item.id}}"
+              bindtap="onFilterChange"
+            >
+              <text class="option-text">{{item.name}}</text>
+            </view>
           </view>
         </view>
+        
+        <!-- 品牌筛选 -->
+        <view class="filter-section">
+          <view class="filter-section-title">品牌</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.brand === 'all' ? 'active' : ''}}"
+              data-type="brand"
+              data-value="all"
+              bindtap="onFilterChange"
+            >
+              <text class="option-text">全部品牌</text>
+            </view>
+            <view 
+              class="filter-option {{filterOptions.brand === item.name ? 'active' : ''}}"
+              wx:for="{{brandList}}"
+              wx:key="id"
+              data-type="brand"
+              data-value="{{item.name}}"
+              bindtap="onFilterChange"
+            >
+              <text class="option-text">{{item.name}}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+      
+      <view class="filter-footer">
+        <button class="filter-cancel" bindtap="hideFilterPanel">取消</button>
+        <button class="filter-confirm" bindtap="applyFilter">确定</button>
       </view>
     </view>
+  </view>
 
-    <!-- 加载更多 -->
-    <view class="load-more" wx:if="{{hasMore}}">
-      <text class="load-text">{{loading ? '加载中...' : '上拉加载更多'}}</text>
-    </view>
-    
-    <!-- 没有更多数据 -->
-    <view class="no-more" wx:if="{{!hasMore && (filteredProducts.length > 0 || filteredIngredients.length > 0 || filteredBrands.length > 0)}}">
-      <text class="no-more-text">没有更多数据了</text>
-    </view>
-    
-    <!-- 空状态 -->
-    <view class="empty-state" wx:if="{{isEmpty}}">
-      <text class="empty-icon">📦</text>
-      <text class="empty-text">暂无相关内容</text>
-      <text class="empty-tip">试试其他搜索关键词</text>
-    </view>
-  </scroll-view>
-</view>
-
-<!-- 筛选弹窗 -->
-<view class="filter-modal" wx:if="{{showFilterModal}}" bindtap="onHideFilter">
-  <view class="filter-content" catchtap="true">
-    <view class="filter-header">
-      <text class="filter-title">筛选条件</text>
-      <text class="filter-close" bindtap="onHideFilter">✕</text>
-    </view>
-    
-    <scroll-view class="filter-body" scroll-y="true">
-      <!-- 分类筛选 -->
-      <view class="filter-group" wx:if="{{currentTab === 0}}">
-        <view class="filter-group-title">产品分类</view>
-        <view class="filter-options">
-          <view 
-            class="filter-option {{item.selected ? 'selected' : ''}}"
-            wx:for="{{categoryOptions}}" 
-            wx:key="id"
-            bindtap="onFilterOptionChange"
-            data-type="category"
-            data-id="{{item.id}}"
-          >
-            {{item.name}}
-          </view>
-        </view>
+  <!-- 产品详情弹窗 -->
+  <view class="product-detail-modal {{showProductDetail ? 'show' : ''}}" wx:if="{{selectedProduct}}">
+    <view class="modal-mask" bindtap="closeProductDetail"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">产品详情</text>
+        <text class="modal-close" bindtap="closeProductDetail">✕</text>
       </view>
       
-      <!-- 肌肤类型筛选 -->
-      <view class="filter-group" wx:if="{{currentTab === 0}}">
-        <view class="filter-group-title">适用肌肤</view>
-        <view class="filter-options">
-          <view 
-            class="filter-option {{item.selected ? 'selected' : ''}}"
-            wx:for="{{skinTypeOptions}}" 
-            wx:key="id"
-            bindtap="onFilterOptionChange"
-            data-type="skinType"
-            data-id="{{item.id}}"
-          >
-            {{item.name}}
+      <scroll-view class="modal-body" scroll-y="{{true}}">
+        <view class="product-detail">
+          <image class="detail-image" src="{{selectedProduct.image}}" mode="aspectFill" />
+          
+          <view class="detail-info">
+            <view class="detail-name">{{selectedProduct.name}}</view>
+            <view class="detail-brand">{{selectedProduct.brand}}</view>
+            
+            <view class="detail-rating">
+              <text class="rating-stars">⭐</text>
+              <text class="rating-score">{{selectedProduct.rating}}</text>
+              <text class="rating-count">({{selectedProduct.sales}}人购买)</text>
+            </view>
+            
+            <view class="detail-price">
+              <text class="current-price">¥{{selectedProduct.price}}</text>
+              <text class="original-price" wx:if="{{selectedProduct.originalPrice !== selectedProduct.price}}">¥{{selectedProduct.originalPrice}}</text>
+            </view>
+            
+            <view class="detail-description">{{selectedProduct.description}}</view>
+            
+            <view class="detail-section">
+              <view class="section-title">适用肌肤</view>
+              <text class="skin-type">{{selectedProduct.skinTypes}}</text>
+            </view>
+            
+            <view class="detail-section">
+              <view class="section-title">主要功效</view>
+              <text class="effect-tag">{{selectedProduct.effects}}</text>
+            </view>
+            
+            <view class="detail-section">
+              <view class="section-title">核心成分</view>
+              <text class="ingredient-tag">{{selectedProduct.ingredients}}</text>
+            </view>
           </view>
         </view>
+      </scroll-view>
+      
+      <view class="modal-footer">
+        <button 
+          class="favorite-btn {{selectedProduct.isFavorite ? 'active' : ''}}"
+          data-id="{{selectedProduct.id}}"
+          bindtap="toggleFavorite"
+        >
+          {{selectedProduct.isFavorite ? '已收藏' : '收藏'}}
+        </button>
+        <button class="share-btn" data-id="{{selectedProduct.id}}" bindtap="shareProduct">分享</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 成分详情弹窗 -->
+  <view class="ingredient-detail-modal {{showIngredientDetail ? 'show' : ''}}" wx:if="{{selectedIngredient}}">
+    <view class="modal-mask" bindtap="closeIngredientDetail"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">成分详情</text>
+        <text class="modal-close" bindtap="closeIngredientDetail">✕</text>
       </view>
       
-      <!-- 价格筛选 -->
-      <view class="filter-group" wx:if="{{currentTab === 0}}">
-        <view class="filter-group-title">价格区间</view>
-        <view class="filter-options">
-          <view 
-            class="filter-option {{item.selected ? 'selected' : ''}}"
-            wx:for="{{priceOptions}}" 
-            wx:key="id"
-            bindtap="onFilterOptionChange"
-            data-type="price"
-            data-id="{{item.id}}"
-          >
-            {{item.name}}
+      <scroll-view class="modal-body" scroll-y="{{true}}">
+        <view class="ingredient-detail">
+          <view class="ingredient-header">
+            <view class="ingredient-name">{{selectedIngredient.name}}</view>
+            <view class="ingredient-english">{{selectedIngredient.englishName}}</view>
+          </view>
+          
+          <view class="ingredient-safety">
+            <view class="safety-score">
+              <text class="score-label">安全评分</text>
+              <text class="score-value">{{selectedIngredient.safetyScore}}/10</text>
+            </view>
+            <view class="safety-level {{selectedIngredient.safetyLevel}}">
+              <text class="safety-icon">{{selectedIngredient.safetyLevel === 'safe' ? '✅' : '⚠️'}}</text>
+              <text class="safety-text">{{selectedIngredient.safetyLevel === 'safe' ? '安全' : '需注意'}}</text>
+            </view>
+          </view>
+          
+          <view class="ingredient-effects">
+            <view class="section-title">主要功效</view>
+            <view class="effect-list">
+              <text 
+                class="effect-tag"
+                wx:for="{{selectedIngredient.effects}}"
+                wx:for-item="effect"
+                wx:key="*this"
+              >{{effect}}</text>
+            </view>
+          </view>
+          
+          <view class="ingredient-description">
+            <view class="section-title">成分说明</view>
+            <text class="description-text">{{selectedIngredient.description}}</text>
+          </view>
+          
+          <view class="ingredient-usage">
+            <view class="section-title">使用建议</view>
+            <text class="usage-text">{{selectedIngredient.usage}}</text>
+          </view>
+          
+          <view class="ingredient-precautions">
+            <view class="section-title">注意事项</view>
+            <text class="precautions-text">{{selectedIngredient.precautions}}</text>
           </view>
         </view>
-      </view>
-    </scroll-view>
-    
-    <view class="filter-footer">
-      <view class="filter-btn reset" bindtap="onResetFilter">重置</view>
-      <view class="filter-btn confirm" bindtap="onConfirmFilter">确定</view>
+      </scroll-view>
     </view>
   </view>
 </view>

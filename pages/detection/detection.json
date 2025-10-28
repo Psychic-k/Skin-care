@@ -1,7 +1,7 @@
 {
   "navigationBarTitleText": "AI皮肤检测",
-  "navigationBarBackgroundColor": "#4CAF50",
-  "navigationBarTextStyle": "white",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
   "backgroundColor": "#f0f9f0",
   "enablePullDownRefresh": false,
   "usingComponents": {}

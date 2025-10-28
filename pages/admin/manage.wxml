@@ -1,0 +1,296 @@
+<!--管理后台 - 产品数据管理页面-->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="header">
+    <view class="header-title">产品数据管理</view>
+    <view class="header-subtitle">共 {{totalCount}} 个产品</view>
+  </view>
+
+  <!-- 统计卡片 -->
+  <view class="statistics-cards">
+    <view class="stat-card">
+      <view class="stat-number">{{statistics.totalProducts}}</view>
+      <view class="stat-label">总产品数</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-number">{{statistics.activeProducts}}</view>
+      <view class="stat-label">已启用</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-number">{{statistics.inactiveProducts}}</view>
+      <view class="stat-label">已禁用</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-number">{{statistics.totalBrands}}</view>
+      <view class="stat-label">品牌数</view>
+    </view>
+  </view>
+
+  <!-- 搜索和筛选 -->
+  <view class="search-filter-section">
+    <!-- 搜索框 -->
+    <view class="search-box">
+      <view class="search-icon">🔍</view>
+      <input class="search-input" 
+             value="{{searchText}}" 
+             placeholder="搜索产品名称或品牌"
+             bindinput="onSearchInput" />
+      <view wx:if="{{searchText}}" class="clear-search" bindtap="clearFilters">×</view>
+    </view>
+
+    <!-- 筛选器 -->
+    <view class="filter-row">
+      <picker class="filter-picker" 
+              range="{{['全部'].concat(categories)}}" 
+              value="{{filterCategory ? categories.indexOf(filterCategory) + 1 : 0}}"
+              bindchange="onCategoryChange">
+        <view class="filter-display">
+          <view class="filter-text">{{filterCategory || '全部分类'}}</view>
+          <view class="filter-arrow">▼</view>
+        </view>
+      </picker>
+
+      <picker class="filter-picker" 
+              range="{{brandOptions}}" 
+              value="{{filterBrandIndex}}"
+              bindchange="onBrandChange">
+        <view class="filter-display">
+          <view class="filter-text">{{filterBrand || '全部品牌'}}</view>
+          <view class="filter-arrow">▼</view>
+        </view>
+      </picker>
+
+      <picker class="filter-picker" 
+              range="{{['全部', '已启用', '已禁用']}}" 
+              range-key="label"
+              value="{{filterStatus === 'all' ? 0 : (filterStatus === 'active' ? 1 : 2)}}"
+              bindchange="onStatusChange">
+        <view class="filter-display">
+          <view class="filter-text">
+            {{filterStatus === 'all' ? '全部状态' : (filterStatus === 'active' ? '已启用' : '已禁用')}}
+          </view>
+          <view class="filter-arrow">▼</view>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 操作栏 -->
+  <view class="action-bar">
+    <view class="left-actions">
+      <button class="action-btn primary" bindtap="goToUpload">
+        <view class="btn-icon">➕</view>
+        <view class="btn-text">添加产品</view>
+      </button>
+      <button class="action-btn {{isSelectMode ? 'active' : ''}}" bindtap="toggleSelectMode">
+        <view class="btn-icon">{{isSelectMode ? '✓' : '☐'}}</view>
+        <view class="btn-text">{{isSelectMode ? '取消选择' : '批量操作'}}</view>
+      </button>
+    </view>
+    
+    <view class="right-actions">
+      <button class="action-btn" bindtap="exportData">
+        <view class="btn-icon">📤</view>
+        <view class="btn-text">导出</view>
+      </button>
+    </view>
+  </view>
+
+  <!-- 批量操作栏 -->
+  <view wx:if="{{isSelectMode && selectedProducts.length > 0}}" class="batch-action-bar">
+    <view class="selected-count">已选择 {{selectedProducts.length}} 个产品</view>
+    <view class="batch-actions">
+      <button class="batch-btn" bindtap="showBatchActions">批量操作</button>
+      <button class="batch-btn" bindtap="toggleSelectAll">
+        {{selectedProducts.length === filteredProducts.length ? '取消全选' : '全选'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 产品列表 -->
+  <view class="product-list">
+    <view wx:if="{{loading && filteredProducts.length === 0}}" class="loading-state">
+      <view class="loading-icon">⏳</view>
+      <view class="loading-text">加载中...</view>
+    </view>
+
+    <view wx:elif="{{filteredProducts.length === 0}}" class="empty-state">
+      <view class="empty-icon">📦</view>
+      <view class="empty-text">暂无产品数据</view>
+      <button class="empty-action" bindtap="goToUpload">添加第一个产品</button>
+    </view>
+
+    <view wx:else>
+      <view wx:for="{{filteredProducts}}" 
+            wx:key="id" 
+            class="product-item {{isSelectMode ? 'select-mode' : ''}}"
+            bindtap="{{isSelectMode ? 'toggleProductSelect' : 'viewProductDetail'}}"
+            data-id="{{item.id}}">
+        
+        <!-- 选择框 -->
+        <view wx:if="{{isSelectMode}}" class="select-checkbox">
+          <view class="checkbox {{selectedProducts.includes(item.id) ? 'checked' : ''}}">
+            {{selectedProducts.includes(item.id) ? '✓' : ''}}
+          </view>
+        </view>
+
+        <!-- 产品图片 -->
+        <view class="product-image">
+          <image src="{{item.image}}" mode="aspectFill" />
+          <view class="status-badge {{item.status}}">
+            {{item.status === 'active' ? '启用' : '禁用'}}
+          </view>
+        </view>
+
+        <!-- 产品信息 -->
+        <view class="product-info">
+          <view class="product-name">{{item.name}}</view>
+          <view class="product-brand">{{item.brand}}</view>
+          <view class="product-category">{{item.category}}</view>
+          <view class="product-price">¥{{item.price}}</view>
+          
+          <view class="product-meta">
+            <view class="meta-item">
+              <view class="meta-label">销量:</view>
+              <view class="meta-value">{{item.sales}}</view>
+            </view>
+            <view class="meta-item">
+              <view class="meta-label">评分:</view>
+              <view class="meta-value">{{item.rating}}</view>
+            </view>
+            <view class="meta-item">
+              <view class="meta-label">更新:</view>
+              <view class="meta-value">{{item.updateTime.split('T')[0]}}</view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view wx:if="{{!isSelectMode}}" class="product-actions">
+          <button class="action-icon edit" 
+                  bindtap="editProduct" 
+                  data-id="{{item.id}}"
+                  catchtap="true">
+            ✏️
+          </button>
+          <button class="action-icon toggle" 
+                  bindtap="toggleProductStatus" 
+                  data-id="{{item.id}}"
+                  catchtap="true">
+            {{item.status === 'active' ? '🔒' : '🔓'}}
+          </button>
+          <button class="action-icon delete" 
+                  bindtap="deleteProduct" 
+                  data-id="{{item.id}}"
+                  catchtap="true">
+            🗑️
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view wx:if="{{hasMore && !loading}}" class="load-more">
+    <button class="load-more-btn" bindtap="loadMoreProducts">加载更多</button>
+  </view>
+
+  <view wx:if="{{loading && filteredProducts.length > 0}}" class="loading-more">
+    <view class="loading-text">加载中...</view>
+  </view>
+</view>
+
+<!-- 产品详情弹窗 -->
+<view wx:if="{{showProductDetail}}" class="product-detail-modal">
+  <view class="modal-mask" bindtap="closeProductDetail"></view>
+  <view class="detail-content">
+    <view class="detail-header">
+      <view class="detail-title">产品详情</view>
+      <view class="detail-close" bindtap="closeProductDetail">×</view>
+    </view>
+    
+    <scroll-view class="detail-body" scroll-y>
+      <view wx:if="{{currentProduct}}" class="product-detail">
+        <view class="detail-image">
+          <image src="{{currentProduct.image}}" mode="aspectFill" />
+        </view>
+        
+        <view class="detail-info">
+          <view class="detail-row">
+            <view class="detail-label">产品名称:</view>
+            <view class="detail-value">{{currentProduct.name}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">品牌:</view>
+            <view class="detail-value">{{currentProduct.brand}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">分类:</view>
+            <view class="detail-value">{{currentProduct.category}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">价格:</view>
+            <view class="detail-value">¥{{currentProduct.price}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">状态:</view>
+            <view class="detail-value {{currentProduct.status}}">
+              {{currentProduct.status === 'active' ? '已启用' : '已禁用'}}
+            </view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">销量:</view>
+            <view class="detail-value">{{currentProduct.sales}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">评分:</view>
+            <view class="detail-value">{{currentProduct.rating}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">创建时间:</view>
+            <view class="detail-value">{{currentProduct.createTime.split('T')[0]}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">更新时间:</view>
+            <view class="detail-value">{{currentProduct.updateTime.split('T')[0]}}</view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+    
+    <view class="detail-actions">
+      <button class="detail-btn edit" bindtap="editProduct" data-id="{{currentProduct.id}}">编辑</button>
+      <button class="detail-btn toggle" bindtap="toggleProductStatus" data-id="{{currentProduct.id}}">
+        {{currentProduct.status === 'active' ? '禁用' : '启用'}}
+      </button>
+    </view>
+  </view>
+</view>
+
+<!-- 批量操作弹窗 -->
+<view wx:if="{{showBatchActions}}" class="batch-actions-modal">
+  <view class="modal-mask" bindtap="hideBatchActions"></view>
+  <view class="batch-content">
+    <view class="batch-header">
+      <view class="batch-title">批量操作</view>
+      <view class="batch-subtitle">已选择 {{selectedProducts.length}} 个产品</view>
+    </view>
+    
+    <view class="batch-options">
+      <button class="batch-option enable" bindtap="batchEnable">
+        <view class="option-icon">🔓</view>
+        <view class="option-text">批量启用</view>
+      </button>
+      <button class="batch-option disable" bindtap="batchDisable">
+        <view class="option-icon">🔒</view>
+        <view class="option-text">批量禁用</view>
+      </button>
+      <button class="batch-option delete" bindtap="batchDelete">
+        <view class="option-icon">🗑️</view>
+        <view class="option-text">批量删除</view>
+      </button>
+    </view>
+    
+    <button class="batch-cancel" bindtap="hideBatchActions">取消</button>
+  </view>
+</view>

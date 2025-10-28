@@ -1,6 +1,6 @@
 // pages/profile/profile.js
 const app = getApp()
-const { request } = require('../../utils/request')
+const request = require('../../utils/request')
 const { showToast, showLoading, hideLoading, formatDate } = require('../../utils/utils')
 
 Page({

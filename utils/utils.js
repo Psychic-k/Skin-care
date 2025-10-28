@@ -247,16 +247,7 @@ class Utils {
     return descriptions[skinType] || '未知肌肤类型';
   }
 
-  // 获取体验官等级
-  static getExpertLevel(points) {
-    const levels = config.expertLevels;
-    for (const [level, config] of Object.entries(levels).reverse()) {
-      if (points >= config.minPoints) {
-        return { level, ...config };
-      }
-    }
-    return levels.bronze;
-  }
+
 
   // 计算连续打卡天数
   static calculateStreakDays(diaryRecords) {
@@ -312,4 +303,33 @@ class Utils {
   }
 }
 
+// 导出 Utils 类
 module.exports = Utils;
+
+// 同时导出常用的工具函数，方便直接解构使用
+module.exports.showToast = Utils.showError;  // 通用 toast 提示
+module.exports.showLoading = Utils.showLoading;
+module.exports.hideLoading = Utils.hideLoading;
+module.exports.showSuccess = Utils.showSuccess;
+module.exports.showError = Utils.showError;
+module.exports.showConfirm = Utils.showConfirm;
+module.exports.formatDate = Utils.formatDate;
+module.exports.getRelativeTime = Utils.getRelativeTime;
+module.exports.debounce = Utils.debounce;
+module.exports.throttle = Utils.throttle;
+module.exports.generateId = Utils.generateId;
+module.exports.compressImage = Utils.compressImage;
+module.exports.chooseImage = Utils.chooseImage;
+module.exports.previewImage = Utils.previewImage;
+module.exports.saveImageToPhotosAlbum = Utils.saveImageToPhotosAlbum;
+module.exports.copyToClipboard = Utils.copyToClipboard;
+module.exports.makePhoneCall = Utils.makePhoneCall;
+module.exports.getSystemInfo = Utils.getSystemInfo;
+module.exports.getNetworkType = Utils.getNetworkType;
+module.exports.vibrateShort = Utils.vibrateShort;
+module.exports.calculateSkinScore = Utils.calculateSkinScore;
+module.exports.getSkinTypeDescription = Utils.getSkinTypeDescription;
+module.exports.calculateStreakDays = Utils.calculateStreakDays;
+module.exports.validatePhone = Utils.validatePhone;
+module.exports.validateEmail = Utils.validateEmail;
+module.exports.deepClone = Utils.deepClone;

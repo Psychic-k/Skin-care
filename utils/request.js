@@ -89,8 +89,22 @@ class Request {
     // 移除开头的斜杠
     const cleanUrl = url.replace(/^\/+/, '');
     
+    // 处理带参数的URL路径（如 /api/diary/list/123）
+    let normalizedUrl = cleanUrl;
+    
+    // 移除动态参数，保留基础路径
+    normalizedUrl = normalizedUrl.replace(/\/[a-f0-9]{24}$/, ''); // 移除MongoDB ObjectId
+    normalizedUrl = normalizedUrl.replace(/\/\d+$/, ''); // 移除数字ID
+    normalizedUrl = normalizedUrl.replace(/\/[^\/]+$/, function(match) {
+      // 如果最后一段看起来像ID，则移除
+      if (/^\/[a-zA-Z0-9_-]{8,}$/.test(match)) {
+        return '';
+      }
+      return match;
+    });
+    
     // 将URL路径转换为云函数名称
-    const parts = cleanUrl.split('/');
+    const parts = normalizedUrl.split('/');
     let functionName = parts.join('_');
     
     // 添加方法前缀
@@ -100,18 +114,38 @@ class Request {
     
     // 处理常见的API路径映射
     const apiMappings = {
-      'user/login': 'userLogin',
+      'api/user/login': 'login',
+      'api/user/profile': 'userProfile',
+      'api/detection/analyze': 'detectionAnalyze',
+      'api/detection/history': 'detectionHistory',
+      'api/diary/list': 'diaryList',
+      'api/diary/create': 'diaryCreate',
+      'api/diary/update': 'diaryUpdate',
+      'api/diary/stats': 'diaryStats',
+      'api/products/list': 'getProductRecommendations',
+      'api/products/user-products': 'getUserProducts',
+      'api/products/search': 'productsSearch',
+      'user/login': 'login',
       'user/profile': 'userProfile',
       'detection/analyze': 'detectionAnalyze',
       'detection/history': 'detectionHistory',
       'diary/list': 'diaryList',
       'diary/create': 'diaryCreate',
       'diary/update': 'diaryUpdate',
-      'products/list': 'productsList',
+      'diary/stats': 'diaryStats',
+      'products/list': 'getProductRecommendations',
+      'products/user-products': 'getUserProducts',
       'products/search': 'productsSearch'
     };
     
-    return apiMappings[cleanUrl] || functionName || 'defaultFunction';
+    console.log('URL映射调试:', {
+      originalUrl: url,
+      cleanUrl: cleanUrl,
+      normalizedUrl: normalizedUrl,
+      mappedFunction: apiMappings[normalizedUrl] || functionName || 'defaultFunction'
+    });
+    
+    return apiMappings[normalizedUrl] || functionName || 'defaultFunction';
   }
 
   // GET请求
@@ -186,19 +220,42 @@ class Request {
     });
   }
 
-  // 错误处理
-  handleError(error) {
-    wx.showToast({
-      title: error.message || '请求失败',
-      icon: 'none',
-      duration: 2000
-    });
+  // 处理错误
+  handleError(error, url) {
+    console.error('请求错误详情:', {
+      url: url,
+      error: error,
+      errorType: typeof error,
+      errorKeys: Object.keys(error || {})
+    })
+    
+    if (error.errCode) {
+      // 云函数错误
+      console.error('云函数调用失败:', error)
+      return {
+        code: -1,
+        message: error.errMsg || '云函数调用失败',
+        data: null,
+        error: error
+      }
+    } else if (error.statusCode) {
+      // HTTP错误
+      return this.handleHttpError(error)
+    } else {
+      // 网络错误
+      return this.handleNetworkError(error)
+    }
   }
 
   // HTTP状态码错误处理
-  handleHttpError(statusCode) {
-    let message = '网络错误';
+  handleHttpError(error) {
+    const statusCode = error.statusCode;
+    let message = '请求失败';
+    
     switch (statusCode) {
+      case 400:
+        message = '请求参数错误';
+        break;
       case 401:
         message = '未授权，请重新登录';
         // 清除token并跳转到登录页
@@ -208,16 +265,16 @@ class Request {
         });
         break;
       case 403:
-        message = '拒绝访问';
+        message = '禁止访问';
         break;
       case 404:
-        message = '请求地址不存在';
+        message = '请求的资源不存在';
         break;
       case 500:
         message = '服务器内部错误';
         break;
       default:
-        message = `网络错误 ${statusCode}`;
+        message = `请求失败 (${statusCode})`;
     }
     
     wx.showToast({
@@ -225,6 +282,13 @@ class Request {
       icon: 'none',
       duration: 2000
     });
+    
+    return {
+      code: -1,
+      message: message,
+      data: null,
+      statusCode: statusCode
+    };
   }
 
   // 网络错误处理
@@ -232,17 +296,26 @@ class Request {
     let message = '网络连接失败';
     if (error.errMsg) {
       if (error.errMsg.includes('timeout')) {
-        message = '请求超时，请检查网络';
+        message = '请求超时，请重试';
       } else if (error.errMsg.includes('fail')) {
-        message = '网络连接失败';
+        message = '网络连接失败，请检查网络';
       }
     }
+    
+    console.error('网络错误详情:', error);
     
     wx.showToast({
       title: message,
       icon: 'none',
       duration: 2000
     });
+    
+    return {
+      code: -1,
+      message: message,
+      data: null,
+      error: error
+    };
   }
 }
 

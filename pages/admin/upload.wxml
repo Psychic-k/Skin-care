@@ -1,0 +1,278 @@
+<!--管理后台 - 产品数据上传页面-->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="header">
+    <view class="header-title">产品数据上传</view>
+    <view class="header-subtitle">支持批量上传和单个产品添加</view>
+  </view>
+
+  <!-- 上传方式选择 -->
+  <view class="upload-type-selector">
+    <view class="type-option {{uploadType === 'batch' ? 'active' : ''}}" bindtap="selectUploadType" data-type="batch">
+      <view class="type-icon">📊</view>
+      <view class="type-text">批量上传</view>
+    </view>
+    <view class="type-option {{uploadType === 'single' ? 'active' : ''}}" bindtap="selectUploadType" data-type="single">
+      <view class="type-icon">➕</view>
+      <view class="type-text">单个添加</view>
+    </view>
+  </view>
+
+  <!-- 批量上传区域 -->
+  <view class="batch-upload-section" wx:if="{{uploadType === 'batch'}}">
+    <!-- 文件上传区域 -->
+    <view class="file-upload-area">
+      <view wx:if="{{!selectedFile}}" class="upload-zone" bindtap="selectFile">
+        <view class="upload-icon">📁</view>
+        <view class="upload-text">点击选择文件</view>
+        <view class="upload-hint">支持 Excel (.xlsx) 和 CSV (.csv) 格式</view>
+      </view>
+
+      <!-- 已选择文件 -->
+      <view wx:if="{{selectedFile}}" class="selected-file">
+        <view class="file-info">
+          <view class="file-icon">📄</view>
+          <view class="file-details">
+            <view class="file-name">{{selectedFile.name}}</view>
+            <view class="file-size">{{selectedFile.size}}</view>
+          </view>
+          <view class="file-remove" bindtap="removeFile">✕</view>
+        </view>
+
+        <!-- 上传按钮 -->
+        <view class="upload-actions">
+          <button class="upload-btn {{uploading ? 'uploading' : ''}}" 
+                  bindtap="startUpload" 
+                  disabled="{{uploading}}">
+            {{uploading ? '上传中...' : '开始上传'}}
+          </button>
+        </view>
+
+        <!-- 上传进度 -->
+        <view wx:if="{{uploading}}" class="upload-progress">
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{uploadProgress}}%"></view>
+          </view>
+          <view class="progress-text">{{uploadProgress}}%</view>
+        </view>
+
+        <!-- 上传结果 -->
+        <view wx:if="{{uploadResult}}" class="upload-result">
+          <view class="result-header {{uploadResult.success ? 'success' : 'error'}}">
+            <view class="result-icon">{{uploadResult.success ? '✅' : '❌'}}</view>
+            <view class="result-message">{{uploadResult.message}}</view>
+          </view>
+
+          <view class="result-details">
+            <view class="detail-item">
+              <view class="detail-label">总计:</view>
+              <view class="detail-value">{{uploadResult.total}}</view>
+            </view>
+            <view class="detail-item">
+              <view class="detail-label">成功:</view>
+              <view class="detail-value success">{{uploadResult.success_count}}</view>
+            </view>
+            <view class="detail-item" wx:if="{{uploadResult.error_count > 0}}">
+              <view class="detail-label">失败:</view>
+              <view class="detail-value error">{{uploadResult.error_count}}</view>
+            </view>
+          </view>
+
+          <!-- 错误详情 -->
+          <view wx:if="{{uploadResult.errors && uploadResult.errors.length > 0}}" class="error-list">
+            <view class="error-title">错误详情:</view>
+            <view wx:for="{{uploadResult.errors}}" wx:key="index" class="error-item">
+              <view class="error-row">第{{item.row}}行:</view>
+              <view class="error-msg">{{item.message}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 模板下载 -->
+      <view class="template-download">
+        <text class="download-link" bindtap="downloadTemplate">下载Excel模板</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 单个产品添加区域 -->
+  <view class="single-add-section" wx:if="{{uploadType === 'single'}}">
+    <form class="product-form" bindsubmit="submitProduct">
+      <!-- 基本信息 -->
+      <view class="form-section">
+        <view class="section-title">基本信息</view>
+        
+        <view class="form-item">
+          <view class="form-label">产品名称 *</view>
+          <input class="form-input" 
+                 name="name" 
+                 value="{{productForm.name}}" 
+                 placeholder="请输入产品名称"
+                 bindinput="onFormInput"
+                 data-field="name" />
+        </view>
+
+        <view class="form-item">
+          <view class="form-label">品牌 *</view>
+          <view class="brand-selector" bindtap="showBrandModal">
+            <view class="brand-text {{!productForm.brand ? 'placeholder' : ''}}">
+              {{productForm.brand || '请选择品牌'}}
+            </view>
+            <view class="selector-arrow">▼</view>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <view class="form-label">价格 (元)</view>
+          <input class="form-input" 
+                 name="price" 
+                 type="digit"
+                 value="{{productForm.price}}" 
+                 placeholder="请输入价格"
+                 bindinput="onFormInput"
+                 data-field="price" />
+        </view>
+
+        <view class="form-item">
+          <view class="form-label">分类 *</view>
+          <picker range="{{categories}}" 
+                  value="{{categoryIndex}}" 
+                  bindchange="onCategoryChange">
+            <view class="picker-display">
+              <view>{{productForm.category || '请选择分类'}}</view>
+              <view class="picker-arrow">▼</view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <view class="form-label">产品描述</view>
+          <textarea class="form-textarea" 
+                    name="description" 
+                    value="{{productForm.description}}" 
+                    placeholder="请输入产品描述"
+                    bindinput="onFormInput"
+                    data-field="description"
+                    maxlength="500" />
+        </view>
+      </view>
+
+      <!-- 适用肌肤类型 -->
+      <view class="form-section">
+        <view class="section-title">适用肌肤类型</view>
+        <view class="checkbox-group">
+          <view wx:for="{{skinTypes}}" 
+                wx:key="index" 
+                class="checkbox-item {{productForm.skinTypes.includes(item) ? 'selected' : ''}}"
+                bindtap="toggleSkinType"
+                data-type="{{item}}">
+            <view class="checkbox-icon">{{productForm.skinTypes.includes(item) ? '✓' : '○'}}</view>
+            <view class="checkbox-text">{{item}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 主要功效 -->
+      <view class="form-section">
+        <view class="section-title">主要功效</view>
+        <view class="checkbox-group">
+          <view wx:for="{{effects}}" 
+                wx:key="index" 
+                class="checkbox-item {{productForm.effects.includes(item) ? 'selected' : ''}}"
+                bindtap="toggleEffect"
+                data-effect="{{item}}">
+            <view class="checkbox-icon">{{productForm.effects.includes(item) ? '✓' : '○'}}</view>
+            <view class="checkbox-text">{{item}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 成分信息 -->
+      <view class="form-section">
+        <view class="section-title">成分信息</view>
+        
+        <view class="ingredient-input">
+          <input class="ingredient-field" 
+                 value="{{newIngredient.name}}" 
+                 placeholder="成分名称"
+                 bindinput="onIngredientInput"
+                 data-field="name" />
+          <input class="ingredient-field" 
+                 value="{{newIngredient.concentration}}" 
+                 placeholder="浓度 (可选)"
+                 bindinput="onIngredientInput"
+                 data-field="concentration" />
+          <button class="add-ingredient-btn" 
+                  bindtap="addIngredient" 
+                  type="button">添加</button>
+        </view>
+
+        <view class="ingredient-list">
+          <view wx:for="{{productForm.ingredients}}" 
+                wx:key="index" 
+                class="ingredient-tag">
+            <view class="ingredient-name">
+              {{item.name}}{{item.concentration ? ' (' + item.concentration + ')' : ''}}
+            </view>
+            <view class="remove-ingredient" 
+                  bindtap="removeIngredient" 
+                  data-index="{{index}}">×</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 产品图片 -->
+      <view class="form-section">
+        <view class="section-title">产品图片</view>
+        <view class="image-upload" bindtap="selectImage">
+          <view wx:if="{{productForm.image}}" class="image-preview">
+            <image class="preview-image" src="{{productForm.image}}" mode="aspectFill" />
+            <view class="image-mask">
+              <view class="change-text">点击更换</view>
+            </view>
+          </view>
+          <view wx:else class="image-placeholder">
+            <view class="placeholder-icon">📷</view>
+            <view class="placeholder-text">点击上传图片</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 验证错误 -->
+      <view wx:if="{{validationErrors.length > 0}}" class="validation-errors">
+        <view class="error-title">请修正以下错误:</view>
+        <view wx:for="{{validationErrors}}" wx:key="index" class="error-item">
+          <view class="error-text">• {{item}}</view>
+        </view>
+      </view>
+
+      <!-- 表单操作 -->
+      <view class="form-actions">
+        <button class="reset-btn" bindtap="resetForm" type="button">重置</button>
+        <button class="submit-btn" form-type="submit">保存产品</button>
+      </view>
+    </form>
+  </view>
+</view>
+
+<!-- 品牌选择弹窗 -->
+<view wx:if="{{showBrandModal}}" class="brand-modal">
+  <view class="modal-mask" bindtap="hideBrandModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <view class="modal-title">选择品牌</view>
+      <view class="modal-close" bindtap="hideBrandModal">×</view>
+    </view>
+    <scroll-view class="brand-list" scroll-y>
+      <view wx:for="{{brands}}" 
+            wx:key="id" 
+            class="brand-item"
+            bindtap="selectBrand"
+            data-brand="{{item.name}}">
+        <image class="brand-logo" src="{{item.logo}}" mode="aspectFill" />
+        <view class="brand-name">{{item.name}}</view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

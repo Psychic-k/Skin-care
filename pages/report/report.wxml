@@ -291,10 +291,7 @@
         <view class="other-action-icon">🔄</view>
         <view class="other-action-text">重新检测</view>
       </view>
-      <view class="other-action" bindtap="consultExpert">
-        <view class="other-action-icon">👩‍⚕️</view>
-        <view class="other-action-text">咨询专家</view>
-      </view>
+
       <view class="other-action" bindtap="goHome">
         <view class="other-action-icon">🏠</view>
         <view class="other-action-text">返回首页</view>

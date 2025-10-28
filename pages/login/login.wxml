@@ -3,13 +3,13 @@
   <!-- 品牌区域 -->
   <view class="brand-section">
     <image class="brand-logo" src="/images/logo.png" mode="aspectFit"></image>
-    <text class="brand-name">谷雨护肤</text>
+    <text class="brand-name" bindtap="onSkinCareTap">SkinCare</text>
     <text class="brand-slogan">科学护肤，美丽由内而外</text>
   </view>
 
   <!-- 登录区域 -->
   <view class="login-section">
-    <view class="login-title">欢迎使用谷雨护肤小程序</view>
+    <view class="login-title">欢迎使用SkinCare小程序</view>
     <view class="login-subtitle">开启您的智能护肤之旅</view>
 
     <!-- 微信登录按钮 -->
@@ -19,7 +19,7 @@
       disabled="{{isLoading}}"
     >
       <image class="btn-icon" src="/images/wechat-icon.png" wx:if="{{!isLoading}}"></image>
-      <text>{{isLoading ? '登录中...' : '微信一键登录'}}</text>
+      <text class="btn-label">{{isLoading ? '登录中...' : '微信一键登录'}}</text>
     </button>
 
     <!-- 用户信息授权按钮 -->
@@ -29,7 +29,7 @@
       wx:if="{{canIUseGetUserProfile}}"
     >
       <image class="btn-icon" src="/images/user-icon.png"></image>
-      <text>获取用户信息</text>
+      <text class="btn-label">获取用户信息</text>
     </button>
 
     <!-- 跳过登录 -->
@@ -62,5 +62,24 @@
       和
       <text class="privacy-link">《隐私政策》</text>
     </text>
+  </view>
+
+  <!-- 开发者模式角色选择弹窗 -->
+  <view class="dev-modal" wx:if="{{showDevModal}}">
+    <view class="dev-modal-content">
+      <view class="dev-modal-title">开发者模式 - 选择角色</view>
+      <view class="dev-role-list">
+        <view class="dev-role-item" bindtap="onSelectRole" data-role="user">
+          <text class="role-name">普通用户</text>
+          <text class="role-desc">体验基础功能</text>
+        </view>
+
+        <view class="dev-role-item" bindtap="onSelectRole" data-role="admin">
+          <text class="role-name">管理员</text>
+          <text class="role-desc">管理后台权限</text>
+        </view>
+      </view>
+      <view class="dev-modal-close" bindtap="onCloseDevModal">取消</view>
+    </view>
   </view>
 </view>

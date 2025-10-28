@@ -10,22 +10,22 @@
   <view class="step-indicator">
     <view class="step {{detectionStep >= 1 ? 'active' : ''}}" data-step="1">
       <view class="step-number">1</view>
-      <view class="step-text">选择类型</view>
+      <view class="step-text">选择<br/>类型</view>
     </view>
     <view class="step-line {{detectionStep >= 2 ? 'active' : ''}}"></view>
     <view class="step {{detectionStep >= 2 ? 'active' : ''}}" data-step="2">
       <view class="step-number">2</view>
-      <view class="step-text">拍照检测</view>
+      <view class="step-text">拍照<br/>检测</view>
     </view>
     <view class="step-line {{detectionStep >= 3 ? 'active' : ''}}"></view>
     <view class="step {{detectionStep >= 3 ? 'active' : ''}}" data-step="3">
       <view class="step-number">3</view>
-      <view class="step-text">AI分析</view>
+      <view class="step-text">AI<br/>分析</view>
     </view>
     <view class="step-line {{detectionStep >= 4 ? 'active' : ''}}"></view>
     <view class="step {{detectionStep >= 4 ? 'active' : ''}}" data-step="4">
       <view class="step-number">4</view>
-      <view class="step-text">查看报告</view>
+      <view class="step-text">查看<br/>报告</view>
     </view>
   </view>
 
@@ -52,7 +52,7 @@
     <view class="guidelines">
       <view class="guidelines-title">拍照指导</view>
       <view class="guideline-item" wx:for="{{guidelines}}" wx:key="*this">
-        <view class="guideline-dot">•</view>
+        <view class="guideline-dot">🌟</view>
         <view class="guideline-text">{{item}}</view>
       </view>
     </view>
@@ -80,7 +80,7 @@
     </view>
 
     <!-- 开始检测按钮 -->
-    <view class="action-buttons">
+    <view class="action-buttons {{isScrolling ? 'is-scrolling' : ''}} {{scrollDirection === 'down' ? 'scrolling-down' : scrollDirection === 'up' ? 'scrolling-up' : ''}}">
       <button class="start-btn" bindtap="startDetection">
         开始{{selectedType === 'face' ? '面部' : selectedType === 'eye' ? '眼部' : '唇部'}}检测
       </button>

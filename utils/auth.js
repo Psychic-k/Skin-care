@@ -1,164 +1,170 @@
-// 用户认证工具类
-const request = require('./request.js');
-const Storage = require('./storage.js');
+// 用户认证相关工具函数
+const app = getApp();
 
-class Auth {
-  // 微信登录
-  static login() {
-    return new Promise((resolve, reject) => {
-      wx.login({
-        success: (res) => {
-          if (res.code) {
-            // 发送code到后端换取token
-            this.exchangeToken(res.code)
-              .then(resolve)
-              .catch(reject);
-          } else {
-            reject(new Error('获取微信登录code失败'));
-          }
-        },
-        fail: reject
-      });
-    });
-  }
+/**
+ * 检查用户是否已登录
+ */
+function isLoggedIn() {
+  const userInfo = wx.getStorageSync('userInfo');
+  return !!(userInfo && userInfo.openid);
+}
 
-  // 用code换取token
-  static exchangeToken(code) {
-    return request.post('/auth/login', { code })
-      .then(res => {
-        if (res.data.token) {
-          // 保存token和用户信息
-          Storage.setUserToken(res.data.token);
-          Storage.setUserInfo(res.data.user);
-          return res.data;
-        } else {
-          throw new Error('登录失败');
-        }
-      });
-  }
+/**
+ * 获取用户信息
+ */
+function getUserInfo() {
+  return wx.getStorageSync('userInfo') || {};
+}
 
-  // 获取用户信息授权
-  static getUserProfile() {
-    return new Promise((resolve, reject) => {
-      wx.getUserProfile({
-        desc: '用于完善用户资料',
-        success: (res) => {
-          resolve(res.userInfo);
-        },
-        fail: reject
-      });
-    });
-  }
-
-  // 检查登录状态
-  static checkLoginStatus() {
-    return new Promise((resolve, reject) => {
-      const token = Storage.getUserToken();
-      if (!token) {
-        reject(new Error('未登录'));
-        return;
-      }
-
-      // 验证token有效性
-      request.get('/auth/verify')
-        .then(res => {
-          resolve(res.data);
-        })
-        .catch(err => {
-          // token无效，清除本地数据
-          Storage.logout();
-          reject(err);
-        });
-    });
-  }
-
-  // 退出登录
-  static logout() {
-    return new Promise((resolve) => {
-      // 调用后端登出接口
-      request.post('/auth/logout')
-        .finally(() => {
-          // 清除本地数据
-          Storage.logout();
-          resolve();
-        });
-    });
-  }
-
-  // 检查是否需要登录
-  static requireLogin() {
-    return new Promise((resolve, reject) => {
-      if (Storage.isLoggedIn()) {
-        this.checkLoginStatus()
-          .then(resolve)
-          .catch(() => {
-            // 跳转到登录页
-            this.redirectToLogin();
-            reject(new Error('需要重新登录'));
-          });
-      } else {
-        // 跳转到登录页
-        this.redirectToLogin();
-        reject(new Error('需要登录'));
-      }
-    });
-  }
-
-  // 跳转到登录页
-  static redirectToLogin() {
-    wx.navigateTo({
-      url: '/pages/login/login'
-    });
-  }
-
-  // 获取当前用户信息
-  static getCurrentUser() {
-    return Storage.getUserInfo();
-  }
-
-  // 更新用户信息
-  static updateUserInfo(userInfo) {
-    return request.put('/user/profile', userInfo)
-      .then(res => {
-        // 更新本地存储
-        Storage.setUserInfo(res.data);
-        return res.data;
-      });
-  }
-
-  // 绑定手机号
-  static bindPhone(encryptedData, iv) {
-    return request.post('/auth/bind-phone', {
-      encryptedData,
-      iv
-    }).then(res => {
-      // 更新用户信息
-      const userInfo = Storage.getUserInfo();
-      userInfo.phone = res.data.phone;
-      Storage.setUserInfo(userInfo);
-      return res.data;
-    });
-  }
-
-  // 检查是否为体验官
-  static isExpert() {
-    const userInfo = this.getCurrentUser();
-    return userInfo && userInfo.role === 'expert';
-  }
-
-  // 申请成为体验官
-  static applyExpert(inviteCode) {
-    return request.post('/expert/apply', { inviteCode })
-      .then(res => {
-        // 更新用户角色
-        const userInfo = Storage.getUserInfo();
-        userInfo.role = 'expert';
-        userInfo.expertLevel = res.data.level;
-        userInfo.points = res.data.points;
-        Storage.setUserInfo(userInfo);
-        return res.data;
-      });
+/**
+ * 设置用户信息
+ */
+function setUserInfo(userInfo) {
+  wx.setStorageSync('userInfo', userInfo);
+  // 同时设置到全局
+  const app = getApp();
+  if (app) {
+    app.globalData.userInfo = userInfo;
   }
 }
 
-module.exports = Auth;
+/**
+ * 清除用户信息（退出登录）
+ */
+function clearUserInfo() {
+  wx.removeStorageSync('userInfo');
+  wx.removeStorageSync('token');
+  // 同时清除全局用户信息
+  const app = getApp();
+  if (app) {
+    app.globalData.userInfo = null;
+  }
+}
+
+/**
+ * 检查用户是否为管理员
+ */
+function isAdmin() {
+  const userInfo = getUserInfo();
+  return userInfo.role === 'admin';
+}
+
+/**
+ * 获取用户角色
+ * @returns {string} 'user' | 'admin'
+ */
+function getUserRole() {
+  const userInfo = getUserInfo();
+  const role = userInfo.role || 'user';
+  
+  // 只允许两种角色：普通用户和管理员
+  if (role === 'admin') {
+    return 'admin';
+  }
+  return 'user';
+}
+
+/**
+ * 检查用户权限
+ * @param {string} permission 权限名称
+ * @returns {boolean} 是否有权限
+ */
+function hasPermission(permission) {
+  const userInfo = getUserInfo();
+  const role = getUserRole();
+  
+  // 管理员拥有所有权限
+  if (role === 'admin') {
+    return true;
+  }
+  
+  // 普通用户权限列表
+  const userPermissions = [
+    'view_products',      // 查看产品
+    'create_diary',       // 创建护肤日记
+    'use_detection',      // 使用AI检测
+    'view_reports',       // 查看检测报告
+    'edit_profile',       // 编辑个人资料
+    'view_history'        // 查看历史记录
+  ];
+  
+  return userPermissions.includes(permission);
+}
+
+/**
+ * 微信登录
+ */
+function wxLogin() {
+  return new Promise((resolve, reject) => {
+    wx.login({
+      success: (res) => {
+        if (res.code) {
+          // 调用云函数进行登录
+          wx.cloud.callFunction({
+            name: 'login',
+            data: {
+              code: res.code
+            },
+            success: (result) => {
+              const { openid, session_key } = result.result;
+              const userInfo = {
+                openid,
+                session_key,
+                role: 'user', // 默认为普通用户
+                loginTime: new Date().getTime()
+              };
+              setUserInfo(userInfo);
+              resolve(userInfo);
+            },
+            fail: reject
+          });
+        } else {
+          reject(new Error('获取登录凭证失败'));
+        }
+      },
+      fail: reject
+    });
+  });
+}
+
+/**
+ * 获取用户资料
+ */
+function getUserProfile() {
+  return new Promise((resolve, reject) => {
+    wx.getUserProfile({
+      desc: '用于完善用户资料',
+      success: (res) => {
+        const userInfo = getUserInfo();
+        const updatedUserInfo = {
+          ...userInfo,
+          ...res.userInfo,
+          avatarUrl: res.userInfo.avatarUrl,
+          nickName: res.userInfo.nickName,
+          gender: res.userInfo.gender,
+          city: res.userInfo.city,
+          province: res.userInfo.province,
+          country: res.userInfo.country
+        };
+        setUserInfo(updatedUserInfo);
+        resolve(updatedUserInfo);
+      },
+      fail: reject
+    });
+  });
+}
+
+
+
+module.exports = {
+  isLoggedIn,
+  getUserInfo,
+  setUserInfo,
+  clearUserInfo,
+  isAdmin,
+  getUserRole,
+  hasPermission,
+  wxLogin,
+  getUserProfile
+
+};

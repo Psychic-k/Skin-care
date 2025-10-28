@@ -31,13 +31,6 @@ Page({
     });
   },
 
-  // 跳转到专家咨询页面
-  goToExpert: function() {
-    wx.switchTab({
-      url: '/pages/expert/expert'
-    });
-  },
-
   // 跳转到用户档案页面
   goToProfile: function() {
     wx.switchTab({

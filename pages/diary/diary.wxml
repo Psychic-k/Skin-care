@@ -231,10 +231,18 @@
         <!-- 使用产品 -->
         <view class="form-item">
           <text class="form-label">使用产品</text>
-          <view class="products-selector" bindtap="showProductSelector">
-            <text class="selector-text">
-              {{newDiary.products.length > 0 ? '已选择' + newDiary.products.length + '个产品' : '点击选择产品'}}
-            </text>
+          <view class="products-selector {{newDiary.products.length > 0 ? 'has-products' : ''}}" bindtap="showProductSelector">
+            <view class="selector-content">
+              <text class="selector-text {{newDiary.products.length > 0 ? 'has-products' : ''}}">
+                {{newDiary.products.length > 0 ? '已选择' + newDiary.products.length + '个产品' : '点击选择产品'}}
+              </text>
+              <view class="selected-products-preview" wx:if="{{newDiary.products.length > 0}}">
+                <view class="product-tag" wx:for="{{newDiary.products.slice(0, 3)}}" wx:key="*this">
+                  {{item.name}}
+                </view>
+                <text class="more-indicator" wx:if="{{newDiary.products.length > 3}}">+{{newDiary.products.length - 3}}</text>
+              </view>
+            </view>
             <text class="selector-arrow">></text>
           </view>
         </view>
@@ -273,13 +281,19 @@
   <view class="modal-overlay" wx:if="{{showProductModal}}" bindtap="closeProductModal">
     <view class="product-modal" catchtap="">
       <view class="modal-header">
-        <text class="modal-title">选择产品</text>
+        <text class="modal-title">选择护肤产品</text>
         <view class="close-btn" bindtap="closeProductModal">×</view>
+      </view>
+      
+      <!-- 搜索框 -->
+      <view class="product-search">
+        <input class="search-input" placeholder="搜索产品名称或品牌..." 
+               value="{{productSearchText}}" bindinput="onProductSearch"/>
       </view>
       
       <scroll-view class="product-list" scroll-y>
         <view class="product-item {{selectedProducts.includes(item.id) ? 'selected' : ''}}"
-              wx:for="{{availableProducts}}" wx:key="id"
+              wx:for="{{filteredProducts}}" wx:key="id"
               data-id="{{item.id}}" bindtap="toggleProduct">
           <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
           <view class="product-info">
@@ -290,7 +304,19 @@
             <text wx:if="{{selectedProducts.includes(item.id)}}">✓</text>
           </view>
         </view>
+        
+        <!-- 空状态 -->
+        <view class="empty-state" wx:if="{{filteredProducts.length === 0}}">
+          <text class="empty-text">未找到相关产品</text>
+          <text class="empty-desc">请尝试其他关键词</text>
+        </view>
       </scroll-view>
+
+      <!-- 统计信息 -->
+      <view class="product-stats" wx:if="{{selectedProducts.length > 0}}">
+        <text class="selected-count">已选择 {{selectedProducts.length}} 个产品</text>
+        <view class="clear-all-btn" bindtap="clearAllProducts">清空选择</view>
+      </view>
 
       <view class="modal-footer">
         <view class="cancel-btn" bindtap="closeProductModal">取消</view>

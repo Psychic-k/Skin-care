@@ -1,0 +1,439 @@
+<!--pages/brands/brands.wxml-->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="header">
+    <view class="header-content">
+      <view class="title">品牌管理</view>
+      <view class="header-actions">
+        <view class="action-btn" bindtap="toggleSearchBar">
+          <text class="icon">🔍</text>
+        </view>
+        <view class="action-btn" bindtap="toggleFilterPanel">
+          <text class="icon">🔧</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar {{showSearchBar ? 'show' : ''}}">
+    <view class="search-input-wrapper">
+      <input 
+        class="search-input" 
+        placeholder="搜索品牌名称或特色..." 
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearchConfirm"
+      />
+      <view class="search-btn" bindtap="onSearchConfirm">
+        <text class="icon">🔍</text>
+      </view>
+    </view>
+    
+    <!-- 热门搜索 -->
+    <view class="search-suggestions" wx:if="{{!searchKeyword}}">
+      <view class="suggestion-section">
+        <view class="suggestion-title">热门搜索</view>
+        <view class="suggestion-tags">
+          <view 
+            class="suggestion-tag" 
+            wx:for="{{hotSearches}}" 
+            wx:key="*this"
+            data-keyword="{{item}}"
+            bindtap="onHotSearchTap"
+          >
+            {{item}}
+          </view>
+        </view>
+      </view>
+      
+      <!-- 搜索历史 -->
+      <view class="suggestion-section" wx:if="{{searchHistory.length > 0}}">
+        <view class="suggestion-header">
+          <view class="suggestion-title">搜索历史</view>
+          <view class="clear-history" bindtap="clearSearchHistory">清空</view>
+        </view>
+        <view class="suggestion-list">
+          <view 
+            class="suggestion-item" 
+            wx:for="{{searchHistory}}" 
+            wx:key="*this"
+            data-keyword="{{item}}"
+            bindtap="onHistoryItemTap"
+          >
+            <text class="icon">🕐</text>
+            <text class="text">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计信息 -->
+  <view class="stats-section">
+    <view class="stats-card">
+      <view class="stat-item">
+        <view class="stat-number">{{stats.totalBrands}}</view>
+        <view class="stat-label">总品牌数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.skincareCount}}</view>
+        <view class="stat-label">护肤品牌</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.makeupCount}}</view>
+        <view class="stat-label">彩妆品牌</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.fragranceCount}}</view>
+        <view class="stat-label">香水品牌</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 工具栏 -->
+  <view class="toolbar">
+    <view class="sort-section">
+      <text class="sort-label">排序：</text>
+      <picker 
+        class="sort-picker" 
+        range="{{sortOptions}}" 
+        range-key="label"
+        bindchange="onSortChange"
+      >
+        <view class="sort-value">
+          {{sortOptions[currentSort] || sortOptions[0].label}}
+          <text class="arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    <view class="result-count">
+      共 {{filteredBrands.length}} 个品牌
+    </view>
+  </view>
+
+  <!-- 品牌列表 -->
+  <view class="content">
+    <!-- 加载状态 -->
+    <view class="loading" wx:if="{{loading && brandList.length === 0}}">
+      <view class="loading-spinner"></view>
+      <view class="loading-text">加载中...</view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty" wx:elif="{{!loading && filteredBrands.length === 0}}">
+      <view class="empty-icon">🏢</view>
+      <view class="empty-text">暂无品牌数据</view>
+      <view class="empty-desc">请尝试调整筛选条件</view>
+    </view>
+
+    <!-- 品牌网格 -->
+    <view class="brand-grid" wx:else>
+      <view 
+        class="brand-item" 
+        wx:for="{{filteredBrands}}" 
+        wx:key="id"
+        data-brand="{{item}}"
+        bindtap="onBrandTap"
+      >
+        <view class="brand-header">
+          <image class="brand-logo" src="{{item.logo}}" mode="aspectFit" />
+          <view class="brand-country">{{item.country === 'japan' ? '🇯🇵' : item.country === 'korea' ? '🇰🇷' : item.country === 'usa' ? '🇺🇸' : item.country === 'france' ? '🇫🇷' : item.country === 'germany' ? '🇩🇪' : '🇨🇳'}}</view>
+        </view>
+        
+        <view class="brand-info">
+          <view class="brand-name">{{item.name}}</view>
+          <view class="brand-english">{{item.englishName}}</view>
+          <view class="brand-founded">创立于 {{item.founded}}</view>
+        </view>
+        
+        <view class="brand-stats">
+          <view class="stat">
+            <text class="icon">⭐</text>
+            <text class="value">{{item.rating}}</text>
+          </view>
+          <view class="stat">
+            <text class="icon">📦</text>
+            <text class="value">{{item.productCount}}</text>
+          </view>
+          <view class="stat">
+            <text class="icon">❤️</text>
+            <text class="value">{{item.followCount}}</text>
+          </view>
+        </view>
+        
+        <view class="brand-tags">
+          <view 
+            class="tag" 
+            wx:for="{{item.specialties}}" 
+            wx:for-item="specialty"
+            wx:key="*this"
+          >
+            {{specialty}}
+          </view>
+        </view>
+        
+        <view class="brand-actions">
+          <view 
+            class="action-btn follow-btn {{isFollowed(item.id) ? 'followed' : ''}}"
+            data-brand="{{item}}"
+            bindtap="toggleFollow"
+            catchtap="true"
+          >
+            <text class="icon">{{isFollowed(item.id) ? '❤️' : '🤍'}}</text>
+            <text class="text">{{isFollowed(item.id) ? '已关注' : '关注'}}</text>
+          </view>
+          <view 
+            class="action-btn products-btn"
+            data-brand="{{item}}"
+            bindtap="viewBrandProducts"
+            catchtap="true"
+          >
+            <text class="icon">📦</text>
+            <text class="text">产品</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{loading && brandList.length > 0}}">
+      <view class="loading-spinner small"></view>
+      <text class="loading-text">加载更多...</text>
+    </view>
+  </view>
+
+  <!-- 筛选面板 -->
+  <view class="filter-panel {{showFilterPanel ? 'show' : ''}}" wx:if="{{showFilterPanel}}">
+    <view class="filter-mask" bindtap="onFilterMaskTap"></view>
+    <view class="filter-content">
+      <view class="filter-header">
+        <view class="filter-title">筛选条件</view>
+        <view class="filter-close" bindtap="toggleFilterPanel">✕</view>
+      </view>
+      
+      <scroll-view class="filter-body" scroll-y>
+        <!-- 品牌国家 -->
+        <view class="filter-section">
+          <view class="filter-section-title">品牌国家</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.country === item.value ? 'active' : ''}}"
+              wx:for="{{countries}}" 
+              wx:key="value"
+              data-value="{{item.value}}"
+              bindtap="onCountryTap"
+            >
+              <text class="option-icon">{{item.icon}}</text>
+              <text class="option-label">{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 价格区间 -->
+        <view class="filter-section">
+          <view class="filter-section-title">价格区间</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.priceRange === item.value ? 'active' : ''}}"
+              wx:for="{{priceRanges}}" 
+              wx:key="value"
+              data-value="{{item.value}}"
+              bindtap="onPriceRangeTap"
+            >
+              <text class="option-icon">{{item.icon}}</text>
+              <text class="option-label">{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 品牌类别 -->
+        <view class="filter-section">
+          <view class="filter-section-title">品牌类别</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.category === item.value ? 'active' : ''}}"
+              wx:for="{{categories}}" 
+              wx:key="value"
+              data-value="{{item.value}}"
+              bindtap="onCategoryTap"
+            >
+              <text class="option-icon">{{item.icon}}</text>
+              <text class="option-label">{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 热度选项 -->
+        <view class="filter-section">
+          <view class="filter-section-title">品牌热度</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.popularity === item.value ? 'active' : ''}}"
+              wx:for="{{popularityOptions}}" 
+              wx:key="value"
+              data-value="{{item.value}}"
+              bindtap="onPopularityTap"
+            >
+              <text class="option-icon">{{item.icon}}</text>
+              <text class="option-label">{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+      
+      <view class="filter-footer">
+        <view class="filter-btn reset-btn" bindtap="resetFilters">重置</view>
+        <view class="filter-btn confirm-btn" bindtap="confirmFilters">确定</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 品牌详情弹窗 -->
+  <view class="brand-detail-modal {{showBrandDetail ? 'show' : ''}}" wx:if="{{showBrandDetail && selectedBrand}}">
+    <view class="modal-mask" bindtap="onDetailMaskTap"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <view class="brand-header-info">
+          <image class="brand-logo-large" src="{{selectedBrand.logo}}" mode="aspectFit" />
+          <view class="brand-basic-info">
+            <view class="brand-name-large">{{selectedBrand.name}}</view>
+            <view class="brand-english-large">{{selectedBrand.englishName}}</view>
+            <view class="brand-meta">
+              <text class="country">{{selectedBrand.country === 'japan' ? '🇯🇵 日本' : selectedBrand.country === 'korea' ? '🇰🇷 韩国' : selectedBrand.country === 'usa' ? '🇺🇸 美国' : selectedBrand.country === 'france' ? '🇫🇷 法国' : selectedBrand.country === 'germany' ? '🇩🇪 德国' : '🇨🇳 中国'}}</text>
+              <text class="founded">创立于 {{selectedBrand.founded}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="modal-close" bindtap="closeBrandDetail">✕</view>
+      </view>
+      
+      <scroll-view class="modal-body" scroll-y>
+        <!-- 品牌描述 -->
+        <view class="detail-section">
+          <view class="section-title">品牌介绍</view>
+          <view class="brand-description">{{selectedBrand.description}}</view>
+        </view>
+        
+        <!-- 品牌统计 -->
+        <view class="detail-section">
+          <view class="section-title">品牌数据</view>
+          <view class="brand-stats-detail">
+            <view class="stat-item">
+              <view class="stat-icon">⭐</view>
+              <view class="stat-info">
+                <view class="stat-value">{{selectedBrand.rating}}</view>
+                <view class="stat-label">用户评分</view>
+              </view>
+            </view>
+            <view class="stat-item">
+              <view class="stat-icon">📦</view>
+              <view class="stat-info">
+                <view class="stat-value">{{selectedBrand.productCount}}</view>
+                <view class="stat-label">产品数量</view>
+              </view>
+            </view>
+            <view class="stat-item">
+              <view class="stat-icon">❤️</view>
+              <view class="stat-info">
+                <view class="stat-value">{{selectedBrand.followCount}}</view>
+                <view class="stat-label">关注人数</view>
+              </view>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 品牌特色 -->
+        <view class="detail-section">
+          <view class="section-title">品牌特色</view>
+          <view class="specialties-list">
+            <view 
+              class="specialty-item" 
+              wx:for="{{selectedBrand.specialties}}" 
+              wx:key="*this"
+            >
+              <text class="specialty-icon">✨</text>
+              <text class="specialty-text">{{item}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 热门产品 -->
+        <view class="detail-section">
+          <view class="section-title">热门产品</view>
+          <view class="hot-products">
+            <view 
+              class="hot-product" 
+              wx:for="{{selectedBrand.hotProducts}}" 
+              wx:key="*this"
+            >
+              <text class="product-icon">🔥</text>
+              <text class="product-name">{{item}}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+      
+      <view class="modal-footer">
+        <view 
+          class="modal-btn follow-btn {{isFollowed(selectedBrand.id) ? 'followed' : ''}}"
+          data-brand="{{selectedBrand}}"
+          bindtap="toggleFollow"
+        >
+          <text class="btn-icon">{{isFollowed(selectedBrand.id) ? '❤️' : '🤍'}}</text>
+          <text class="btn-text">{{isFollowed(selectedBrand.id) ? '已关注' : '关注品牌'}}</text>
+        </view>
+        <view 
+          class="modal-btn products-btn"
+          data-brand="{{selectedBrand}}"
+          bindtap="goToProducts"
+        >
+          <text class="btn-icon">📦</text>
+          <text class="btn-text">查看产品</text>
+        </view>
+        <view 
+          class="modal-btn share-btn"
+          data-brand="{{selectedBrand}}"
+          bindtap="onShareBrand"
+        >
+          <text class="btn-icon">📤</text>
+          <text class="btn-text">分享</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 品牌产品弹窗 -->
+  <view class="brand-products-modal {{showBrandProducts ? 'show' : ''}}" wx:if="{{showBrandProducts && selectedBrandForProducts}}">
+    <view class="modal-mask" bindtap="closeBrandProducts"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <view class="modal-title">{{selectedBrandForProducts.name}} 产品</view>
+        <view class="modal-close" bindtap="closeBrandProducts">✕</view>
+      </view>
+      
+      <scroll-view class="modal-body" scroll-y>
+        <view class="products-list">
+          <view 
+            class="product-item" 
+            wx:for="{{brandProducts}}" 
+            wx:key="id"
+          >
+            <image class="product-image" src="{{item.image}}" mode="aspectFit" />
+            <view class="product-info">
+              <view class="product-name">{{item.name}}</view>
+              <view class="product-category">{{item.category}}</view>
+              <view class="product-meta">
+                <view class="product-price">¥{{item.price}}</view>
+                <view class="product-rating">
+                  <text class="rating-icon">⭐</text>
+                  <text class="rating-value">{{item.rating}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

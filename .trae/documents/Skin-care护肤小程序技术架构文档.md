@@ -9,7 +9,6 @@ graph TD
     C --> D[AI皮肤检测服务]
     C --> E[Supabase数据库]
     C --> F[对象存储服务]
-    C --> G[消息推送服务]
     
     subgraph "前端层"
         A
@@ -19,7 +18,6 @@ graph TD
     subgraph "后端服务层"
         C
         D
-        G
     end
     
     subgraph "数据存储层"
@@ -28,14 +26,14 @@ graph TD
     end
     
     subgraph "外部服务"
-        H[微信API]
-        I[天气API]
-        J[AI算法服务]
+        G[微信API]
+        H[天气API]
+        I[AI算法服务]
     end
     
+    C --> G
     C --> H
-    C --> I
-    D --> J
+    D --> I
 ```
 
 ## 2. Technology Description
@@ -60,9 +58,7 @@ graph TD
 | /pages/products/products | 产品知识库页面，产品列表和搜索 |
 | /pages/products/detail | 产品详情页面，成分分析和使用指南 |
 | /pages/ingredients/ingredients | 成分词典页面，成分科学解释 |
-| /pages/expert/expert | 体验官中心页面，任务和积分管理 |
-| /pages/expert/tasks | 任务详情页面，任务领取和提交 |
-| /pages/expert/community | 内测社群页面，体验官交流 |
+
 | /pages/user/user | 个人中心页面，用户设置和客服 |
 | /pages/login/login | 登录页面，微信授权登录 |
 
@@ -161,29 +157,30 @@ Response:
 | ingredients | array | 成分列表 |
 | recommendations | array | 搭配推荐 |
 
-#### 体验官系统相关
+#### 用户管理相关
 
 ```
-GET /api/expert/tasks
+GET /api/user/profile/{userId}
 ```
 
 Response:
 | Param Name | Param Type | Description |
 |------------|------------|-------------|
-| tasks | array | 可领取任务列表 |
-| myTasks | array | 我的任务列表 |
+| profile | object | 用户档案信息 |
+| skinData | object | 皮肤数据统计 |
+| preferences | object | 用户偏好设置 |
 
 ```
-POST /api/expert/report/submit
+PUT /api/user/profile/{userId}
 ```
 
 Request:
 | Param Name | Param Type | isRequired | Description |
 |------------|------------|------------|-------------|
-| taskId | string | true | 任务ID |
-| report | object | true | 报告内容 |
-| beforeImages | array | false | 使用前照片 |
-| afterImages | array | false | 使用后照片 |
+| nickname | string | false | 用户昵称 |
+| avatar | string | false | 头像URL |
+| skinType | string | false | 肤质类型 |
+| preferences | object | false | 偏好设置 |
 
 ## 5. Server architecture diagram
 
@@ -232,7 +229,6 @@ erDiagram
     USERS ||--o{ SKIN_PROFILES : has
     USERS ||--o{ DETECTION_RECORDS : creates
     USERS ||--o{ DIARY_ENTRIES : writes
-    USERS ||--o{ EXPERT_TASKS : participates
     
     SKIN_PROFILES ||--o{ DETECTION_RECORDS : updates
     DETECTION_RECORDS ||--o{ RECOMMENDATIONS : generates
@@ -240,9 +236,6 @@ erDiagram
     PRODUCTS ||--o{ PRODUCT_INGREDIENTS : contains
     PRODUCTS ||--o{ DIARY_PRODUCTS : used_in
     DIARY_ENTRIES ||--o{ DIARY_PRODUCTS : includes
-    
-    EXPERT_TASKS ||--o{ TASK_REPORTS : has
-    USERS ||--o{ USER_POINTS : earns
     
     USERS {
         uuid id PK
@@ -306,18 +299,6 @@ erDiagram
         json images
         timestamp created_at
     }
-    
-    EXPERT_TASKS {
-        uuid id PK
-        string title
-        text description
-        string task_type
-        json requirements
-        int points_reward
-        date deadline
-        string status
-        timestamp created_at
-    }
 ```
 
 ### 6.2 Data Definition Language
@@ -331,7 +312,7 @@ CREATE TABLE users (
     phone VARCHAR(20),
     nickname VARCHAR(50),
     avatar_url TEXT,
-    user_type VARCHAR(20) DEFAULT 'normal' CHECK (user_type IN ('normal', 'expert', 'admin')),
+    user_type VARCHAR(20) DEFAULT 'normal' CHECK (user_type IN ('normal', 'admin')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -420,28 +401,7 @@ CREATE TABLE diary_entries (
 CREATE INDEX idx_diary_entries_user_date ON diary_entries(user_id, entry_date DESC);
 ```
 
-#### 体验官任务表 (expert_tasks)
-```sql
--- 创建体验官任务表
-CREATE TABLE expert_tasks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(100) NOT NULL,
-    description TEXT,
-    task_type VARCHAR(30) NOT NULL CHECK (task_type IN ('product_trial', 'survey', 'content_creation')),
-    requirements JSONB DEFAULT '{}',
-    points_reward INTEGER DEFAULT 0,
-    max_participants INTEGER,
-    current_participants INTEGER DEFAULT 0,
-    deadline DATE,
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'cancelled')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
 
--- 创建索引
-CREATE INDEX idx_expert_tasks_status ON expert_tasks(status);
-CREATE INDEX idx_expert_tasks_deadline ON expert_tasks(deadline);
-```
 
 #### 权限设置
 ```sql
@@ -454,7 +414,7 @@ GRANT ALL PRIVILEGES ON users TO authenticated;
 GRANT ALL PRIVILEGES ON skin_profiles TO authenticated;
 GRANT ALL PRIVILEGES ON detection_records TO authenticated;
 GRANT ALL PRIVILEGES ON diary_entries TO authenticated;
-GRANT ALL PRIVILEGES ON expert_tasks TO authenticated;
+
 GRANT ALL PRIVILEGES ON products TO authenticated;
 GRANT ALL PRIVILEGES ON product_ingredients TO authenticated;
 ```
@@ -467,8 +427,5 @@ INSERT INTO products (name, category, description, suitable_skin_types, price) V
 ('谷雨修护精华', '精华', '深层修护，改善肌肤屏障', '["sensitive", "dry"]', 298.00),
 ('谷雨清洁面膜', '面膜', '深层清洁，收缩毛孔', '["oily", "combination"]', 89.00);
 
--- 插入示例任务数据
-INSERT INTO expert_tasks (title, description, task_type, points_reward, max_participants, deadline) VALUES
-('新品精华试用体验', '试用谷雨新款精华产品，记录使用感受', 'product_trial', 500, 20, '2024-03-31'),
-('护肤习惯调研', '参与护肤习惯问卷调研', 'survey', 100, 100, '2024-02-29');
+
 ```

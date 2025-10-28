@@ -1,6 +1,6 @@
 // pages/report/report.js
 const app = getApp()
-const { request } = require('../../utils/request')
+const request = require('../../utils/request')
 const { showToast, showLoading, hideLoading, formatDate } = require('../../utils/utils')
 
 Page({
@@ -274,34 +274,27 @@ Page({
     })
   },
 
-  // 咨询专家
-  consultExpert() {
-    wx.navigateTo({
-      url: `/pages/consultation/consultation?detectionId=${this.data.detectionId}`
-    })
-  },
+// 返回首页
+goHome() {
+  wx.switchTab({
+    url: '/pages/index/index'
+  })
+},
 
-  // 返回首页
-  goHome() {
-    wx.switchTab({
-      url: '/pages/index/index'
-    })
-  },
-
-  // 分享给朋友
-  onShareAppMessage() {
-    return {
-      title: `我的皮肤检测得分${this.data.reportData.overallScore}分，快来测测你的吧！`,
-      path: `/pages/detection/detection`,
-      imageUrl: '/images/share-detection.jpg'
-    }
-  },
-
-  // 分享到朋友圈
-  onShareTimeline() {
-    return {
-      title: `皮肤检测得分${this.data.reportData.overallScore}分 - Skin-care护肤助手`,
-      imageUrl: '/images/share-detection.jpg'
-    }
+// 分享给朋友
+onShareAppMessage() {
+  return {
+    title: `我的皮肤检测得分${this.data.reportData.overallScore}分，快来测测你的吧！`,
+    path: `/pages/detection/detection`,
+    imageUrl: '/images/share-detection.jpg'
   }
+},
+
+// 分享到朋友圈
+onShareTimeline() {
+  return {
+    title: `皮肤检测得分${this.data.reportData.overallScore}分 - Skin-care护肤助手`,
+    imageUrl: '/images/share-detection.jpg'
+  }
+}
 })

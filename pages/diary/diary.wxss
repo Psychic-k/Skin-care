@@ -1,6 +1,6 @@
 /* pages/diary/diary.wxss */
 .diary-container {
-  background-color: #f5f5f5;
+  background-color: #ffffff;
   min-height: 100vh;
 }
 
@@ -442,11 +442,14 @@
 
 .add-diary-modal, .product-modal {
   width: 90%;
-  max-height: 80%;
+  max-width: 600rpx;
+  max-height: 80vh;
   background: white;
   border-radius: 20rpx;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .modal-header {
@@ -476,10 +479,14 @@
 .modal-content {
   flex: 1;
   padding: 30rpx;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .form-item {
   margin-bottom: 40rpx;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-label {
@@ -490,10 +497,13 @@
 }
 
 .date-picker {
+  width: 100%;
   padding: 24rpx;
   background: #f8f8f8;
   border-radius: 16rpx;
   color: #333;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .weather-options {
@@ -523,16 +533,61 @@
   align-items: center;
   justify-content: space-between;
   padding: 24rpx;
-  background: #f8f8f8;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2rpx solid #e9ecef;
   border-radius: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.products-selector::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(33, 150, 243, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.products-selector:active::before {
+  opacity: 1;
+}
+
+.products-selector:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
 }
 
 .selector-text {
   color: #333;
+  font-size: 28rpx;
+  font-weight: 500;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.selector-text.has-products {
+  color: #4CAF50;
+  font-weight: 600;
 }
 
 .selector-arrow {
   color: #999;
+  font-size: 32rpx;
+  font-weight: bold;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.products-selector:active .selector-arrow {
+  transform: rotate(90deg);
 }
 
 .photos-section {
@@ -617,24 +672,74 @@
 .product-list {
   flex: 1;
   padding: 30rpx;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.product-search {
+  padding: 0 30rpx 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.search-input {
+  width: 100%;
+  padding: 20rpx 24rpx;
+  background: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  border-radius: 25rpx;
+  font-size: 28rpx;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #4CAF50;
+  background: #ffffff;
 }
 
 .product-item {
   display: flex;
   align-items: center;
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  background: #ffffff;
+  border: 2rpx solid #f0f0f0;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.product-item:last-child {
-  border-bottom: none;
+.product-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(33, 150, 243, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.product-item:active::before {
+  opacity: 1;
+}
+
+.product-item:active {
+  transform: scale(0.98);
 }
 
 .product-item.selected {
-  background: #E8F5E8;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
+  background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 100%);
+  border-color: #4CAF50;
+  box-shadow: 0 4rpx 16rpx rgba(76, 175, 80, 0.2);
+}
+
+.product-item.selected::before {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(139, 195, 74, 0.1) 100%);
+  opacity: 1;
 }
 
 .product-image {
@@ -642,10 +747,15 @@
   height: 80rpx;
   border-radius: 12rpx;
   margin-right: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .product-info {
   flex: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .product-name {
@@ -653,6 +763,12 @@
   font-size: 28rpx;
   color: #333;
   margin-bottom: 8rpx;
+  font-weight: 500;
+}
+
+.product-item.selected .product-name {
+  color: #2E7D32;
+  font-weight: 600;
 }
 
 .product-brand {
@@ -660,13 +776,99 @@
   color: #666;
 }
 
+.product-item.selected .product-brand {
+  color: #4CAF50;
+}
+
 .product-check {
-  width: 40rpx;
-  height: 40rpx;
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #4CAF50;
-  font-size: 24rpx;
+  font-size: 28rpx;
   font-weight: bold;
+  border: 2rpx solid #4CAF50;
+  border-radius: 24rpx;
+  background: #ffffff;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.product-item:not(.selected) .product-check {
+  border-color: #e0e0e0;
+  color: transparent;
+}
+
+.product-item.selected .product-check {
+  background: #4CAF50;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.product-stats {
+  padding: 20rpx 30rpx;
+  background: #f8f9fa;
+  border-top: 1rpx solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selected-count {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.clear-all-btn {
+  padding: 12rpx 24rpx;
+  background: #ffffff;
+  border: 2rpx solid #e9ecef;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.clear-all-btn:active {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.selector-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.selected-products-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.product-tag {
+  padding: 6rpx 12rpx;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1rpx solid rgba(76, 175, 80, 0.3);
+  border-radius: 12rpx;
+  font-size: 22rpx;
+  color: #4CAF50;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more-indicator {
+  padding: 6rpx 12rpx;
+  background: rgba(158, 158, 158, 0.1);
+  border: 1rpx solid rgba(158, 158, 158, 0.3);
+  border-radius: 12rpx;
+  font-size: 22rpx;
+  color: #9e9e9e;
 }

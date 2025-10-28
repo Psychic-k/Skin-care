@@ -1,8 +1,7 @@
 {
-  "navigationBarTitleText": "体验官中心",
+  "navigationBarTitleText": "产品数据上传",
   "navigationBarBackgroundColor": "#4CAF50",
   "navigationBarTextStyle": "white",
   "backgroundColor": "#f5f5f5",
-  "enablePullDownRefresh": true,
-  "onReachBottomDistance": 50
+  "enablePullDownRefresh": false
 }

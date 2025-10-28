@@ -33,14 +33,22 @@ App({
 
   // 初始化云开发
   initCloud() {
-    if (config.cloudEnvId) {
+    // 检查云开发能力
+    if (!wx.cloud) {
+      console.error('请使用 2.2.3 或以上的基础库以使用云能力');
+      return;
+    }
+
+    try {
       wx.cloud.init({
-        env: config.cloudEnvId,
+        env: config.cloudEnvId, // 云开发环境ID，需要在微信开发者工具中配置
         traceUser: true
       });
-      console.log('云开发初始化成功，环境ID:', config.cloudEnvId);
-    } else {
-      console.warn('未配置云开发环境ID');
+      console.log('云开发初始化成功');
+      this.globalData.cloudEnabled = true;
+    } catch (error) {
+      console.error('云开发初始化失败:', error);
+      this.globalData.cloudEnabled = false;
     }
   },
 
@@ -61,15 +69,14 @@ App({
 
     // 检查登录状态
     if (Storage.isLoggedIn()) {
-      Auth.checkLoginStatus()
-        .then(user => {
-          this.globalData.userInfo = user;
-          console.log('用户已登录:', user);
-        })
-        .catch(err => {
-          console.log('登录状态失效:', err);
-          Storage.logout();
-        });
+      const userInfo = Storage.getUserInfo();
+      if (userInfo && userInfo.id) {
+        this.globalData.userInfo = userInfo;
+        console.log('用户已登录:', userInfo);
+      } else {
+        console.log('用户信息不完整，清除登录状态');
+        Storage.logout();
+      }
     }
 
     // 初始化全局数据
@@ -112,19 +119,23 @@ App({
     systemInfo: null,
     skinProfile: null,
     detectionHistory: [],
-    config: config
+    config: config,
+    cloudEnabled: false
   },
 
   // 全局方法
   // 设置用户信息
   setUserInfo(userInfo) {
     this.globalData.userInfo = userInfo;
-    Storage.setUserInfo(userInfo);
+    Storage.saveUserInfo(userInfo);
   },
 
   // 获取用户信息
   getUserInfo() {
-    return this.globalData.userInfo || Storage.getUserInfo();
+    if (!this.globalData.userInfo) {
+      this.globalData.userInfo = Storage.getUserInfo();
+    }
+    return this.globalData.userInfo;
   },
 
   // 设置皮肤档案
@@ -147,11 +158,7 @@ App({
   // 获取检测历史
   getDetectionHistory() {
     return this.globalData.detectionHistory || Storage.getDetectionHistory();
-  },
-
-  // 检查是否为体验官
-  isExpert() {
-    const userInfo = this.getUserInfo();
-    return userInfo && userInfo.role === 'expert';
   }
+
+
 })

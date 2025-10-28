@@ -1,6 +1,6 @@
 // pages/detection/detection.js
 const app = getApp()
-const { request } = require('../../utils/request')
+const request = require('../../utils/request')
 const { showToast, showLoading, hideLoading } = require('../../utils/utils')
 
 Page({
@@ -13,11 +13,18 @@ Page({
     cameraPosition: 'front', // front: 前置, back: 后置
     flash: 'off',
     
+    // 滚动状态
+    scrollTop: 0,
+    scrollDirection: 'up',
+    lastScrollTop: 0,
+    isScrolling: false,
+    
     // 检测类型
     detectionTypes: [
       { id: 'face', name: '面部检测', icon: '👤', desc: '检测肤质、毛孔、痘痘等' },
       { id: 'eye', name: '眼部检测', icon: '👁️', desc: '检测黑眼圈、细纹、浮肿' },
-      { id: 'lip', name: '唇部检测', icon: '👄', desc: '检测唇色、干燥度、纹理' }
+      { id: 'lip', name: '唇部检测', icon: '👄', desc: '检测唇色、干燥度、纹理' },
+      { id: 'more', name: '更多检测', icon: '📊', desc: '敬请期待更多功能' }
     ],
     selectedType: 'face',
     
@@ -53,6 +60,32 @@ Page({
     this.checkCameraAuth()
   },
 
+  // 页面滚动监听
+  onPageScroll(e) {
+    const scrollTop = e.scrollTop
+    const scrollDirection = scrollTop > (this.data.lastScrollTop || 0) ? 'down' : 'up'
+    
+    // 更新滚动状态
+    this.setData({
+      scrollTop: scrollTop,
+      scrollDirection: scrollDirection,
+      lastScrollTop: scrollTop,
+      isScrolling: true
+    })
+    
+    // 清除之前的定时器
+    if (this.scrollTimer) {
+      clearTimeout(this.scrollTimer)
+    }
+    
+    // 设置滚动结束检测
+    this.scrollTimer = setTimeout(() => {
+      this.setData({
+        isScrolling: false
+      })
+    }, 150)
+  },
+
   // 获取用户信息
   getUserInfo() {
     const userInfo = app.globalData.userInfo
@@ -67,10 +100,7 @@ Page({
       const userInfo = app.globalData.userInfo
       if (!userInfo) return
 
-      const res = await request({
-        url: `/api/detection/history/${userInfo.id}`,
-        method: 'GET'
-      })
+      const res = await request.get(`/api/detection/history/${userInfo.id}`)
 
       if (res.success) {
         this.setData({
@@ -113,6 +143,13 @@ Page({
   // 选择检测类型
   selectDetectionType(e) {
     const type = e.currentTarget.dataset.type
+    
+    // 如果选择的是"更多检测"，显示提示
+    if (type === 'more') {
+      showToast('更多检测功能即将上线，敬请期待！')
+      return
+    }
+    
     this.setData({
       selectedType: type
     })
@@ -191,14 +228,10 @@ Page({
       const base64 = await this.imageToBase64(imagePath)
 
       // 调用AI检测接口
-      const res = await request({
-        url: '/api/detection/analyze',
-        method: 'POST',
-        data: {
-          image: base64,
-          userId: this.data.userInfo.id,
-          detectionType: this.data.selectedType
-        }
+      const res = await request.post('/api/detection/analyze', {
+        image: base64,
+        userId: this.data.userInfo.id,
+        detectionType: this.data.selectedType
       })
 
       hideLoading()
