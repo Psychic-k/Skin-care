@@ -103,7 +103,7 @@ Page({
     return {
       title: `${product.name} - 护肤产品详情`,
       path: `/pages/product-detail/product-detail?id=${product.id}`,
-      imageUrl: product.images && product.images[0] ? product.images[0] : ''
+      imageUrl: (product.images && product.images[0]) ? product.images[0] : (product.image || '')
     };
   },
 
@@ -144,15 +144,32 @@ Page({
       // 计算评价统计
       const reviewStats = this.calculateReviewStats(reviews.list);
       
+      const normalizeImagePath = (img) => {
+        if (!img) return '';
+        return img.replace(/^\.\//, '/').replace(/^images\//, '/images/');
+      };
+
+      const primaryImage = product.image || (Array.isArray(product.images) ? product.images[0] : '');
+      const normalizedPrimary = normalizeImagePath(primaryImage);
+      const normalizedImages = (Array.isArray(product.images) && product.images.length > 0)
+        ? product.images.map(normalizeImagePath)
+        : (normalizedPrimary ? [normalizedPrimary] : ['/images/products/谷雨-淡斑瓶.png']);
+
+      const normalizedProduct = {
+        ...product,
+        image: normalizedPrimary || '/images/products/谷雨-淡斑瓶.png',
+        images: normalizedImages
+      };
+
       this.setData({
-        product,
+        product: normalizedProduct,
         ingredients,
         ingredientStats,
         reviews: reviews.list,
         reviewStats,
         hasMoreReviews: reviews.hasMore,
         relatedProducts,
-        previewImages: product.images || []
+        previewImages: normalizedImages
       });
       
     } catch (error) {
@@ -176,10 +193,9 @@ Page({
           brand: 'SK-II',
           englishName: 'Facial Treatment Essence',
           images: [
-            '/images/products/skii-essence-1.png',
-            '/images/products/skii-essence-2.png',
-            '/images/products/skii-essence-3.png',
-            '/images/products/skii-essence-4.png'
+            '/images/products/谷雨-淡斑瓶.png',
+            '/images/products/光感美白系列-第三代美白奶罐.png',
+            '/images/products/氨基酸洁面系列-氨基酸洁面乳.png'
           ],
           price: 1299,
           originalPrice: 1599,
@@ -691,6 +707,31 @@ Page({
     wx.showToast({
       title: '客服功能开发中',
       icon: 'none'
-    });
+    })
+  },
+
+  // 图片加载错误处理
+  onImageError(e) {
+    const { index, type } = e.currentTarget.dataset
+    console.warn('图片加载失败:', e.detail)
+    
+    // 设置默认占位图
+    const defaultImage = '/images/placeholder-product.png'
+    
+    if (type === 'product-detail' && typeof index !== 'undefined') {
+      const updatePath = `product.images[${index}]`
+      this.setData({
+        [updatePath]: defaultImage
+      })
+    }
+    
+    // 显示用户友好的提示（仅在开发环境显示）
+    if (wx.getSystemInfoSync().platform === 'devtools') {
+      wx.showToast({
+        title: '图片加载失败，已使用默认图片',
+        icon: 'none',
+        duration: 1500
+      })
+    }
   }
 });

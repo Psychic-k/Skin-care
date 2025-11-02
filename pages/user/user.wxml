@@ -9,7 +9,7 @@
       </view>
       
       <view class="user-info">
-        <view class="user-name">{{userInfo.nickName || '未登录'}}</view>
+        <view class="user-name" bindtap="{{(userInfo.nickName === '未登录' || !userInfo.openid) ? 'onLoginTap' : ''}}">{{userInfo.nickName || '未登录'}}</view>
         <view class="user-level">
           <text class="level-icon">⭐</text>
           <view class="user-stats">

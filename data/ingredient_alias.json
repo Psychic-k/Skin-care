@@ -1,0 +1,187 @@
+{
+  "aliases": {
+    "透明质酸": [
+      "玻尿酸",
+      "透明质酸钠",
+      "水解透明质酸",
+      "Hyaluronic Acid",
+      "Sodium Hyaluronate",
+      "Hydrolyzed Hyaluronic Acid"
+    ],
+    "烟酰胺": [
+      "维生素B3",
+      "Niacinamide",
+      "Nicotinamide",
+      "维他命B3"
+    ],
+    "水杨酸": [
+      "BHA",
+      "Salicylic Acid",
+      "β-羟基酸",
+      "柳酸"
+    ],
+    "维生素C": [
+      "抗坏血酸",
+      "Vitamin C",
+      "Ascorbic Acid",
+      "L-抗坏血酸",
+      "维他命C",
+      "VC"
+    ],
+    "视黄醇": [
+      "维生素A",
+      "Retinol",
+      "Vitamin A",
+      "维他命A",
+      "VA"
+    ],
+    "神经酰胺": [
+      "分子钉",
+      "Ceramide",
+      "神经酰胺NP",
+      "Ceramide NP"
+    ],
+    "甘油": [
+      "丙三醇",
+      "Glycerin",
+      "Glycerol"
+    ],
+    "角鲨烷": [
+      "角鲨烯",
+      "Squalane",
+      "Squalene"
+    ],
+    "泛醇": [
+      "维生素B5",
+      "Panthenol",
+      "Pro-Vitamin B5",
+      "B5泛醇",
+      "维他命B5"
+    ],
+    "凝血酸": [
+      "氨甲环酸",
+      "Tranexamic Acid"
+    ],
+    "光甘草定": [
+      "甘草提取物",
+      "Glabridin",
+      "Licorice Extract"
+    ],
+    "山参提取物": [
+      "人参提取物",
+      "Ginseng Extract",
+      "Panax Ginseng Extract"
+    ],
+    "胶原蛋白肽": [
+      "胶原蛋白",
+      "Collagen Peptide",
+      "Collagen",
+      "水解胶原蛋白"
+    ],
+    "椰油酰甘氨酸钾": [
+      "氨基酸表活",
+      "Potassium Cocoyl Glycinate",
+      "椰油酰甘氨酸"
+    ],
+    "白千松露提取物": [
+      "白千松露菌丝体提取物",
+      "White Truffle Extract",
+      "White Truffle Mycelium Extract"
+    ],
+    "雪绒花提取物": [
+      "积雪绒花提取物",
+      "Edelweiss Extract",
+      "Leontopodium Alpinum Extract"
+    ],
+    "茶树精油": [
+      "茶树油",
+      "Tea Tree Oil",
+      "Melaleuca Alternifolia Oil"
+    ],
+    "乳木果油": [
+      "乳木果脂",
+      "Shea Butter",
+      "Butyrospermum Parkii Butter"
+    ],
+    "霍霍巴籽油": [
+      "荷荷巴油",
+      "Jojoba Seed Oil",
+      "Simmondsia Chinensis Seed Oil"
+    ],
+    "甘草酸二钾": [
+      "甘草酸钾",
+      "Dipotassium Glycyrrhizate",
+      "Potassium Glycyrrhizinate"
+    ],
+    "PCA钠": [
+      "吡咯烷酮羧酸钠",
+      "Sodium PCA",
+      "Sodium Pyrrolidone Carboxylic Acid"
+    ]
+  },
+  "categories": {
+    "active": [
+      "透明质酸",
+      "烟酰胺",
+      "水杨酸",
+      "维生素C",
+      "视黄醇",
+      "光甘草定",
+      "凝血酸",
+      "山参提取物",
+      "胶原蛋白肽",
+      "白千松露提取物",
+      "雪绒花提取物"
+    ],
+    "moisturizer": [
+      "甘油",
+      "角鲨烷",
+      "透明质酸",
+      "神经酰胺",
+      "乳木果油",
+      "霍霍巴籽油"
+    ],
+    "surfactant": [
+      "椰油酰甘氨酸钾",
+      "氨基酸表活复配体系",
+      "氨基酸表活"
+    ],
+    "soothing": [
+      "泛醇",
+      "甘草酸二钾",
+      "雪绒花提取物",
+      "PCA钠"
+    ],
+    "essential_oil": [
+      "茶树精油"
+    ]
+  },
+  "safety_levels": {
+    "safe": [
+      "透明质酸",
+      "烟酰胺",
+      "甘油",
+      "角鲨烷",
+      "神经酰胺",
+      "泛醇",
+      "光甘草定",
+      "山参提取物",
+      "胶原蛋白肽",
+      "椰油酰甘氨酸钾",
+      "白千松露提取物",
+      "雪绒花提取物",
+      "乳木果油",
+      "霍霍巴籽油",
+      "甘草酸二钾",
+      "PCA钠"
+    ],
+    "caution": [
+      "水杨酸",
+      "维生素C",
+      "视黄醇",
+      "凝血酸",
+      "茶树精油"
+    ],
+    "danger": []
+  }
+}

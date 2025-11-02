@@ -1,0 +1,2 @@
+
+78b2e13ec60497185b9e0e2cf8d304820782d793	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/@babel%2fruntime","integrity":null,"time":1761825638239,"size":"262","metadata":{"time":1761825638238,"url":"http://registry.npm.taobao.org/@babel%2fruntime","reqHeaders":{"accept":"application/json"},"resHeaders":{"content-type":"text/html","date":"Thu, 30 Oct 2025 12:00:38 GMT","location":"https://registry.npmmirror.com/@babel%2fruntime"},"options":{"compress":true},"status":301}}

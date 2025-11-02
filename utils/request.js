@@ -1,11 +1,15 @@
 // 网络请求工具类
 const config = require('./config.js');
+const { CacheStorage } = require('./storage.js');
 
 class Request {
   constructor() {
     this.baseUrl = config.apiBaseUrl;
     this.timeout = 10000;
     this.useCloud = config.cloudEnvId ? true : false;
+    this.maxRetries = 3; // 最大重试次数
+    this.retryDelay = 1000; // 重试延迟（毫秒）
+    this.requestQueue = new Map(); // 请求队列，用于防抖动
   }
 
   // 获取用户token
@@ -13,22 +17,111 @@ class Request {
     return wx.getStorageSync(config.storageKeys.userToken) || '';
   }
 
-  // 云函数调用方法
-  callCloudFunction(name, data = {}) {
+  // 延迟函数
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // 生成请求唯一标识
+  generateRequestId(name, data) {
+    return `${name}_${JSON.stringify(data)}`;
+  }
+
+  // 防抖动处理
+  debounceRequest(requestId, requestFn, delay = 300) {
+    // 如果已有相同请求在队列中，清除之前的
+    if (this.requestQueue.has(requestId)) {
+      clearTimeout(this.requestQueue.get(requestId).timer);
+    }
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(async () => {
+        this.requestQueue.delete(requestId);
+        try {
+          const result = await requestFn();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      }, delay);
+
+      this.requestQueue.set(requestId, { timer, resolve, reject });
+    });
+  }
+
+  // 云函数调用方法（带重试机制）
+  callCloudFunction(name, data = {}, options = {}) {
+    const requestId = this.generateRequestId(name, data);
+    
+    // 如果启用防抖动，使用防抖动处理
+    if (options.debounce !== false) {
+      return this.debounceRequest(requestId, () => this._callCloudFunctionWithRetry(name, data, options));
+    }
+    
+    return this._callCloudFunctionWithRetry(name, data, options);
+  }
+
+  // 带重试的云函数调用
+  async _callCloudFunctionWithRetry(name, data = {}, options = {}) {
+    const { maxRetries = this.maxRetries, useCache = true, cacheTime = 5 * 60 * 1000 } = options;
+    
+    // 尝试从缓存获取数据
+    if (useCache) {
+      const cacheKey = `cloudFunction_${name}_${JSON.stringify(data)}`;
+      const cachedData = CacheStorage.getCache(cacheKey);
+      if (cachedData) {
+        console.log(`从缓存获取云函数 ${name} 数据`);
+        return cachedData;
+      }
+    }
+
+    let lastError = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`调用云函数: ${name} (第${attempt}次尝试)`, data);
+        
+        const result = await this._callCloudFunctionOnce(name, data);
+        
+        // 缓存成功的结果
+        if (useCache && result.code === 0) {
+          const cacheKey = `cloudFunction_${name}_${JSON.stringify(data)}`;
+          CacheStorage.setCache(cacheKey, result, cacheTime);
+        }
+        
+        return result;
+      } catch (error) {
+        lastError = error;
+        console.warn(`云函数 ${name} 第${attempt}次调用失败:`, error);
+        
+        // 如果不是最后一次尝试，等待后重试
+        if (attempt < maxRetries) {
+          const delay = this.retryDelay * Math.pow(2, attempt - 1); // 指数退避
+          console.log(`等待 ${delay}ms 后重试...`);
+          await this.delay(delay);
+        }
+      }
+    }
+    
+    // 所有重试都失败，尝试降级处理
+    console.error(`云函数 ${name} 所有重试都失败，尝试降级处理`);
+    return this.handleCloudFunctionFallback(name, data, lastError);
+  }
+
+  // 单次云函数调用
+  _callCloudFunctionOnce(name, data = {}) {
     return new Promise((resolve, reject) => {
       // 检查云开发是否可用
       const app = getApp();
       if (!app.globalData.cloudEnabled) {
-        console.warn('云开发不可用，尝试降级处理');
         reject({ code: -1, message: '云开发服务不可用' });
         return;
       }
-
-      console.log(`调用云函数: ${name}`, data);
       
       wx.cloud.callFunction({
         name,
         data,
+        timeout: this.timeout,
         success: (res) => {
           console.log(`云函数 ${name} 调用成功:`, res);
           if (res.result && res.result.code === 0) {
@@ -36,29 +129,185 @@ class Request {
           } else {
             const error = res.result || { code: -1, message: '云函数调用失败' };
             console.error(`云函数 ${name} 返回错误:`, error);
-            this.handleError(error, name);
             reject(error);
           }
         },
         fail: (err) => {
           console.error(`云函数 ${name} 调用失败:`, err);
-          this.handleNetworkError(err, name);
           reject(err);
         }
       });
     });
   }
 
-  // 通用请求方法
-  request(options) {
+  // 云函数降级处理
+  handleCloudFunctionFallback(name, data, error) {
+    console.log(`执行云函数 ${name} 降级处理`);
+    
+    // 尝试从本地缓存获取历史数据
+    const cacheKey = `cloudFunction_${name}_fallback`;
+    const fallbackData = CacheStorage.getCache(cacheKey);
+    
+    if (fallbackData) {
+      console.log(`使用云函数 ${name} 的降级缓存数据`);
+      return {
+        code: 0,
+        data: fallbackData,
+        message: '使用缓存数据',
+        fromCache: true
+      };
+    }
+    
+    // 根据不同的云函数提供不同的降级策略
+    switch (name) {
+      case 'diaryList':
+        return {
+          code: 0,
+          data: { diaries: [], total: 0 },
+          message: '暂无数据',
+          fromFallback: true
+        };
+      case 'diaryStats':
+        return {
+          code: 0,
+          data: this.getDefaultStatsData(),
+          message: '使用默认统计数据',
+          fromFallback: true
+        };
+      case 'getUserProducts':
+        return {
+          code: 0,
+          data: { products: this.getDefaultProducts() },
+          message: '使用默认产品数据',
+          fromFallback: true
+        };
+      default:
+        // 抛出原始错误
+        throw error;
+    }
+  }
+
+  // 获取默认统计数据
+  getDefaultStatsData() {
+    return {
+      basic: {
+        totalCount: 0,
+        thisMonthCount: 0,
+        consecutiveDays: 0
+      },
+      skinCondition: {
+        moisture: 5,
+        oiliness: 5,
+        sensitivity: 5,
+        breakouts: 5,
+        overall: 5
+      },
+      mood: {
+        excellent: 0,
+        good: 0,
+        neutral: 0,
+        bad: 0,
+        terrible: 0
+      },
+      topProducts: [],
+      last7Days: [],
+      summary: {
+        completionRate: 0
+      }
+    };
+  }
+
+  // 获取默认产品数据
+  getDefaultProducts() {
+    return [
+      {
+        id: 'default_1',
+        name: '温和洁面乳',
+        brand: '默认品牌',
+        image: '/images/placeholder/placeholder-product.png',
+        category: 'cleanser'
+      },
+      {
+        id: 'default_2',
+        name: '保湿爽肤水',
+        brand: '默认品牌',
+        image: '/images/placeholder/placeholder-product.png',
+        category: 'toner'
+      }
+    ];
+  }
+
+  // 通用请求方法（带重试机制）
+  async request(options) {
+    const { maxRetries = this.maxRetries, useCache = true, cacheTime = 5 * 60 * 1000 } = options;
+    
     // 如果使用云开发，优先使用云函数
     if (this.useCloud) {
       const { url, method = 'GET', data = {} } = options;
       const functionName = this.urlToFunctionName(url, method);
-      return this.callCloudFunction(functionName, data);
+      return this.callCloudFunction(functionName, data, { maxRetries, useCache, cacheTime });
     }
 
     // 传统HTTP请求作为备选方案
+    const requestId = this.generateRequestId(options.url, options.data);
+    
+    // 防抖动处理
+    if (options.debounce !== false) {
+      return this.debounceRequest(requestId, () => this._requestWithRetry(options));
+    }
+    
+    return this._requestWithRetry(options);
+  }
+
+  // 带重试的HTTP请求
+  async _requestWithRetry(options) {
+    const { maxRetries = this.maxRetries, useCache = true, cacheTime = 5 * 60 * 1000 } = options;
+    
+    // 尝试从缓存获取数据
+    if (useCache && options.method === 'GET') {
+      const cacheKey = `http_${options.url}_${JSON.stringify(options.data)}`;
+      const cachedData = CacheStorage.getCache(cacheKey);
+      if (cachedData) {
+        console.log(`从缓存获取HTTP请求 ${options.url} 数据`);
+        return cachedData;
+      }
+    }
+
+    let lastError = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`HTTP请求: ${options.url} (第${attempt}次尝试)`);
+        
+        const result = await this._requestOnce(options);
+        
+        // 缓存成功的GET请求结果
+        if (useCache && options.method === 'GET' && result.code === 0) {
+          const cacheKey = `http_${options.url}_${JSON.stringify(options.data)}`;
+          CacheStorage.setCache(cacheKey, result, cacheTime);
+        }
+        
+        return result;
+      } catch (error) {
+        lastError = error;
+        console.warn(`HTTP请求 ${options.url} 第${attempt}次调用失败:`, error);
+        
+        // 如果不是最后一次尝试，等待后重试
+        if (attempt < maxRetries) {
+          const delay = this.retryDelay * Math.pow(2, attempt - 1); // 指数退避
+          console.log(`等待 ${delay}ms 后重试...`);
+          await this.delay(delay);
+        }
+      }
+    }
+    
+    // 所有重试都失败，抛出错误
+    console.error(`HTTP请求 ${options.url} 所有重试都失败`);
+    throw lastError;
+  }
+
+  // 单次HTTP请求
+  _requestOnce(options) {
     return new Promise((resolve, reject) => {
       const { url, method = 'GET', data = {}, header = {} } = options;
       
@@ -82,17 +331,17 @@ class Request {
             if (res.data.code === 0) {
               resolve(res.data);
             } else {
-              this.handleError(res.data);
+              this.handleError(res.data, `HTTP ${method} ${url}`);
               reject(res.data);
             }
           } else {
-            this.handleHttpError(res.statusCode);
-            reject(res);
+            const error = this.handleHttpError(res);
+            reject(error);
           }
         },
         fail: (err) => {
-          this.handleNetworkError(err);
-          reject(err);
+          const error = this.handleNetworkError(err, `HTTP ${method} ${url}`);
+          reject(error);
         }
       });
     });
@@ -152,6 +401,16 @@ class Request {
     normalizedUrl = normalizedUrl.replace(/\/\d+$/, ''); // 移除数字ID
     normalizedUrl = normalizedUrl.replace(/\/[a-zA-Z0-9_-]{8,}$/, ''); // 移除其他ID格式
     
+    // 针对带ID的日记资源，依据HTTP方法选择云函数
+    if ((normalizedUrl === 'api/diary' || normalizedUrl === 'diary')) {
+      if (method === 'PUT') {
+        return 'diaryUpdate'
+      }
+      if (method === 'DELETE') {
+        return 'diaryDelete'
+      }
+    }
+
     // 优先使用精确匹配
     if (apiMappings[normalizedUrl]) {
       console.log('URL映射调试:', {

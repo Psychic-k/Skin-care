@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>肌肤状态和心情状态样式预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 375px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        /* 肌肤状态样式 - 紧凑版本 */
+        .skin-condition-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .skin-condition-option {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            border: 1px solid #eee;
+            border-radius: 15px;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .skin-condition-option:active {
+            transform: scale(0.95);
+        }
+
+        .condition-icon {
+            font-size: 12px;
+        }
+
+        .condition-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .condition-level {
+            font-size: 11px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* 心情状态样式 - 紧凑版本 */
+        .mood-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mood-option {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            border: 1px solid #eee;
+            border-radius: 15px;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mood-option.selected {
+            border-color: #4CAF50;
+            background: #E8F5E8;
+            color: #4CAF50;
+        }
+
+        .mood-icon {
+            font-size: 12px;
+        }
+
+        .mood-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>护肤日记样式预览</h1>
+        </div>
+        <div class="content">
+            <div class="section-title">肌肤状态</div>
+            <div class="skin-condition-options">
+                <div class="skin-condition-option">
+                    <span class="condition-icon">💧</span>
+                    <span class="condition-name">水分</span>
+                    <span class="condition-level">4/5</span>
+                </div>
+                <div class="skin-condition-option">
+                    <span class="condition-icon">🛢️</span>
+                    <span class="condition-name">出油</span>
+                    <span class="condition-level">3/5</span>
+                </div>
+                <div class="skin-condition-option">
+                    <span class="condition-icon">⚠️</span>
+                    <span class="condition-name">敏感</span>
+                    <span class="condition-level">2/5</span>
+                </div>
+                <div class="skin-condition-option">
+                    <span class="condition-icon">🔴</span>
+                    <span class="condition-name">痘痘</span>
+                    <span class="condition-level">1/5</span>
+                </div>
+                <div class="skin-condition-option">
+                    <span class="condition-icon">✨</span>
+                    <span class="condition-name">整体</span>
+                    <span class="condition-level">4/5</span>
+                </div>
+            </div>
+
+            <div class="section-title">心情状态</div>
+            <div class="mood-options">
+                <div class="mood-option selected">
+                    <span class="mood-icon">😊</span>
+                    <span class="mood-name">极好</span>
+                </div>
+                <div class="mood-option">
+                    <span class="mood-icon">🙂</span>
+                    <span class="mood-name">不错</span>
+                </div>
+                <div class="mood-option">
+                    <span class="mood-icon">😐</span>
+                    <span class="mood-name">一般</span>
+                </div>
+                <div class="mood-option">
+                    <span class="mood-icon">😞</span>
+                    <span class="mood-name">不好</span>
+                </div>
+                <div class="mood-option">
+                    <span class="mood-icon">😢</span>
+                    <span class="mood-name">糟糕</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectMood(element) {
+            // 移除所有选中状态
+            document.querySelectorAll('.mood-weather-option').forEach(option => {
+                option.classList.remove('selected');
+                option.querySelector('.mood-selection-ring').classList.remove('active');
+            });
+            
+            // 添加选中状态到当前元素
+            element.classList.add('selected');
+            element.querySelector('.mood-selection-ring').classList.add('active');
+        }
+    </script>
+</body>
+</html>

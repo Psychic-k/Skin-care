@@ -2,12 +2,27 @@
 <view class="container">
   <!-- 页面头部 -->
   <view class="header">
-    <view class="header-title">产品数据管理</view>
-    <view class="header-subtitle">共 {{totalCount}} 个产品</view>
+    <view class="header-title">管理后台</view>
+    <view class="header-subtitle">{{currentTab === 'products' ? '共 ' + totalCount + ' 个产品' : '共 ' + requestsCount + ' 个催更请求'}}</view>
   </view>
 
-  <!-- 统计卡片 -->
-  <view class="statistics-cards">
+  <!-- 标签页切换 -->
+  <view class="tab-bar">
+    <view class="tab-item {{currentTab === 'products' ? 'active' : ''}}" bindtap="switchTab" data-tab="products">
+      <view class="tab-icon">📦</view>
+      <view class="tab-text">产品管理</view>
+    </view>
+    <view class="tab-item {{currentTab === 'requests' ? 'active' : ''}}" bindtap="switchTab" data-tab="requests">
+      <view class="tab-icon">📝</view>
+      <view class="tab-text">催更请求</view>
+      <view wx:if="{{pendingRequestsCount > 0}}" class="tab-badge">{{pendingRequestsCount}}</view>
+    </view>
+  </view>
+
+  <!-- 产品管理内容 -->
+  <view wx:if="{{currentTab === 'products'}}" class="products-content">
+    <!-- 统计卡片 -->
+    <view class="statistics-cards">
     <view class="stat-card">
       <view class="stat-number">{{statistics.totalProducts}}</view>
       <view class="stat-label">总产品数</view>
@@ -113,7 +128,7 @@
 
   <!-- 产品列表 -->
   <view class="product-list">
-    <view wx:if="{{loading && filteredProducts.length === 0}}" class="loading-state">
+    <view wx:if="{{listLoading && filteredProducts.length === 0}}" class="loading-state">
       <view class="loading-icon">⏳</view>
       <view class="loading-text">加载中...</view>
     </view>
@@ -195,12 +210,301 @@
   </view>
 
   <!-- 加载更多 -->
-  <view wx:if="{{hasMore && !loading}}" class="load-more">
+  <view wx:if="{{hasMore && !listLoading}}" class="load-more">
     <button class="load-more-btn" bindtap="loadMoreProducts">加载更多</button>
   </view>
 
-  <view wx:if="{{loading && filteredProducts.length > 0}}" class="loading-more">
+  <view wx:if="{{listLoading && filteredProducts.length > 0}}" class="loading-more">
     <view class="loading-text">加载中...</view>
+  </view>
+  </view>
+
+  <!-- 催更请求管理内容 -->
+  <view wx:if="{{currentTab === 'requests'}}" class="requests-content">
+    <!-- 请求统计卡片 -->
+    <view class="statistics-cards">
+      <view class="stat-card">
+        <view class="stat-number">{{requestsStatistics.totalRequests}}</view>
+        <view class="stat-label">总请求数</view>
+      </view>
+      <view class="stat-card">
+        <view class="stat-number">{{requestsStatistics.pendingRequests}}</view>
+        <view class="stat-label">待处理</view>
+      </view>
+      <view class="stat-card">
+        <view class="stat-number">{{requestsStatistics.approvedRequests}}</view>
+        <view class="stat-label">已通过</view>
+      </view>
+      <view class="stat-card">
+        <view class="stat-number">{{requestsStatistics.rejectedRequests}}</view>
+        <view class="stat-label">已拒绝</view>
+      </view>
+    </view>
+
+    <!-- 请求筛选 -->
+    <view class="search-filter-section">
+      <view class="search-box">
+        <view class="search-icon">🔍</view>
+        <input class="search-input" 
+               value="{{requestSearchText}}" 
+               placeholder="搜索产品名称或用户"
+               bindinput="onRequestSearchInput" />
+        <view wx:if="{{requestSearchText}}" class="clear-search" bindtap="clearRequestFilters">×</view>
+      </view>
+
+      <view class="filter-row">
+        <picker class="filter-picker" 
+                range="{{['全部状态', '待处理', '已通过', '已拒绝']}}" 
+                value="{{requestFilterStatus === 'all' ? 0 : (requestFilterStatus === 'pending' ? 1 : (requestFilterStatus === 'approved' ? 2 : 3))}}"
+                bindchange="onRequestStatusChange">
+          <view class="filter-display">
+            <view class="filter-text">
+              {{requestFilterStatus === 'all' ? '全部状态' : (requestFilterStatus === 'pending' ? '待处理' : (requestFilterStatus === 'approved' ? '已通过' : '已拒绝'))}}
+            </view>
+            <view class="filter-arrow">▼</view>
+          </view>
+        </picker>
+
+        <picker class="filter-picker" 
+                range="{{['全部分类'].concat(categories)}}" 
+                value="{{requestFilterCategory ? categories.indexOf(requestFilterCategory) + 1 : 0}}"
+                bindchange="onRequestCategoryChange">
+          <view class="filter-display">
+            <view class="filter-text">{{requestFilterCategory || '全部分类'}}</view>
+            <view class="filter-arrow">▼</view>
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 请求列表 -->
+    <view class="request-list">
+      <view wx:if="{{requestsLoading && filteredRequests.length === 0}}" class="loading-state">
+        <view class="loading-icon">⏳</view>
+        <view class="loading-text">加载中...</view>
+      </view>
+
+      <view wx:elif="{{filteredRequests.length === 0}}" class="empty-state">
+        <view class="empty-icon">📝</view>
+        <view class="empty-text">暂无催更请求</view>
+      </view>
+
+      <view wx:else>
+        <view wx:for="{{filteredRequests}}" 
+              wx:key="id" 
+              class="request-item"
+              bindtap="viewRequestDetail"
+              data-id="{{item.id}}">
+          
+          <!-- 请求状态标识 -->
+          <view class="request-status {{item.status}}">
+            <view class="status-dot"></view>
+            <view class="status-text">
+              {{item.status === 'pending' ? '待处理' : (item.status === 'approved' ? '已通过' : '已拒绝')}}
+            </view>
+          </view>
+
+          <!-- 请求信息 -->
+          <view class="request-info">
+            <view class="request-header">
+              <view class="product-name">{{item.productName}}</view>
+              <view class="request-time">{{item.createTime.split('T')[0]}}</view>
+            </view>
+            
+            <view class="request-details">
+              <view class="detail-row">
+                <view class="detail-label">品牌:</view>
+                <view class="detail-value">{{item.brand}}</view>
+              </view>
+              <view class="detail-row">
+                <view class="detail-label">分类:</view>
+                <view class="detail-value">{{item.category}}</view>
+              </view>
+              <view class="detail-row">
+                <view class="detail-label">用户:</view>
+                <view class="detail-value">{{item.userNickname || item.userId}}</view>
+              </view>
+            </view>
+
+            <view wx:if="{{item.description}}" class="request-description">
+              {{item.description}}
+            </view>
+
+            <view wx:if="{{item.images && item.images.length > 0}}" class="request-images">
+              <view wx:for="{{item.images}}" wx:key="*this" wx:for-item="image" class="image-thumb">
+                <image src="{{image}}" mode="aspectFill" />
+              </view>
+            </view>
+          </view>
+
+          <!-- 操作按钮 -->
+          <view wx:if="{{item.status === 'pending'}}" class="request-actions">
+            <button class="action-btn approve" 
+                    bindtap="approveRequest" 
+                    data-id="{{item.id}}"
+                    catchtap="true">
+              ✅ 通过
+            </button>
+            <button class="action-btn reject" 
+                    bindtap="rejectRequest" 
+                    data-id="{{item.id}}"
+                    catchtap="true">
+              ❌ 拒绝
+            </button>
+          </view>
+
+          <!-- 处理结果 -->
+          <view wx:if="{{item.status !== 'pending' && item.adminFeedback}}" class="admin-feedback">
+            <view class="feedback-label">管理员反馈:</view>
+            <view class="feedback-content">{{item.adminFeedback}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多请求 -->
+    <view wx:if="{{hasMoreRequests && !requestsLoading}}" class="load-more">
+      <button class="load-more-btn" bindtap="loadMoreRequests">加载更多</button>
+    </view>
+
+    <view wx:if="{{requestsLoading && filteredRequests.length > 0}}" class="loading-more">
+      <view class="loading-text">加载中...</view>
+    </view>
+  </view>
+</view>
+
+<!-- 请求详情弹窗 -->
+<view wx:if="{{showRequestDetail}}" class="request-detail-modal">
+  <view class="modal-mask" bindtap="closeRequestDetail"></view>
+  <view class="detail-content">
+    <view class="detail-header">
+      <view class="detail-title">催更请求详情</view>
+      <view class="detail-close" bindtap="closeRequestDetail">×</view>
+    </view>
+    
+    <scroll-view class="detail-body" scroll-y>
+      <view wx:if="{{currentRequest}}" class="request-detail">
+        <view class="detail-section">
+          <view class="section-title">基本信息</view>
+          <view class="detail-row">
+            <view class="detail-label">产品名称:</view>
+            <view class="detail-value">{{currentRequest.productName}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">品牌:</view>
+            <view class="detail-value">{{currentRequest.brand}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">分类:</view>
+            <view class="detail-value">{{currentRequest.category}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">状态:</view>
+            <view class="detail-value {{currentRequest.status}}">
+              {{currentRequest.status === 'pending' ? '待处理' : (currentRequest.status === 'approved' ? '已通过' : '已拒绝')}}
+            </view>
+          </view>
+        </view>
+
+        <view class="detail-section">
+          <view class="section-title">用户信息</view>
+          <view class="detail-row">
+            <view class="detail-label">用户昵称:</view>
+            <view class="detail-value">{{currentRequest.userNickname || '未设置'}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">联系方式:</view>
+            <view class="detail-value">{{currentRequest.contactInfo || '未提供'}}</view>
+          </view>
+        </view>
+
+        <view wx:if="{{currentRequest.description}}" class="detail-section">
+          <view class="section-title">产品描述</view>
+          <view class="description-content">{{currentRequest.description}}</view>
+        </view>
+
+        <view wx:if="{{currentRequest.notes}}" class="detail-section">
+          <view class="section-title">备注信息</view>
+          <view class="notes-content">{{currentRequest.notes}}</view>
+        </view>
+
+        <view wx:if="{{currentRequest.images && currentRequest.images.length > 0}}" class="detail-section">
+          <view class="section-title">产品图片</view>
+          <view class="images-grid">
+            <view wx:for="{{currentRequest.images}}" wx:key="*this" wx:for-item="image" class="image-item">
+              <image src="{{image}}" mode="aspectFill" bindtap="previewImage" data-url="{{image}}" />
+            </view>
+          </view>
+        </view>
+
+        <view class="detail-section">
+          <view class="section-title">时间信息</view>
+          <view class="detail-row">
+            <view class="detail-label">提交时间:</view>
+            <view class="detail-value">{{currentRequest.createTime}}</view>
+          </view>
+          <view wx:if="{{currentRequest.processTime}}" class="detail-row">
+            <view class="detail-label">处理时间:</view>
+            <view class="detail-value">{{currentRequest.processTime}}</view>
+          </view>
+        </view>
+
+        <view wx:if="{{currentRequest.adminFeedback}}" class="detail-section">
+          <view class="section-title">管理员反馈</view>
+          <view class="feedback-content">{{currentRequest.adminFeedback}}</view>
+        </view>
+      </view>
+    </scroll-view>
+    
+    <view wx:if="{{currentRequest && currentRequest.status === 'pending'}}" class="detail-actions">
+      <button class="detail-btn approve" bindtap="showProcessModal" data-action="approve">通过请求</button>
+      <button class="detail-btn reject" bindtap="showProcessModal" data-action="reject">拒绝请求</button>
+    </view>
+  </view>
+</view>
+
+<!-- 处理请求弹窗 -->
+<view wx:if="{{showProcessModal}}" class="process-modal">
+  <view class="modal-mask" bindtap="hideProcessModal"></view>
+  <view class="process-content">
+    <view class="process-header">
+      <view class="process-title">
+        {{processAction === 'approve' ? '通过请求' : '拒绝请求'}}
+      </view>
+    </view>
+    
+    <view class="process-body">
+      <view class="process-info">
+        <view class="info-row">
+          <view class="info-label">产品名称:</view>
+          <view class="info-value">{{currentRequest.productName}}</view>
+        </view>
+        <view class="info-row">
+          <view class="info-label">用户:</view>
+          <view class="info-value">{{currentRequest.userNickname || currentRequest.userId}}</view>
+        </view>
+      </view>
+
+      <view class="feedback-section">
+        <view class="feedback-label">管理员反馈 (可选)</view>
+        <textarea class="feedback-textarea" 
+                  value="{{processFeedback}}" 
+                  placeholder="{{processAction === 'approve' ? '请输入通过理由或补充说明...' : '请输入拒绝理由...'}}"
+                  bindinput="onProcessFeedbackInput" />
+      </view>
+    </view>
+    
+    <view class="process-actions">
+      <button class="process-btn cancel" bindtap="hideProcessModal">取消</button>
+      <button class="process-btn confirm {{processAction}}" 
+              bindtap="confirmProcessRequest"
+              disabled="{{processLoading}}">
+        <view wx:if="{{processLoading}}" class="loading-icon">⏳</view>
+        <view class="btn-text">
+          {{processLoading ? '处理中...' : (processAction === 'approve' ? '确认通过' : '确认拒绝')}}
+        </view>
+      </button>
+    </view>
   </view>
 </view>
 

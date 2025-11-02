@@ -45,11 +45,38 @@ class StorageManager {
     try {
       const data = wx.getStorageSync(key)
       if (data) {
-        return JSON.parse(data)
+        // 检查数据类型，如果已经是对象则直接返回
+        if (typeof data === 'object') {
+          return data
+        }
+        // 如果是字符串，尝试解析JSON
+        if (typeof data === 'string') {
+          // 检查是否为空字符串或无效字符串
+          if (data.trim() === '' || data === 'undefined' || data === 'null') {
+            console.warn(`存储键 ${key} 包含无效数据，使用默认值`)
+            return defaultValue
+          }
+          try {
+            return JSON.parse(data)
+          } catch (parseError) {
+            console.warn(`JSON解析失败，键: ${key}, 数据: ${data.substring(0, 100)}...`, parseError)
+            // 清除无效数据
+            wx.removeStorageSync(key)
+            return defaultValue
+          }
+        }
+        // 其他类型直接返回
+        return data
       }
       return defaultValue
     } catch (error) {
       console.error('获取存储数据失败:', error)
+      // 如果是存储访问错误，尝试清除可能损坏的数据
+      try {
+        wx.removeStorageSync(key)
+      } catch (removeError) {
+        console.error('清除损坏数据失败:', removeError)
+      }
       return defaultValue
     }
   }
@@ -532,72 +559,298 @@ class SettingsStorage {
  * 缓存数据存储
  */
 class CacheStorage {
+  // 缓存大小限制（KB）
+  static MAX_CACHE_SIZE = 2048; // 2MB
+  
   /**
    * 设置缓存
    */
   static setCache(key, data, expireTime = 30 * 60 * 1000) { // 默认30分钟
-    const cacheData = {
-      data,
-      expireTime: Date.now() + expireTime,
-      createTime: Date.now()
+    try {
+      const cacheData = {
+        data,
+        expireTime: Date.now() + expireTime,
+        createTime: Date.now(),
+        accessCount: 0,
+        lastAccess: Date.now(),
+        size: this._calculateSize(data)
+      }
+      
+      const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
+      
+      // 检查缓存大小限制
+      this._checkCacheSize(allCache, cacheData.size)
+      
+      allCache[key] = cacheData
+      
+      return StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
+    } catch (error) {
+      console.error('设置缓存失败:', error)
+      return false
     }
-    
-    const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
-    allCache[key] = cacheData
-    
-    return StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
   }
 
   /**
    * 获取缓存
    */
   static getCache(key) {
-    const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
-    const cacheItem = allCache[key]
-    
-    if (!cacheItem) {
+    try {
+      const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
+      const cacheItem = allCache[key]
+      
+      if (!cacheItem) {
+        return null
+      }
+      
+      // 检查是否过期
+      if (Date.now() > cacheItem.expireTime) {
+        this.removeCache(key)
+        return null
+      }
+      
+      // 更新访问统计
+      cacheItem.accessCount = (cacheItem.accessCount || 0) + 1
+      cacheItem.lastAccess = Date.now()
+      allCache[key] = cacheItem
+      StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
+      
+      return cacheItem.data
+    } catch (error) {
+      console.error('获取缓存失败:', error)
       return null
     }
-    
-    // 检查是否过期
-    if (Date.now() > cacheItem.expireTime) {
-      this.removeCache(key)
-      return null
-    }
-    
-    return cacheItem.data
   }
 
   /**
    * 删除缓存
    */
   static removeCache(key) {
-    const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
-    delete allCache[key]
-    return StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
+    try {
+      const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
+      delete allCache[key]
+      return StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
+    } catch (error) {
+      console.error('删除缓存失败:', error)
+      return false
+    }
+  }
+
+  /**
+   * 批量删除缓存
+   */
+  static removeCaches(keys) {
+    try {
+      const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
+      keys.forEach(key => {
+        delete allCache[key]
+      })
+      return StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
+    } catch (error) {
+      console.error('批量删除缓存失败:', error)
+      return false
+    }
   }
 
   /**
    * 清理过期缓存
    */
   static clearExpiredCache() {
-    const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
-    const now = Date.now()
-    
-    Object.keys(allCache).forEach(key => {
-      if (now > allCache[key].expireTime) {
-        delete allCache[key]
+    try {
+      const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
+      const now = Date.now()
+      let removedCount = 0
+      
+      Object.keys(allCache).forEach(key => {
+        if (now > allCache[key].expireTime) {
+          delete allCache[key]
+          removedCount++
+        }
+      })
+      
+      if (removedCount > 0) {
+        StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
+        console.log(`清理了 ${removedCount} 个过期缓存`)
       }
-    })
-    
-    return StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
+      
+      return removedCount
+    } catch (error) {
+      console.error('清理过期缓存失败:', error)
+      return 0
+    }
   }
 
   /**
    * 清空所有缓存
    */
   static clearAllCache() {
-    return StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, {})
+    try {
+      return StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, {})
+    } catch (error) {
+      console.error('清空缓存失败:', error)
+      return false
+    }
+  }
+
+  /**
+   * 获取缓存统计信息
+   */
+  static getCacheStats() {
+    try {
+      const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
+      const now = Date.now()
+      let totalSize = 0
+      let expiredCount = 0
+      let totalCount = 0
+      
+      Object.values(allCache).forEach(item => {
+        totalCount++
+        totalSize += item.size || 0
+        if (now > item.expireTime) {
+          expiredCount++
+        }
+      })
+      
+      return {
+        totalCount,
+        expiredCount,
+        totalSize,
+        maxSize: this.MAX_CACHE_SIZE * 1024,
+        usagePercent: Math.round((totalSize / (this.MAX_CACHE_SIZE * 1024)) * 100)
+      }
+    } catch (error) {
+      console.error('获取缓存统计失败:', error)
+      return {
+        totalCount: 0,
+        expiredCount: 0,
+        totalSize: 0,
+        maxSize: this.MAX_CACHE_SIZE * 1024,
+        usagePercent: 0
+      }
+    }
+  }
+
+  /**
+   * 智能清理缓存（LRU策略）
+   */
+  static smartCleanCache(targetSize = null) {
+    try {
+      const allCache = StorageManager.getItem(STORAGE_KEYS.CACHE_DATA, {})
+      const now = Date.now()
+      
+      // 首先清理过期缓存
+      this.clearExpiredCache()
+      
+      // 如果没有指定目标大小，使用默认策略
+      if (!targetSize) {
+        const stats = this.getCacheStats()
+        if (stats.usagePercent < 80) {
+          return 0 // 不需要清理
+        }
+        targetSize = this.MAX_CACHE_SIZE * 1024 * 0.6 // 清理到60%
+      }
+      
+      // 按最后访问时间排序（LRU）
+      const cacheEntries = Object.entries(allCache)
+        .map(([key, value]) => ({ key, ...value }))
+        .sort((a, b) => (a.lastAccess || 0) - (b.lastAccess || 0))
+      
+      let currentSize = cacheEntries.reduce((sum, item) => sum + (item.size || 0), 0)
+      let removedCount = 0
+      
+      // 删除最少使用的缓存直到达到目标大小
+      for (const item of cacheEntries) {
+        if (currentSize <= targetSize) break
+        
+        delete allCache[item.key]
+        currentSize -= (item.size || 0)
+        removedCount++
+      }
+      
+      if (removedCount > 0) {
+        StorageManager.setItem(STORAGE_KEYS.CACHE_DATA, allCache)
+        console.log(`智能清理了 ${removedCount} 个缓存项`)
+      }
+      
+      return removedCount
+    } catch (error) {
+      console.error('智能清理缓存失败:', error)
+      return 0
+    }
+  }
+
+  /**
+   * 计算数据大小（字节）
+   */
+  static _calculateSize(data) {
+    try {
+      return JSON.stringify(data).length * 2 // 粗略估算UTF-16编码大小
+    } catch (error) {
+      return 0
+    }
+  }
+
+  /**
+   * 检查缓存大小限制
+   */
+  static _checkCacheSize(allCache, newItemSize) {
+    const currentSize = Object.values(allCache).reduce((sum, item) => sum + (item.size || 0), 0)
+    const maxSize = this.MAX_CACHE_SIZE * 1024
+    
+    if (currentSize + newItemSize > maxSize) {
+      // 触发智能清理
+      this.smartCleanCache(maxSize * 0.7) // 清理到70%
+    }
+  }
+
+  /**
+   * 预加载缓存（用于离线支持）
+   */
+  static preloadCache(key, dataLoader, expireTime = 30 * 60 * 1000) {
+    return new Promise(async (resolve) => {
+      try {
+        // 检查是否已有缓存
+        const cached = this.getCache(key)
+        if (cached) {
+          resolve(cached)
+          return
+        }
+        
+        // 加载数据并缓存
+        const data = await dataLoader()
+        this.setCache(key, data, expireTime)
+        resolve(data)
+      } catch (error) {
+        console.error('预加载缓存失败:', error)
+        resolve(null)
+      }
+    })
+  }
+
+  /**
+   * 缓存装饰器（用于函数结果缓存）
+   */
+  static cacheDecorator(key, expireTime = 30 * 60 * 1000) {
+    return (target, propertyName, descriptor) => {
+      const originalMethod = descriptor.value
+      
+      descriptor.value = async function(...args) {
+        const cacheKey = `${key}_${JSON.stringify(args)}`
+        
+        // 尝试从缓存获取
+        const cached = CacheStorage.getCache(cacheKey)
+        if (cached) {
+          return cached
+        }
+        
+        // 执行原方法并缓存结果
+        const result = await originalMethod.apply(this, args)
+        CacheStorage.setCache(cacheKey, result, expireTime)
+        
+        return result
+      }
+      
+      return descriptor
+    }
   }
 }
 

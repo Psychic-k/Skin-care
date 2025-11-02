@@ -375,19 +375,61 @@
           </view>
 
           <!-- 相关产品 -->
-          <view class="detail-section" wx:if="{{selectedIngredient.products}}">
-            <text class="section-title">含有该成分的热门产品</text>
-            <view class="related-products">
-              <text 
-                class="product-tag" 
-                wx:for="{{selectedIngredient.products}}" 
-                wx:key="*this"
+          <view class="detail-section" wx:if="{{selectedIngredient.relatedProducts && selectedIngredient.relatedProducts.length > 0}}">
+            <text class="section-title">含有该成分的产品 ({{selectedIngredient.relatedProducts.length}})</text>
+            <view class="related-products-list">
+              <view 
+                class="product-item" 
+                wx:for="{{selectedIngredient.relatedProducts}}" 
+                wx:key="name"
                 wx:for-item="product"
-                data-ingredient="{{selectedIngredient}}"
-                bindtap="viewRelatedProducts"
+                data-product="{{product}}"
+                bindtap="onProductTap"
               >
-                {{product}}
-              </text>
+                <!-- 产品图片 -->
+                <view class="product-image">
+                  <image 
+                    src="{{product.imageUrl || '/images/default-product.png'}}" 
+                    mode="aspectFill"
+                    class="product-img"
+                  />
+                </view>
+                
+                <!-- 产品信息 -->
+                <view class="product-info">
+                  <view class="product-header">
+                    <text class="product-name">{{product.name}}</text>
+                    <text class="product-brand">{{product.brand}}</text>
+                  </view>
+                  
+                  <view class="product-details">
+                    <view class="product-category">{{product.category}}</view>
+                    <view class="ingredient-info" wx:if="{{product.concentration}}">
+                      <text class="concentration-label">浓度:</text>
+                      <text class="concentration-value">{{product.concentration}}</text>
+                    </view>
+                    <view class="ingredient-function" wx:if="{{product.function}}">
+                      <text class="function-text">{{product.function}}</text>
+                    </view>
+                  </view>
+                </view>
+                
+                <!-- 产品操作 -->
+                <view class="product-actions">
+                  <text class="view-product-btn">查看</text>
+                </view>
+              </view>
+            </view>
+            
+            <!-- 查看更多产品 -->
+            <view class="view-more-products" wx:if="{{selectedIngredient.relatedProducts.length > 3}}">
+              <button 
+                class="view-more-btn"
+                data-ingredient="{{selectedIngredient}}"
+                bindtap="viewAllRelatedProducts"
+              >
+                查看全部 {{selectedIngredient.relatedProducts.length}} 个产品
+              </button>
             </view>
           </view>
         </view>

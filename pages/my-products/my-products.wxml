@@ -1,0 +1,261 @@
+<!--pages/my-products/my-products.wxml-->
+<view class="container">
+  <!-- 头部区域 -->
+  <view class="header">
+    <view class="header-content">
+      <text class="title">我的用品</text>
+      <text class="subtitle">管理您的护肤品收藏</text>
+    </view>
+    <view class="header-actions">
+      <view class="action-btn" bindtap="showAddOptions">
+        <text class="action-icon">+</text>
+        <text class="action-text">添加</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索和筛选区域 -->
+  <view class="search-section">
+    <view class="search-bar">
+      <view class="search-input-wrapper">
+        <input 
+          class="search-input" 
+          placeholder="搜索产品名称或品牌" 
+          value="{{searchKeyword}}"
+          bindinput="onSearchInput"
+          bindconfirm="onSearchConfirm"
+        />
+        <view class="search-icon">🔍</view>
+      </view>
+      <view class="filter-btn" bindtap="showFilterModal">
+        <text class="filter-icon">⚙️</text>
+      </view>
+    </view>
+    
+    <!-- 筛选标签 -->
+    <view class="filter-tags" wx:if="{{activeFilters.length > 0}}">
+      <view 
+        class="filter-tag" 
+        wx:for="{{activeFilters}}" 
+        wx:key="index"
+        bindtap="removeFilter"
+        data-index="{{index}}"
+      >
+        <text>{{item.label}}</text>
+        <text class="remove-icon">×</text>
+      </view>
+      <view class="clear-filters" bindtap="clearAllFilters">
+        <text>清空筛选</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计信息 -->
+  <view class="stats-section">
+    <view class="stat-item">
+      <text class="stat-number">{{totalCount}}</text>
+      <text class="stat-label">总数量</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">{{usedCount}}</text>
+      <text class="stat-label">已使用</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">{{favoriteCount}}</text>
+      <text class="stat-label">收藏</text>
+    </view>
+  </view>
+
+  <!-- 产品列表 -->
+  <view class="products-section">
+    <!-- 加载状态 -->
+    <view class="loading-container" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-container" wx:elif="{{products.length === 0 && !loading}}">
+      <view class="empty-icon">📦</view>
+      <text class="empty-title">暂无护肤品</text>
+      <text class="empty-desc">点击右上角添加按钮开始收集您的护肤品</text>
+      <view class="empty-action" bindtap="showAddOptions">
+        <text>立即添加</text>
+      </view>
+    </view>
+
+    <!-- 产品网格 -->
+    <view class="products-grid" wx:else>
+      <view 
+        class="product-card" 
+        wx:for="{{products}}" 
+        wx:key="_id"
+        bindtap="viewProductDetail"
+        data-product="{{item}}"
+      >
+        <view class="product-image-wrapper">
+          <image 
+            class="product-image" 
+            src="{{item.imageUrl || '/images/placeholder-product.png'}}" 
+            mode="aspectFill"
+            lazy-load="{{true}}"
+          />
+          <view class="product-status" wx:if="{{item.status}}">
+            <text class="status-text">{{item.status === 'used' ? '已用' : item.status === 'favorite' ? '收藏' : ''}}</text>
+          </view>
+        </view>
+        
+        <view class="product-info">
+          <text class="product-name">{{item.name}}</text>
+          <text class="product-brand">{{item.brand}}</text>
+          <view class="product-meta">
+            <text class="product-category">{{item.categoryDisplay || item.category}}</text>
+            <text class="product-date">{{item.addedDateDisplay}}</text>
+          </view>
+        </view>
+
+        <view class="product-actions">
+          <view 
+            class="action-btn-small {{item.isFavorite ? 'active' : ''}}" 
+            bindtap="toggleFavorite"
+            data-id="{{item._id}}"
+            catchtap="true"
+          >
+            <text class="action-icon">{{item.isFavorite ? '❤️' : '🤍'}}</text>
+          </view>
+          <view 
+            class="action-btn-small" 
+            bindtap="showProductMenu"
+            data-product="{{item}}"
+            catchtap="true"
+          >
+            <text class="action-icon">⋯</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{hasMore && products.length > 0}}">
+      <view class="load-more-btn" bindtap="loadMore" wx:if="{{!loadingMore}}">
+        <text>加载更多</text>
+      </view>
+      <view class="loading-more" wx:else>
+        <view class="loading-spinner-small"></view>
+        <text>加载中...</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 添加选项弹窗 -->
+  <view class="modal-overlay" wx:if="{{showAddModal}}" bindtap="hideAddModal">
+    <view class="add-modal" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">添加护肤品</text>
+        <view class="modal-close" bindtap="hideAddModal">×</view>
+      </view>
+      <view class="modal-content">
+        <view class="add-option" bindtap="selectFromExisting">
+          <view class="option-icon">🧴</view>
+          <view class="option-info">
+            <text class="option-title">从现有产品选择</text>
+            <text class="option-desc">从产品库中选择已有的护肤品</text>
+          </view>
+          <view class="option-arrow">→</view>
+        </view>
+        <view class="add-option" bindtap="requestNewProduct">
+          <view class="option-icon">📝</view>
+          <view class="option-info">
+            <text class="option-title">产品催更</text>
+            <text class="option-desc">提交新产品信息，等待管理员审核</text>
+          </view>
+          <view class="option-arrow">→</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 筛选弹窗 -->
+  <view class="modal-overlay" wx:if="{{showFilterModal}}" bindtap="hideFilterModal">
+    <view class="filter-modal" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">筛选条件</text>
+        <view class="modal-close" bindtap="hideFilterModal">×</view>
+      </view>
+      <view class="modal-content">
+        <!-- 分类筛选 -->
+        <view class="filter-group">
+          <text class="filter-group-title">产品分类</text>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.category === item.value ? 'active' : ''}}"
+              wx:for="{{categoryOptions}}" 
+              wx:key="value"
+              bindtap="selectFilterOption"
+              data-type="category"
+              data-value="{{item.value}}"
+            >
+              <text>{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 状态筛选 -->
+        <view class="filter-group">
+          <text class="filter-group-title">使用状态</text>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.status === item.value ? 'active' : ''}}"
+              wx:for="{{statusOptions}}" 
+              wx:key="value"
+              bindtap="selectFilterOption"
+              data-type="status"
+              data-value="{{item.value}}"
+            >
+              <text>{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 排序方式 -->
+        <view class="filter-group">
+          <text class="filter-group-title">排序方式</text>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterOptions.sort === item.value ? 'active' : ''}}"
+              wx:for="{{sortOptions}}" 
+              wx:key="value"
+              bindtap="selectFilterOption"
+              data-type="sort"
+              data-value="{{item.value}}"
+            >
+              <text>{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="modal-footer">
+        <view class="modal-btn secondary" bindtap="resetFilters">重置</view>
+        <view class="modal-btn primary" bindtap="applyFilters">应用</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 产品菜单弹窗 -->
+  <view class="modal-overlay" wx:if="{{showMenuModal}}" bindtap="hideMenuModal">
+    <view class="menu-modal" catchtap="true">
+      <view class="menu-item" bindtap="editProduct">
+        <text class="menu-icon">✏️</text>
+        <text class="menu-text">编辑</text>
+      </view>
+      <view class="menu-item" bindtap="markAsUsed">
+        <text class="menu-icon">✅</text>
+        <text class="menu-text">{{selectedProduct.isUsed ? '取消使用' : '标记为已使用'}}</text>
+      </view>
+      <view class="menu-item" bindtap="removeProduct">
+        <text class="menu-icon">🗑️</text>
+        <text class="menu-text">移除</text>
+      </view>
+    </view>
+  </view>
+</view>

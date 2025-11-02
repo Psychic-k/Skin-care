@@ -14,24 +14,42 @@
   
   <!-- 主要功能区域 -->
   <view class="main-content">
+    <!-- 用户状态提示 -->
+    <view class="user-status" wx:if="{{!isLoggedIn}}">
+      <view class="status-icon">👋</view>
+      <view class="status-content">
+        <text class="status-title">欢迎体验 SkinCare</text>
+        <text class="status-desc">登录后可使用完整功能</text>
+        <button class="login-btn" bindtap="goToLogin">立即登录</button>
+      </view>
+    </view>
+
+    <view class="user-welcome" wx:if="{{isLoggedIn}}">
+      <view class="welcome-content">
+        <text class="welcome-text">欢迎回来，{{userInfo.nickname || '用户'}}</text>
+        <text class="welcome-desc">继续您的护肤之旅</text>
+      </view>
+    </view>
+    
     <!-- 快速检测卡片 -->
-    <view class="hero-card" bindtap="goToDetection">
+    <view class="hero-card {{!isLoggedIn ? 'disabled' : ''}}" bindtap="goToDetection">
       <view class="hero-content">
         <view class="hero-icon">📷</view>
         <view class="hero-text">
           <text class="hero-title">AI皮肤检测</text>
-          <text class="hero-desc">智能分析肌肤状态，获得专业护理建议</text>
+          <text class="hero-desc">{{isLoggedIn ? '智能分析肌肤状态，获得专业护理建议' : '登录后可使用AI检测功能'}}</text>
         </view>
       </view>
-      <view class="hero-arrow">→</view>
+      <view class="hero-arrow">{{isLoggedIn ? '→' : '🔒'}}</view>
     </view>
     
     <!-- 功能网格 -->
     <view class="features-grid">
-      <view class="feature-card" bindtap="goToDiary">
+      <view class="feature-card {{!isLoggedIn ? 'disabled' : ''}}" bindtap="goToDiary">
         <view class="feature-icon">📝</view>
         <text class="feature-title">护肤日记</text>
-        <text class="feature-desc">记录护肤历程</text>
+        <text class="feature-desc">{{isLoggedIn ? '记录护肤历程' : '需要登录'}}</text>
+        <view class="lock-icon" wx:if="{{!isLoggedIn}}">🔒</view>
       </view>
       
       <view class="feature-card" bindtap="goToProducts">
@@ -40,16 +58,24 @@
         <text class="feature-desc">个性化推荐</text>
       </view>
       
-      <view class="feature-card" bindtap="goToProfile">
+      <view class="feature-card {{!isLoggedIn ? 'disabled' : ''}}" bindtap="goToMyProducts">
+        <view class="feature-icon">💄</view>
+        <text class="feature-title">我的用品</text>
+        <text class="feature-desc">{{isLoggedIn ? '管理护肤品' : '需要登录'}}</text>
+        <view class="lock-icon" wx:if="{{!isLoggedIn}}">🔒</view>
+      </view>
+      
+      <view class="feature-card {{!isLoggedIn ? 'disabled' : ''}}" bindtap="goToProfile">
         <view class="feature-icon">📊</view>
         <text class="feature-title">肌肤档案</text>
-        <text class="feature-desc">数据分析</text>
+        <text class="feature-desc">{{isLoggedIn ? '数据分析' : '需要登录'}}</text>
+        <view class="lock-icon" wx:if="{{!isLoggedIn}}">🔒</view>
       </view>
     </view>
     
     <!-- 底部提示 -->
     <view class="bottom-tip">
-      <text class="tip-text">开始您的专业护肤之旅</text>
+      <text class="tip-text">{{isLoggedIn ? '开始您的专业护肤之旅' : '登录后体验完整功能'}}</text>
     </view>
   </view>
 </view>

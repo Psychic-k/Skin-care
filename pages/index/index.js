@@ -1,17 +1,90 @@
 // index.js
 const request = require('../../utils/request');
+const Auth = require('../../utils/auth');
 
 Page({
   data: {
-    testResults: []
+    testResults: [],
+    isLoggedIn: false,
+    userInfo: null
   },
 
   onLoad: function (options) {
+    console.log('首页加载');
+    this.checkLoginStatus();
+    // 加载推荐占位，避免函数未定义错误
+    this.loadRecommendations();
     
+    // 添加登录状态变化监听器
+    this.loginStatusListener = (isLoggedIn, userInfo) => {
+      console.log('首页收到登录状态变化通知:', isLoggedIn);
+      this.setData({
+        isLoggedIn: isLoggedIn,
+        userInfo: userInfo
+      });
+    };
+    getApp().addLoginStatusListener(this.loginStatusListener);
+  },
+
+  onShow: function() {
+    console.log('首页显示');
+    // 每次显示页面时检查登录状态
+    this.checkLoginStatus();
+  },
+
+  onUnload: function() {
+    // 移除登录状态监听器
+    if (this.loginStatusListener) {
+      getApp().removeLoginStatusListener(this.loginStatusListener);
+    }
+  },
+
+  // 检查登录状态
+  checkLoginStatus: function() {
+    const app = getApp();
+    const isLoggedIn = Auth.isLoggedIn();
+    const userInfo = app.getUserInfo();
+    
+    this.setData({
+      isLoggedIn: isLoggedIn,
+      userInfo: userInfo
+    });
+  },
+
+  // 推荐内容加载占位实现，后续可替换为真实接口
+  loadRecommendations: function() {
+    try {
+      console.log('加载首页推荐内容');
+      // 这里可以接入接口或云函数，当前占位不做操作
+    } catch (e) {
+      console.warn('加载推荐内容失败(占位):', e);
+    }
+  },
+
+  // 跳转到登录页面
+  goToLogin: function() {
+    wx.navigateTo({
+      url: '/pages/login/login'
+    });
   },
 
   // 跳转到皮肤检测页面
   goToDetection: function() {
+    if (!this.data.isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: 'AI皮肤检测功能需要登录后使用，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            this.goToLogin();
+          }
+        }
+      });
+      return;
+    }
+    
     wx.navigateTo({
       url: '/pages/detection/detection'
     });
@@ -19,6 +92,21 @@ Page({
 
   // 跳转到护肤日记页面
   goToDiary: function() {
+    if (!this.data.isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '护肤日记功能需要登录后使用，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            this.goToLogin();
+          }
+        }
+      });
+      return;
+    }
+    
     wx.switchTab({
       url: '/pages/diary/diary'
     });
@@ -26,13 +114,51 @@ Page({
 
   // 跳转到产品推荐页面
   goToProducts: function() {
+    // 产品推荐页面支持游客模式
     wx.switchTab({
       url: '/pages/products/products'
     });
   },
 
+  // 跳转到我的用品页面
+  goToMyProducts: function() {
+    if (!this.data.isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '我的用品功能需要登录后使用，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            this.goToLogin();
+          }
+        }
+      });
+      return;
+    }
+    
+    wx.navigateTo({
+      url: '/pages/my-products/my-products'
+    });
+  },
+
   // 跳转到用户档案页面
   goToProfile: function() {
+    if (!this.data.isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '肌肤档案功能需要登录后使用，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            this.goToLogin();
+          }
+        }
+      });
+      return;
+    }
+    
     wx.switchTab({
       url: '/pages/user/user'
     });

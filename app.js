@@ -10,6 +10,9 @@ App({
     // 初始化云开发
     this.initCloud();
     
+    // 检查登录状态并进行路由决策
+    this.checkLoginStatus();
+    
     // 初始化应用
     this.initApp();
     
@@ -93,6 +96,50 @@ App({
     }
   },
 
+  // 检查登录状态并进行路由决策
+  checkLoginStatus() {
+    console.log('开始检查登录状态...');
+    
+    try {
+      const userInfo = Storage.getUserInfo();
+      console.log('获取到的用户信息:', userInfo);
+      
+      if (userInfo && (userInfo.openid || userInfo.id) && userInfo.isLogin) {
+        // 用户已登录，设置全局用户信息
+        this.globalData.userInfo = userInfo;
+        this.globalData.isLoggedIn = true;
+        console.log('用户已登录，直接进入主页');
+        
+        // 延迟跳转，确保应用初始化完成
+        setTimeout(() => {
+          wx.switchTab({
+            url: '/pages/index/index'
+          });
+        }, 100);
+      } else {
+        // 用户未登录，跳转到登录页
+        console.log('用户未登录，跳转到登录页');
+        this.globalData.isLoggedIn = false;
+        this.redirectToLogin();
+      }
+    } catch (error) {
+      console.error('检查登录状态失败:', error);
+      // 出错时也跳转到登录页
+      this.globalData.isLoggedIn = false;
+      this.redirectToLogin();
+    }
+  },
+
+  // 跳转到登录页
+  redirectToLogin() {
+    console.log('跳转到登录页面');
+    setTimeout(() => {
+      wx.reLaunch({
+        url: '/pages/login/login'
+      });
+    }, 100);
+  },
+
   // 初始化应用
   initApp() {
     // 获取系统信息 - 使用新的API替代废弃的wx.getSystemInfo
@@ -108,19 +155,7 @@ App({
       console.error('获取系统信息失败:', error);
     }
 
-    // 检查登录状态
-    if (Storage.isLoggedIn()) {
-      const userInfo = Storage.getUserInfo();
-      if (userInfo && userInfo.id) {
-        this.globalData.userInfo = userInfo;
-        console.log('用户已登录:', userInfo);
-      } else {
-        console.log('用户信息不完整，清除登录状态');
-        Storage.logout();
-      }
-    }
-
-    // 初始化全局数据
+    // 初始化全局数据（登录状态检查已在 checkLoginStatus 中处理）
     this.globalData.skinProfile = Storage.getSkinProfile();
     this.globalData.detectionHistory = Storage.getDetectionHistory();
   },
@@ -161,16 +196,26 @@ App({
     skinProfile: null,
     detectionHistory: [],
     config: config,
-    cloudEnabled: false
+    cloudEnabled: false,
+    isLoggedIn: false,
+    // 登录状态变化监听器列表
+    loginStatusListeners: []
   },
 
   // 全局方法
   // 设置用户信息
   setUserInfo(userInfo) {
     console.log('App.setUserInfo 被调用，用户信息:', userInfo);
+    const wasLoggedIn = this.globalData.isLoggedIn;
     this.globalData.userInfo = userInfo;
+    this.globalData.isLoggedIn = !!(userInfo && (userInfo.openid || userInfo.id) && userInfo.isLogin);
     Storage.saveUserInfo(userInfo);
     console.log('用户信息已保存到全局和本地存储');
+    
+    // 如果登录状态发生变化，通知所有监听器
+    if (wasLoggedIn !== this.globalData.isLoggedIn) {
+      this.notifyLoginStatusChange(this.globalData.isLoggedIn, userInfo);
+    }
   },
 
   // 获取用户信息
@@ -201,6 +246,74 @@ App({
   // 获取检测历史
   getDetectionHistory() {
     return this.globalData.detectionHistory || Storage.getDetectionHistory();
+  },
+
+  // 登录状态管理方法
+  // 添加登录状态变化监听器
+  addLoginStatusListener(listener) {
+    if (typeof listener === 'function') {
+      this.globalData.loginStatusListeners.push(listener);
+      console.log('添加登录状态监听器，当前监听器数量:', this.globalData.loginStatusListeners.length);
+    }
+  },
+
+  // 移除登录状态变化监听器
+  removeLoginStatusListener(listener) {
+    const index = this.globalData.loginStatusListeners.indexOf(listener);
+    if (index > -1) {
+      this.globalData.loginStatusListeners.splice(index, 1);
+      console.log('移除登录状态监听器，当前监听器数量:', this.globalData.loginStatusListeners.length);
+    }
+  },
+
+  // 通知所有监听器登录状态变化
+  notifyLoginStatusChange(isLoggedIn, userInfo) {
+    console.log('通知登录状态变化:', isLoggedIn, '监听器数量:', this.globalData.loginStatusListeners.length);
+    this.globalData.loginStatusListeners.forEach(listener => {
+      try {
+        listener(isLoggedIn, userInfo);
+      } catch (error) {
+        console.error('登录状态监听器执行出错:', error);
+      }
+    });
+  },
+
+  // 退出登录
+  logout() {
+    console.log('执行退出登录');
+    const wasLoggedIn = this.globalData.isLoggedIn;
+    
+    // 清除用户信息
+    this.globalData.userInfo = null;
+    this.globalData.isLoggedIn = false;
+    Storage.clearUserInfo();
+    
+    // 通知登录状态变化
+    if (wasLoggedIn) {
+      this.notifyLoginStatusChange(false, null);
+    }
+    
+    // 跳转到登录页
+    wx.reLaunch({
+      url: '/pages/login/login'
+    });
+  },
+
+  // 检查并更新登录状态
+  updateLoginStatus() {
+    const userInfo = Storage.getUserInfo();
+    const isLoggedIn = !!(userInfo && (userInfo.openid || userInfo.id) && userInfo.isLogin);
+    const wasLoggedIn = this.globalData.isLoggedIn;
+    
+    this.globalData.userInfo = userInfo;
+    this.globalData.isLoggedIn = isLoggedIn;
+    
+    // 如果状态发生变化，通知监听器
+    if (wasLoggedIn !== isLoggedIn) {
+      this.notifyLoginStatusChange(isLoggedIn, userInfo);
+    }
+    
+    return isLoggedIn;
   }
 
 

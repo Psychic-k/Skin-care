@@ -1,0 +1,224 @@
+<!--pages/product-request/product-request.wxml-->
+<view class="container">
+  <!-- 头部区域 -->
+  <view class="header">
+    <view class="header-content">
+      <text class="title">产品催更</text>
+      <text class="subtitle">提交新产品信息，等待管理员审核</text>
+    </view>
+  </view>
+
+  <!-- 表单区域 -->
+  <view class="form-section">
+    <form bindsubmit="submitRequest">
+      <!-- 产品基本信息 -->
+      <view class="form-group">
+        <text class="form-label">产品名称 <text class="required">*</text></text>
+        <input 
+          class="form-input" 
+          placeholder="请输入产品完整名称"
+          value="{{formData.productName}}"
+          bindinput="onInputChange"
+          data-field="productName"
+          maxlength="100"
+        />
+        <text class="form-hint">请输入产品的完整名称，包括系列名（XX系列-XXXX）</text>
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">品牌名称 <text class="required">*</text></text>
+        <input 
+          class="form-input" 
+          placeholder="请输入品牌名称"
+          value="{{formData.brand}}"
+          bindinput="onInputChange"
+          data-field="brand"
+          maxlength="50"
+        />
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">产品分类 <text class="required">*</text></text>
+        <view class="category-selector" bindtap="showCategoryPicker">
+          <text class="{{formData.category ? 'selected' : 'placeholder'}}">
+            {{categoryDisplay || '请选择产品分类'}}
+          </text>
+          <text class="arrow">▼</text>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">产品描述</text>
+        <textarea 
+          class="form-textarea" 
+          placeholder="请描述产品的功效、成分、适用肌肤类型等信息"
+          value="{{formData.description}}"
+          bindinput="onInputChange"
+          data-field="description"
+          maxlength="500"
+          show-confirm-bar="{{false}}"
+        />
+        <text class="char-count">{{formData.description.length}}/500</text>
+      </view>
+
+      <!-- 产品图片 -->
+      <view class="form-group">
+        <text class="form-label">产品图片 <text class="required">*</text></text>
+        <view class="image-upload-section">
+          <view class="uploaded-images" wx:if="{{uploadedImages.length > 0}}">
+            <view 
+              class="image-item" 
+              wx:for="{{uploadedImages}}" 
+              wx:key="index"
+            >
+              <image 
+                class="uploaded-image" 
+                src="{{item.url}}" 
+                mode="aspectFill"
+                bindtap="previewImage"
+                data-url="{{item.url}}"
+              />
+              <view 
+                class="image-delete" 
+                bindtap="deleteImage"
+                data-index="{{index}}"
+              >
+                <text>×</text>
+              </view>
+              <view class="image-status" wx:if="{{item.uploading}}">
+                <view class="uploading-spinner"></view>
+              </view>
+            </view>
+          </view>
+          
+          <view 
+            class="image-upload-btn" 
+            bindtap="chooseImage"
+            wx:if="{{uploadedImages.length < maxImages}}"
+          >
+            <text class="upload-icon">📷</text>
+            <text class="upload-text">添加图片</text>
+            <text class="upload-hint">{{uploadedImages.length}}/{{maxImages}}</text>
+          </view>
+        </view>
+        <text class="form-hint">请上传产品的清晰图片，最多{{maxImages}}张</text>
+      </view>
+
+      <!-- 联系信息 -->
+      <view class="form-group">
+        <text class="form-label">联系方式</text>
+        <input 
+          class="form-input" 
+          placeholder="微信号、QQ号或其他联系方式（可选）"
+          value="{{formData.contact}}"
+          bindinput="onInputChange"
+          data-field="contact"
+          maxlength="50"
+        />
+        <text class="form-hint">方便管理员联系您确认产品信息</text>
+      </view>
+
+      <!-- 备注信息 -->
+      <view class="form-group">
+        <text class="form-label">备注信息</text>
+        <textarea 
+          class="form-textarea" 
+          placeholder="其他需要说明的信息，如购买渠道、使用感受等"
+          value="{{formData.notes}}"
+          bindinput="onInputChange"
+          data-field="notes"
+          maxlength="300"
+          show-confirm-bar="{{false}}"
+        />
+        <text class="char-count">{{formData.notes.length}}/300</text>
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="submit-section">
+        <button 
+          class="submit-btn {{canSubmit ? 'active' : 'disabled'}}" 
+          form-type="submit"
+          disabled="{{!canSubmit || submitting}}"
+        >
+          <text wx:if="{{!submitting}}">提交申请</text>
+          <view wx:else class="submitting">
+            <view class="loading-spinner"></view>
+            <text>提交中...</text>
+          </view>
+        </button>
+        <text class="submit-hint">提交后将进入审核流程，请耐心等待</text>
+      </view>
+    </form>
+  </view>
+
+  <!-- 我的申请记录 -->
+  <view class="history-section">
+    <view class="section-header" bindtap="toggleHistory">
+      <text class="section-title">我的申请记录</text>
+      <text class="toggle-icon {{showHistory ? 'expanded' : ''}}">▼</text>
+    </view>
+    
+    <view class="history-content" wx:if="{{showHistory}}">
+      <!-- 加载状态 -->
+      <view class="loading-container" wx:if="{{historyLoading}}">
+        <view class="loading-spinner"></view>
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-container" wx:elif="{{requestHistory.length === 0}}">
+        <text class="empty-text">暂无申请记录</text>
+      </view>
+
+      <!-- 申请列表 -->
+      <view class="request-list" wx:else>
+        <view 
+          class="request-item" 
+          wx:for="{{requestHistory}}" 
+          wx:key="_id"
+        >
+          <view class="request-header">
+            <text class="request-name">{{item.productName}}</text>
+            <view class="request-status {{item.status}}">
+              <text>{{getStatusText(item.status)}}</text>
+            </view>
+          </view>
+          <view class="request-info">
+            <text class="request-brand">{{item.brand}}</text>
+            <text class="request-date">{{item.submitDateDisplay}}</text>
+          </view>
+          <view class="request-description" wx:if="{{item.description}}">
+            <text>{{item.description}}</text>
+          </view>
+          <view class="request-feedback" wx:if="{{item.adminFeedback}}">
+            <text class="feedback-label">管理员反馈：</text>
+            <text class="feedback-text">{{item.adminFeedback}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分类选择器 -->
+  <view class="modal-overlay" wx:if="{{showCategoryModal}}" bindtap="hideCategoryModal">
+    <view class="category-modal" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">选择产品分类</text>
+        <view class="modal-close" bindtap="hideCategoryModal">×</view>
+      </view>
+      <view class="modal-content">
+        <view 
+          class="category-option {{formData.category === item.value ? 'selected' : ''}}"
+          wx:for="{{categoryOptions}}" 
+          wx:key="value"
+          bindtap="selectCategory"
+          data-value="{{item.value}}"
+          data-label="{{item.label}}"
+        >
+          <text>{{item.label}}</text>
+          <text class="check-icon" wx:if="{{formData.category === item.value}}">✓</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -147,7 +147,15 @@
         >
           <!-- 产品图片 -->
           <view class="product-image-wrapper">
-            <image class="product-image" src="{{item.image}}" mode="aspectFill" />
+            <image 
+              class="product-image" 
+              src="{{item.image}}" 
+              mode="aspectFill"
+              lazy-load="{{true}}"
+              data-index="{{index}}"
+              data-type="product"
+              binderror="onImageError"
+            />
             <view class="product-badges">
               <text class="badge new" wx:if="{{item.isNew}}">新品</text>
               <text class="badge hot" wx:if="{{item.isHot}}">热销</text>
@@ -262,7 +270,15 @@
           bindtap="viewBrandDetail"
         >
           <view class="brand-logo">
-            <image class="logo-image" src="{{item.logo}}" mode="aspectFit" />
+            <image 
+              class="logo-image" 
+              src="{{item.logo}}" 
+              mode="aspectFit"
+              lazy-load="{{true}}"
+              data-index="{{index}}"
+              data-type="brand"
+              binderror="onImageError"
+            />
           </view>
           
           <view class="brand-info">
@@ -440,7 +456,14 @@
       
       <scroll-view class="modal-body" scroll-y="{{true}}">
         <view class="product-detail">
-          <image class="detail-image" src="{{selectedProduct.image}}" mode="aspectFill" />
+          <image 
+            class="detail-image" 
+            src="{{selectedProduct.image}}" 
+            mode="aspectFill"
+            lazy-load="{{true}}"
+            data-type="product-detail"
+            binderror="onImageError"
+          />
           
           <view class="detail-info">
             <view class="detail-name">{{selectedProduct.name}}</view>

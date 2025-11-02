@@ -18,10 +18,11 @@ exports.main = async (event, context) => {
       diaryId,
       userId,
       date,
+      morningRoutine = [],
+      eveningRoutine = [],
       skinCondition,
       mood,
       weather,
-      products = [],
       notes = '',
       photos = []
     } = event
@@ -66,18 +67,97 @@ exports.main = async (event, context) => {
     }
     
     // 数据类型验证
-    if (skinCondition !== undefined && (skinCondition < 1 || skinCondition > 10)) {
+    // 验证日期格式
+    if (date) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      if (!dateRegex.test(date)) {
+        return {
+          code: -1,
+          message: '日期格式不正确，应为YYYY-MM-DD',
+          data: null
+        }
+      }
+      
+      // 验证日期不能是未来时间
+      const inputDate = new Date(date)
+      const today = new Date()
+      today.setHours(23, 59, 59, 999)
+      
+      if (inputDate > today) {
+        return {
+          code: -1,
+          message: '不能选择未来的日期',
+          data: null
+        }
+      }
+    }
+    
+    // 验证肌肤状态数据结构
+    if (skinCondition) {
+      const requiredFields = ['moisture', 'oiliness', 'sensitivity', 'breakouts', 'overall']
+      for (const field of requiredFields) {
+        if (skinCondition[field] === undefined || skinCondition[field] < 1 || skinCondition[field] > 10) {
+          return {
+            code: -1,
+            message: `肌肤状态${field}评分必须在1-10之间`,
+            data: null
+          }
+        }
+      }
+    }
+    
+    // 验证心情数据
+    const validMoods = ['excellent', 'good', 'neutral', 'bad', 'terrible']
+    if (mood && !validMoods.includes(mood)) {
       return {
         code: -1,
-        message: '皮肤状态评分必须在1-10之间',
+        message: '心情状态值无效',
         data: null
       }
     }
     
-    if (mood !== undefined && (mood < 1 || mood > 10)) {
+    // 验证天气数据结构
+    if (weather) {
+      const validConditions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy', 'foggy']
+      if (weather.condition && !validConditions.includes(weather.condition)) {
+        return {
+          code: -1,
+          message: '天气状况值无效',
+          data: null
+        }
+      }
+      
+      if (weather.temperature !== undefined && (weather.temperature < -50 || weather.temperature > 60)) {
+        return {
+          code: -1,
+          message: '温度值超出合理范围',
+          data: null
+        }
+      }
+      
+      if (weather.humidity !== undefined && (weather.humidity < 0 || weather.humidity > 100)) {
+        return {
+          code: -1,
+          message: '湿度值必须在0-100之间',
+          data: null
+        }
+      }
+    }
+    
+    // 验证备注长度
+    if (notes && notes.length > 500) {
       return {
         code: -1,
-        message: '心情评分必须在1-10之间',
+        message: '备注内容不能超过500字符',
+        data: null
+      }
+    }
+    
+    // 验证照片数量
+    if (photos && photos.length > 3) {
+      return {
+        code: -1,
+        message: '最多只能上传3张照片',
         data: null
       }
     }
@@ -101,21 +181,65 @@ exports.main = async (event, context) => {
       }
     }
     
-    // 验证产品ID是否存在
-    let validProducts = []
-    if (products && products.length > 0) {
+    // 验证护肤步骤中的产品ID
+    const allProductIds = [
+      ...(morningRoutine || []).map(item => item.productId),
+      ...(eveningRoutine || []).map(item => item.productId)
+    ].filter(Boolean)
+    
+    if (allProductIds.length > 0) {
       const productsResult = await db.collection('products')
         .where({
-          _id: db.command.in(products)
+          _id: db.command.in(allProductIds)
         })
         .get()
       
-      validProducts = productsResult.data.map(p => p._id)
+      const validProductIds = productsResult.data.map(p => p._id)
       
       // 检查是否有无效的产品ID
-      const invalidProducts = products.filter(id => !validProducts.includes(id))
-      if (invalidProducts.length > 0) {
-        console.warn('发现无效产品ID:', invalidProducts)
+      const invalidProductIds = allProductIds.filter(id => !validProductIds.includes(id))
+      if (invalidProductIds.length > 0) {
+        return {
+          code: -1,
+          message: `包含无效的产品ID: ${invalidProductIds.join(', ')}`,
+          data: null
+        }
+      }
+    }
+    
+    // 验证护肤步骤数据结构
+    const validateRoutine = (routine, routineName) => {
+      if (!routine) return null
+      for (let i = 0; i < routine.length; i++) {
+        const item = routine[i]
+        if (!item.productId || !item.productName) {
+          return `${routineName}第${i + 1}项缺少必要字段`
+        }
+        if (item.usage && item.usage.length > 50) {
+          return `${routineName}第${i + 1}项用量描述过长`
+        }
+        if (item.notes && item.notes.length > 200) {
+          return `${routineName}第${i + 1}项备注过长`
+        }
+      }
+      return null
+    }
+    
+    const morningValidation = validateRoutine(morningRoutine, '早间护肤')
+    if (morningValidation) {
+      return {
+        code: -1,
+        message: morningValidation,
+        data: null
+      }
+    }
+    
+    const eveningValidation = validateRoutine(eveningRoutine, '晚间护肤')
+    if (eveningValidation) {
+      return {
+        code: -1,
+        message: eveningValidation,
+        data: null
       }
     }
     
@@ -128,6 +252,14 @@ exports.main = async (event, context) => {
       updateData.date = date
     }
     
+    if (morningRoutine !== undefined) {
+      updateData.morningRoutine = morningRoutine
+    }
+    
+    if (eveningRoutine !== undefined) {
+      updateData.eveningRoutine = eveningRoutine
+    }
+    
     if (skinCondition !== undefined) {
       updateData.skinCondition = skinCondition
     }
@@ -138,10 +270,6 @@ exports.main = async (event, context) => {
     
     if (weather !== undefined) {
       updateData.weather = weather
-    }
-    
-    if (products !== undefined) {
-      updateData.products = validProducts
     }
     
     if (notes !== undefined) {

@@ -95,11 +95,23 @@ exports.main = async (event, context) => {
       if (validDiaries.length > 0) {
         const totals = validDiaries.reduce((acc, diary) => {
           const condition = diary.skinCondition
-          acc.moisture += condition.moisture || 0
-          acc.oiliness += condition.oiliness || 0
-          acc.sensitivity += condition.sensitivity || 0
-          acc.breakouts += condition.breakouts || 0
-          acc.overall += condition.overall || 0
+          
+          // 兼容旧的数值类型肌肤状态数据
+          if (typeof condition === 'number') {
+            acc.moisture += condition
+            acc.oiliness += condition
+            acc.sensitivity += condition
+            acc.breakouts += condition
+            acc.overall += condition
+          } else if (typeof condition === 'object' && condition) {
+            // 新的对象类型肌肤状态数据
+            acc.moisture += condition.moisture || 0
+            acc.oiliness += condition.oiliness || 0
+            acc.sensitivity += condition.sensitivity || 0
+            acc.breakouts += condition.breakouts || 0
+            acc.overall += condition.overall || 0
+          }
+          
           return acc
         }, { moisture: 0, oiliness: 0, sensitivity: 0, breakouts: 0, overall: 0 })
         
@@ -116,15 +128,27 @@ exports.main = async (event, context) => {
     
     // 心情统计
     const moodStats = {
+      excellent: 0,
       good: 0,
       neutral: 0,
-      bad: 0
+      bad: 0,
+      terrible: 0
     }
     
     allDiaries.forEach(diary => {
       if (diary.mood) {
-        if (moodStats.hasOwnProperty(diary.mood)) {
-          moodStats[diary.mood]++
+        // 兼容旧的数值类型心情数据
+        if (typeof diary.mood === 'number') {
+          if (diary.mood >= 9) moodStats.excellent++
+          else if (diary.mood >= 7) moodStats.good++
+          else if (diary.mood >= 5) moodStats.neutral++
+          else if (diary.mood >= 3) moodStats.bad++
+          else moodStats.terrible++
+        } else if (typeof diary.mood === 'string') {
+          // 新的字符串类型心情数据
+          if (moodStats.hasOwnProperty(diary.mood)) {
+            moodStats[diary.mood]++
+          }
         }
       }
     })
@@ -132,6 +156,7 @@ exports.main = async (event, context) => {
     // 最常使用的产品统计（前5名）
     const productUsage = {}
     allDiaries.forEach(diary => {
+      // 处理新的数据结构（morningRoutine 和 eveningRoutine）
       if (diary.morningRoutine) {
         diary.morningRoutine.forEach(product => {
           const key = product.productId || product.productName
@@ -145,6 +170,15 @@ exports.main = async (event, context) => {
           const key = product.productId || product.productName
           if (key) {
             productUsage[key] = (productUsage[key] || 0) + 1
+          }
+        })
+      }
+      
+      // 兼容旧的数据结构（products 数组）
+      if (diary.products && Array.isArray(diary.products)) {
+        diary.products.forEach(productId => {
+          if (productId) {
+            productUsage[productId] = (productUsage[productId] || 0) + 1
           }
         })
       }

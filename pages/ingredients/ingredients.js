@@ -79,7 +79,33 @@ Page({
   },
 
   onLoad(options) {
-    console.log('成分数据库页面加载', options);
+    console.log('🚀🚀🚀 成分数据库页面开始加载 🚀🚀🚀', options);
+    
+    // 显示页面加载提示
+    wx.showToast({
+      title: '成分页面已加载',
+      icon: 'success',
+      duration: 2000
+    });
+    
+    // 添加云开发状态检查日志
+    const app = getApp();
+    console.log('=== 云开发状态检查 ===');
+    console.log('app.globalData:', app.globalData);
+    console.log('cloudEnabled:', app.globalData?.cloudEnabled);
+    console.log('wx.cloud 是否存在:', typeof wx.cloud !== 'undefined');
+    console.log('========================');
+    
+    // 显示云开发状态提示
+    setTimeout(() => {
+      const cloudStatus = app.globalData?.cloudEnabled ? '已启用' : '未启用';
+      wx.showToast({
+        title: `云开发${cloudStatus}`,
+        icon: app.globalData?.cloudEnabled ? 'success' : 'none',
+        duration: 2000
+      });
+    }, 500);
+    
     this.checkUserPermission();
     this.loadInitialData();
   },
@@ -143,37 +169,38 @@ Page({
   },
 
   // 加载成分列表
-  async loadIngredientList(reset = false) {
+  async loadIngredientList(isRefresh = false) {
     if (this.data.loading) return;
     
     this.setData({ loading: true });
     
     try {
-      const page = reset ? 1 : this.data.page;
-      const response = await this.mockIngredientListAPI({
-        page,
-        pageSize: this.data.pageSize,
+      const params = {
         keyword: this.data.searchKeyword,
-        ...this.data.filterOptions
-      });
+        safetyLevel: this.data.filterOptions.safetyLevel,
+        effectType: this.data.filterOptions.effectType,
+        category: this.data.filterOptions.category
+      };
       
-      const newList = reset ? response.data : [...this.data.ingredientList, ...response.data];
+      const result = await this.getAggregatedIngredients(params);
+      
+      // 应用排序
+      const sortedIngredients = this.sortIngredients(result.data, this.data.currentSort);
       
       this.setData({
-        ingredientList: newList,
-        filteredIngredients: newList,
-        hasMore: response.hasMore,
-        page: reset ? 2 : this.data.page + 1
+        ingredientList: sortedIngredients,
+        filteredIngredients: sortedIngredients,
+        page: 1,
+        hasMore: false, // 聚合数据一次性加载完成
+        loading: false
       });
       
-      this.applyFiltersAndSort();
     } catch (error) {
       console.error('加载成分列表失败:', error);
       wx.showToast({
         title: '加载失败',
-        icon: 'error'
+        icon: 'none'
       });
-    } finally {
       this.setData({ loading: false });
     }
   },
@@ -183,104 +210,232 @@ Page({
     this.loadIngredientList();
   },
 
-  // 模拟成分列表API
-  mockIngredientListAPI(params) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockIngredients = [
-          {
-            id: 1,
-            name: '透明质酸',
-            englishName: 'Hyaluronic Acid',
-            safetyLevel: 'safe',
-            safetyScore: 9.5,
-            category: 'active',
-            effects: ['保湿', '抗衰', '修复'],
-            description: '透明质酸是一种天然保湿因子，能够结合自身重量1000倍的水分，为肌肤提供深层保湿。',
-            usage: '适用于所有肌肤类型，建议在爽肤水后使用。',
-            precautions: '敏感肌肤首次使用建议先做过敏测试。',
-            concentration: '0.1-2%',
-            pH: '6.0-7.0',
-            popularity: 95,
-            products: ['兰蔻小黑瓶', 'SK-II神仙水', '雅诗兰黛小棕瓶']
-          },
-          {
-            id: 2,
-            name: '烟酰胺',
-            englishName: 'Niacinamide',
-            safetyLevel: 'safe',
-            safetyScore: 9.0,
-            category: 'active',
-            effects: ['美白', '控油', '收缩毛孔'],
-            description: '烟酰胺是维生素B3的一种形式，具有美白、控油、收缩毛孔等多重功效。',
-            usage: '建议晚间使用，浓度不宜过高。',
-            precautions: '初次使用可能出现轻微刺激，建议从低浓度开始。',
-            concentration: '2-10%',
-            pH: '5.0-7.0',
-            popularity: 88,
-            products: ['The Ordinary烟酰胺精华', 'Paula\'s Choice 2%烟酰胺']
-          },
-          {
-            id: 3,
-            name: '水杨酸',
-            englishName: 'Salicylic Acid',
-            safetyLevel: 'caution',
-            safetyScore: 7.5,
-            category: 'active',
-            effects: ['祛痘', '去角质', '收缩毛孔'],
-            description: '水杨酸是一种β-羟基酸，能够深入毛孔清洁，有效改善痘痘和黑头问题。',
-            usage: '建议晚间使用，需要做好防晒。',
-            precautions: '孕妇慎用，敏感肌肤需谨慎使用，可能引起干燥和刺激。',
-            concentration: '0.5-2%',
-            pH: '3.0-4.0',
-            popularity: 82,
-            products: ['Paula\'s Choice 2%水杨酸', 'CeraVe水杨酸洁面']
-          },
-          {
-            id: 4,
-            name: '维生素C',
-            englishName: 'Vitamin C',
-            safetyLevel: 'safe',
-            safetyScore: 8.5,
-            category: 'active',
-            effects: ['美白', '抗氧化', '抗衰'],
-            description: '维生素C是强效的抗氧化剂，能够抑制黑色素生成，提亮肌肤。',
-            usage: '建议早晨使用，需要做好防晒。',
-            precautions: '光敏性成分，使用后必须防晒，开封后需冷藏保存。',
-            concentration: '5-20%',
-            pH: '3.0-4.0',
-            popularity: 90,
-            products: ['修丽可CE精华', 'The Ordinary维C精华']
-          },
-          {
-            id: 5,
-            name: '视黄醇',
-            englishName: 'Retinol',
-            safetyLevel: 'caution',
-            safetyScore: 7.0,
-            category: 'active',
-            effects: ['抗衰', '去角质', '改善细纹'],
-            description: '视黄醇是维生素A的一种形式，是公认的抗衰老金标准成分。',
-            usage: '建议晚间使用，需要建立耐受性。',
-            precautions: '孕妇禁用，初次使用需要建立耐受，可能引起脱皮和刺激。',
-            concentration: '0.1-1%',
-            pH: '5.5-6.5',
-            popularity: 85,
-            products: ['露得清A醇面霜', 'The Ordinary视黄醇精华']
-          }
-        ];
+  // 获取聚合后的成分数据
+  async getAggregatedIngredients(params) {
+    console.log('🔍🔍🔍 getAggregatedIngredients 开始 🔍🔍🔍');
+    console.log('传入参数:', params);
+    
+    // 显示数据加载开始提示
+    wx.showToast({
+      title: '开始加载成分数据',
+      icon: 'loading',
+      duration: 1000
+    });
+    
+    try {
+      // 优先尝试调用云函数
+      const app = getApp();
+      console.log('获取 app 实例:', app);
+      console.log('app.globalData:', app.globalData);
+      console.log('cloudEnabled 状态:', app.globalData?.cloudEnabled);
+      
+      if (app.globalData.cloudEnabled) {
+        console.log('✅ 云开发已启用，尝试调用云函数');
         
-        // 模拟分页
-        const start = (params.page - 1) * params.pageSize;
-        const end = start + params.pageSize;
-        const data = mockIngredients.slice(start, end);
-        
-        resolve({
-          data,
-          hasMore: end < mockIngredients.length,
-          total: mockIngredients.length
+        // 显示云函数调用提示
+        wx.showToast({
+          title: '使用云函数获取数据',
+          icon: 'loading',
+          duration: 1500
         });
-      }, 500);
+        
+        try {
+          console.log('📞 调用 getIngredients 云函数，参数:', params);
+          console.log('wx.cloud 对象:', wx.cloud);
+          
+          const cloudParams = {
+            keyword: params.keyword || '',
+            safetyLevel: params.safetyLevel || '',
+            effectType: params.effectType || '',
+            category: params.category || '',
+            sortBy: this.data.currentSort || 'name',
+            page: this.data.page || 1,
+            pageSize: this.data.pageSize || 20
+          };
+          console.log('云函数调用参数:', cloudParams);
+          
+          const result = await wx.cloud.callFunction({
+            name: 'getIngredients',
+            data: cloudParams
+          });
+          
+          console.log('📥 云函数调用结果:', result);
+          console.log('result.result:', result.result);
+          
+          if (result.result && result.result.success) {
+            console.log('✅ 云函数调用成功，返回数据');
+            
+            // 显示成功提示
+            wx.showToast({
+              title: '云函数数据加载成功',
+              icon: 'success',
+              duration: 1500
+            });
+            
+            const returnData = {
+              data: result.result.data.ingredients || [],
+              total: result.result.data.total || 0
+            };
+            console.log('返回的数据结构:', returnData);
+            console.log('=== 使用云函数数据 ===');
+            return returnData;
+          } else {
+            console.warn('⚠️ 云函数返回失败，使用本地聚合器:', result.result);
+            throw new Error(result.result?.message || '云函数调用失败');
+          }
+        } catch (cloudError) {
+          console.error('❌ 云函数调用失败，降级到本地聚合器:', cloudError);
+          console.log('=== 降级到本地聚合器 ===');
+          
+          // 显示降级提示
+          wx.showToast({
+            title: '云函数失败，使用本地数据',
+            icon: 'none',
+            duration: 2000
+          });
+          
+          // 降级到本地聚合器
+          return await this.getLocalAggregatedIngredients(params);
+        }
+      } else {
+        console.log('❌ 云开发未启用，使用本地聚合器');
+        console.log('=== 使用本地聚合器 ===');
+        
+        // 显示本地数据源提示
+        wx.showToast({
+          title: '使用本地数据源',
+          icon: 'none',
+          duration: 1500
+        });
+        
+        return await this.getLocalAggregatedIngredients(params);
+      }
+    } catch (error) {
+      console.error('❌ 获取聚合成分数据失败:', error);
+      throw error;
+    }
+  },
+
+  // 本地聚合器方法（作为降级方案）
+  async getLocalAggregatedIngredients(params) {
+    try {
+      // 加载产品数据
+      const products = await this.loadProductData();
+      
+      // 使用成分聚合器处理数据
+      const { aggregateFromProducts } = require('../../utils/ingredientAggregator');
+      const aggregatedIngredients = aggregateFromProducts(products);
+      
+      // 应用筛选条件
+      let filteredIngredients = aggregatedIngredients;
+      
+      if (params.keyword) {
+        const keyword = params.keyword.toLowerCase();
+        filteredIngredients = filteredIngredients.filter(ingredient => 
+          ingredient.name.toLowerCase().includes(keyword) ||
+          ingredient.englishName.toLowerCase().includes(keyword) ||
+          ingredient.effects.some(effect => effect.includes(keyword))
+        );
+      }
+      
+      if (params.safetyLevel) {
+        filteredIngredients = filteredIngredients.filter(ingredient => 
+          ingredient.safetyLevel === params.safetyLevel
+        );
+      }
+      
+      if (params.effectType) {
+        filteredIngredients = filteredIngredients.filter(ingredient => 
+          ingredient.effects.includes(params.effectType)
+        );
+      }
+      
+      if (params.category) {
+        filteredIngredients = filteredIngredients.filter(ingredient => 
+          ingredient.category === params.category
+        );
+      }
+      
+      return {
+        data: filteredIngredients,
+        total: filteredIngredients.length
+      };
+    } catch (error) {
+      console.error('本地聚合器处理失败:', error);
+      throw error;
+    }
+  },
+
+  // 加载产品数据
+  async loadProductData() {
+    return new Promise((resolve, reject) => {
+      // 检查是否启用云开发
+      const app = getApp();
+      if (app.globalData.cloudEnabled) {
+        // 从云数据库加载
+        this.loadProductsFromCloud()
+          .then(products => resolve(products))
+          .catch(error => {
+            console.error('从云端加载产品数据失败，使用本地数据:', error);
+            this.loadProductsFromLocal()
+              .then(products => resolve(products))
+              .catch(localError => reject(localError));
+          });
+      } else {
+        // 从本地文件加载
+        this.loadProductsFromLocal()
+          .then(products => resolve(products))
+          .catch(error => reject(error));
+      }
+    });
+  },
+
+  // 从云数据库加载产品
+  async loadProductsFromCloud() {
+    const cloudApi = require('../../utils/cloudApi');
+    try {
+      const response = await cloudApi.getProductRecommendations({
+        category: '',
+        budget: { min: 0, max: 10000 },
+        skinType: '',
+        concerns: [],
+        ageRange: '',
+        page: 1,
+        pageSize: 1000 // 获取所有产品
+      });
+      return response.products || [];
+    } catch (error) {
+      console.error('云端产品数据加载失败:', error);
+      throw error;
+    }
+  },
+
+  // 从本地文件加载产品
+  async loadProductsFromLocal() {
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: '/data_test/products.json',
+        method: 'GET',
+        success: (res) => {
+          if (res.statusCode === 200) {
+            try {
+              // 解析JSON Lines格式
+              const lines = res.data.split('\n').filter(line => line.trim());
+              const products = lines.map(line => JSON.parse(line));
+              resolve(products);
+            } catch (parseError) {
+              console.error('解析产品数据失败:', parseError);
+              reject(parseError);
+            }
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}`));
+          }
+        },
+        fail: (error) => {
+          console.error('加载本地产品数据失败:', error);
+          reject(error);
+        }
+      });
     });
   },
 
@@ -624,6 +779,22 @@ Page({
     const ingredient = e.currentTarget.dataset.ingredient;
     wx.navigateTo({
       url: `/pages/products/products?ingredient=${ingredient.name}`
+    });
+  },
+
+  // 点击产品项
+  onProductTap(e) {
+    const product = e.currentTarget.dataset.product;
+    wx.navigateTo({
+      url: `/pages/product-detail/product-detail?name=${encodeURIComponent(product.name)}`
+    });
+  },
+
+  // 查看所有相关产品
+  viewAllRelatedProducts(e) {
+    const ingredient = e.currentTarget.dataset.ingredient;
+    wx.navigateTo({
+      url: `/pages/products/products?ingredient=${encodeURIComponent(ingredient.name)}`
     });
   }
 });

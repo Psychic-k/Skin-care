@@ -1,0 +1,8 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" fill="#f5f5f5" stroke="#ddd" stroke-width="2"/>
+  <circle cx="100" cy="80" r="25" fill="#ccc"/>
+  <rect x="60" y="120" width="80" height="8" fill="#ccc" rx="4"/>
+  <rect x="70" y="140" width="60" height="6" fill="#ddd" rx="3"/>
+  <rect x="75" y="155" width="50" height="6" fill="#ddd" rx="3"/>
+  <text x="100" y="185" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#999">产品图片</text>
+</svg>

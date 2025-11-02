@@ -163,12 +163,34 @@ Page({
   // 切换标签页
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
+    
+    // 清空对应标签页的数据列表，防止数据累积
+    const clearData = {}
+    switch (tab) {
+      case 'products':
+        clearData.productList = []
+        clearData.filteredProducts = []
+        break
+      case 'ingredients':
+        clearData.ingredientList = []
+        break
+      case 'brands':
+        clearData.brandList = []
+        break
+      case 'favorites':
+        clearData.favoriteList = []
+        break
+    }
+    
     this.setData({
       currentTab: tab,
       currentPage: 1,
-      hasMore: true
+      hasMore: true,
+      ...clearData
     })
-    this.loadTabData(tab)
+    
+    // 传递 refresh = true 确保数据重新加载
+    this.loadTabData(tab, true)
   },
 
   // 加载标签页数据
@@ -339,8 +361,66 @@ Page({
     this.setData({ loading: true })
     
     try {
-      // 模拟API调用
-      const response = await this.mockIngredientListAPI()
+      let response
+      
+      // 优先尝试调用云函数
+      if (app.globalData && app.globalData.cloudEnabled && wx.cloud) {
+        try {
+          console.log('🔍 产品页面-成分列表：尝试调用云函数 getIngredients')
+          
+          const cloudResult = await wx.cloud.callFunction({
+            name: 'getIngredients',
+            data: {
+              page: refresh ? 1 : this.data.currentPage,
+              limit: 10,
+              category: 'all',
+              safetyLevel: 'all',
+              effectType: 'all',
+              sortBy: 'name'
+            }
+          })
+          
+          console.log('✅ 产品页面-成分列表：云函数调用成功', cloudResult)
+          
+          if (cloudResult.result && cloudResult.result.success) {
+            response = {
+              ingredients: cloudResult.result.data || [],
+              hasMore: cloudResult.result.pagination ? 
+                cloudResult.result.pagination.page < cloudResult.result.pagination.totalPages : false
+            }
+            
+            wx.showToast({
+              title: '云端数据加载成功',
+              icon: 'success',
+              duration: 1500
+            })
+          } else {
+            throw new Error('云函数返回数据格式错误')
+          }
+        } catch (cloudError) {
+          console.error('❌ 产品页面-成分列表：云函数调用失败，降级到本地数据', cloudError)
+          
+          wx.showToast({
+            title: '使用本地数据',
+            icon: 'none',
+            duration: 1500
+          })
+          
+          // 降级到模拟数据
+          response = await this.mockIngredientListAPI()
+        }
+      } else {
+        console.log('⚠️ 产品页面-成分列表：云开发未启用，使用本地数据')
+        
+        wx.showToast({
+          title: '使用本地数据',
+          icon: 'none',
+          duration: 1500
+        })
+        
+        // 使用模拟数据
+        response = await this.mockIngredientListAPI()
+      }
       
       if (refresh) {
         this.setData({
@@ -356,6 +436,7 @@ Page({
         })
       }
     } catch (error) {
+      console.error('💥 产品页面-成分列表：加载失败', error)
       wx.showToast({
         title: '加载失败',
         icon: 'error'
@@ -697,7 +778,7 @@ Page({
   // 查看产品详情
   viewProductDetail(e) {
     const productId = e.currentTarget.dataset.id
-    const product = this.data.filteredProducts.find(p => p.id === productId)
+    const product = this.data.filteredProducts.find(p => String(p.id) === String(productId))
     
     if (product) {
       this.setData({
@@ -846,14 +927,70 @@ Page({
     }
   },
 
+  // 图片加载错误处理
+  onImageError(e) {
+    const { index, type } = e.currentTarget.dataset
+    console.warn('图片加载失败:', e.detail)
+    
+    // 设置默认占位图
+    const defaultImage = '/images/placeholder-product.png'
+    
+    if (type === 'product' && typeof index !== 'undefined') {
+      const updatePath = `filteredProducts[${index}].image`
+      this.setData({
+        [updatePath]: defaultImage
+      })
+    } else if (type === 'ingredient' && typeof index !== 'undefined') {
+      const updatePath = `ingredientList[${index}].image`
+      this.setData({
+        [updatePath]: defaultImage
+      })
+    } else if (type === 'brand' && typeof index !== 'undefined') {
+      const updatePath = `brandList[${index}].logo`
+      this.setData({
+        [updatePath]: defaultImage
+      })
+    } else if (type === 'product-detail') {
+      this.setData({
+        'selectedProduct.image': defaultImage
+      })
+    }
+    
+    // 显示用户友好的提示（仅在开发环境显示）
+    if (wx.getSystemInfoSync().platform === 'devtools') {
+      wx.showToast({
+        title: '图片加载失败，已使用默认图片',
+        icon: 'none',
+        duration: 1500
+      })
+    }
+  },
+
   // 规范化产品字段，确保 UI 展示稳定
   normalizeProductList(products = []) {
+    const normalizeImagePath = (img) => {
+      if (!img) return ''
+      
+      // 如果是云存储URL，直接返回
+      if (img.startsWith('cloud://')) {
+        return img
+      }
+      
+      // 如果是HTTP/HTTPS URL，直接返回
+      if (img.startsWith('http://') || img.startsWith('https://')) {
+        return img
+      }
+      
+      // 处理本地路径：将 './images/...' 或 'images/...' 统一为 '/images/...'
+      return img.replace(/^\.\//, '/').replace(/^images\//, '/images/')
+    }
+
     const mapCategoryName = (categoryId) => {
       const found = this.data.categories.find(c => c.id === categoryId)
       return found ? found.name : (typeof categoryId === 'string' ? categoryId : '')
     }
 
-    return products.map(p => {
+    return products.map((p, idx) => {
       // 价格：支持 number / string / 对象({amount|value|min|low|avg|price})
       let price
       if (typeof p.price === 'number') {
@@ -889,22 +1026,70 @@ Page({
       } else if (p.rating && typeof p.rating === 'object') {
         const r = p.rating.average ?? p.rating.score
         rating = (parseFloat(r) || 0).toFixed(1)
+      } else if (p.ratings && typeof p.ratings === 'object') {
+        const r = p.ratings.average ?? p.ratings.score
+        rating = (parseFloat(r) || 0).toFixed(1)
       } else {
         rating = '0.0'
       }
 
       // 销量：统一到 sales
-      const sales = p.sales ?? p.salesVolume ?? p.salesCount ?? 0
+      const sales = p.sales ?? p.salesVolume ?? p.salesCount ?? (p.ratings?.count ?? 0)
 
-      // 展示字段：数组转为字符串
-      const effects = Array.isArray(p.effects) ? p.effects.join('、') : (p.effects ?? '')
-      const ingredients = Array.isArray(p.ingredients) ? p.ingredients.join('、') : (p.ingredients ?? '')
-      const skinTypes = Array.isArray(p.skinTypes) ? p.skinTypes.join('、') : (p.skinTypes ?? '')
+      // 展示字段：数组/对象转为字符串，兼容数据源
+      const effects = Array.isArray(p.effects)
+        ? p.effects.join('、')
+        : (p.effects ?? p.mainEffects ?? '')
+
+      // 原始 ingredients 可能是对象数组，优先使用 coreIngredients
+      const coreIngredientNames = Array.isArray(p.coreIngredients)
+        ? p.coreIngredients.map(i => (typeof i === 'string' ? i : (i?.name || i?.englishName || ''))).filter(Boolean)
+        : []
+      const ingredientNames = Array.isArray(p.ingredients)
+        ? p.ingredients.map(i => (typeof i === 'string' ? i : (i?.name || i?.englishName || ''))).filter(Boolean)
+        : []
+      const ingredients = coreIngredientNames.length > 0
+        ? coreIngredientNames.join('、')
+        : (ingredientNames.length > 0 ? ingredientNames.join('、') : (typeof p.ingredients === 'string' ? p.ingredients : ''))
+
+      const skinTypeMap = {
+        dry: '干性肌肤',
+        oily: '油性肌肤',
+        combination: '混合性肌肤',
+        sensitive: '敏感性肌肤',
+        normal: '中性肌肤',
+        mature: '熟龄肌肤'
+      }
+      let skinTypes
+      if (Array.isArray(p.skinTypes)) {
+        skinTypes = p.skinTypes.join('、')
+      } else if (typeof p.skinTypes === 'string') {
+        skinTypes = p.skinTypes
+      } else if (typeof p.suitableSkinTypesDisplay === 'string') {
+        skinTypes = p.suitableSkinTypesDisplay
+      } else if (Array.isArray(p.suitableSkinTypes)) {
+        skinTypes = p.suitableSkinTypes.map(s => skinTypeMap[s] || s).join('、')
+      } else {
+        skinTypes = ''
+      }
 
       const categoryName = p.categoryName ?? mapCategoryName(p.category)
 
+      // 统一并兼容图片字段
+      const primaryImage = p.image ?? p.imageUrl ?? (Array.isArray(p.images) ? p.images[0] : '')
+      const image = normalizeImagePath(primaryImage)
+      const images = Array.isArray(p.images) && p.images.length > 0
+        ? p.images.map(normalizeImagePath)
+        : (image ? [image] : [])
+
+      // 唯一ID：兼容云数据库的 _id，或生成稳定回退
+      const id = p.id ?? p._id ?? `${p.brand || 'brand'}-${p.name || 'product'}-${idx}`
+
       return {
         ...p,
+        id,
+        image,
+        images,
         price,
         originalPrice,
         rating,

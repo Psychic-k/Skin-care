@@ -40,17 +40,39 @@
 
   <!-- 功能介绍 -->
   <view class="features-section">
-    <view class="feature-item">
-      <image class="feature-icon" src="/images/detection-icon.png"></image>
-      <text class="feature-text">AI智能检测</text>
+    <view class="features-title">为您提供专业护肤服务</view>
+    
+    <view class="feature-card">
+      <view class="feature-icon-wrapper">
+        <text class="feature-emoji">🔍</text>
+      </view>
+      <view class="feature-content">
+        <text class="feature-title">AI智能检测</text>
+        <text class="feature-desc">专业皮肤分析，精准识别肌肤问题</text>
+        <text class="feature-note">需要登录使用</text>
+      </view>
     </view>
-    <view class="feature-item">
-      <image class="feature-icon" src="/images/diary-icon.png"></image>
-      <text class="feature-text">护肤日记</text>
+
+    <view class="feature-card">
+      <view class="feature-icon-wrapper">
+        <text class="feature-emoji">📝</text>
+      </view>
+      <view class="feature-content">
+        <text class="feature-title">护肤日记</text>
+        <text class="feature-desc">记录护肤历程，追踪肌肤变化</text>
+        <text class="feature-note">需要登录使用</text>
+      </view>
     </view>
-    <view class="feature-item">
-      <image class="feature-icon" src="/images/products-icon.png"></image>
-      <text class="feature-text">产品知识库</text>
+
+    <view class="feature-card">
+      <view class="feature-icon-wrapper">
+        <text class="feature-emoji">🛍️</text>
+      </view>
+      <view class="feature-content">
+        <text class="feature-title">产品知识库</text>
+        <text class="feature-desc">海量护肤品信息，成分解析</text>
+        <text class="feature-note">游客可浏览</text>
+      </view>
     </view>
   </view>
 

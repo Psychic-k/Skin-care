@@ -1,6 +1,7 @@
 // pages/user/user.js
 const app = getApp()
 const cloudApi = require('../../utils/cloudApi')
+const Auth = require('../../utils/auth')
 
 Page({
   data: {
@@ -63,6 +64,13 @@ Page({
         icon: '⚙️',
         count: 0,
         color: '#DDA0DD'
+      },
+      {
+        id: 'logout',
+        name: '退出登录',
+        icon: '🚪',
+        count: 0,
+        color: '#FF6B6B'
       }
     ],
     
@@ -95,20 +103,50 @@ Page({
   },
 
   onLoad() {
-    this.loadUserInfo()
-    this.loadUserStats()
+    console.log('用户页面加载');
+    this.loadUserInfo();
+    this.loadUserStats();
+    
+    // 添加登录状态变化监听器
+    this.loginStatusListener = (isLoggedIn, userInfo) => {
+      console.log('用户页面收到登录状态变化通知:', isLoggedIn);
+      if (isLoggedIn) {
+        this.loadUserInfo();
+        this.loadUserStats();
+      } else {
+        // 用户退出登录，清空页面数据
+        this.setData({
+          userInfo: null,
+          isLoggedIn: false,
+          stats: {
+            diaryCount: 0,
+            detectionCount: 0,
+            productCount: 0
+          }
+        });
+      }
+    };
+    getApp().addLoginStatusListener(this.loginStatusListener);
   },
 
   onShow() {
-    this.loadUserInfo()
-    this.loadUserStats()
+    console.log('用户页面显示');
+    this.loadUserInfo();
+    this.loadUserStats();
+  },
+
+  onUnload() {
+    // 移除登录状态监听器
+    if (this.loginStatusListener) {
+      getApp().removeLoginStatusListener(this.loginStatusListener);
+    }
   },
 
   // 加载用户信息 - 使用云开发API
   async loadUserInfo() {
     try {
-      // 先从本地存储获取
-      const localUserInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo
+      // 先从统一认证工具获取，确保为对象形态
+      const localUserInfo = Auth.getUserInfo() || app.globalData.userInfo
       console.log('本地用户信息:', localUserInfo)
       
       if (localUserInfo && (localUserInfo.openid || localUserInfo.id || localUserInfo.isLogin)) {
@@ -330,7 +368,15 @@ Page({
     })
   },
 
-
+  // 点击未登录文字跳转登录
+  onLoginTap() {
+    // 检查用户是否未登录
+    if (!this.data.userInfo.openid || this.data.userInfo.nickName === '未登录') {
+      wx.navigateTo({
+        url: '/pages/login/login'
+      })
+    }
+  },
 
   // 菜单项点击
   onMenuItemTap(e) {
@@ -372,9 +418,13 @@ Page({
         })
         break
       case 'settings':
-        wx.navigateTo({
-          url: '/pages/settings/settings'
+        wx.showToast({
+          title: '设置功能开发中',
+          icon: 'none'
         })
+        break
+      case 'logout':
+        this.onLogout()
         break
     }
   },
@@ -493,5 +543,21 @@ Page({
     setTimeout(() => {
       wx.stopPullDownRefresh()
     }, 1000)
+  },
+
+  // 退出登录
+  onLogout() {
+    wx.showModal({
+      title: '确认退出',
+      content: '确定要退出登录吗？',
+      confirmText: '退出',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 使用全局退出登录方法
+          getApp().logout();
+        }
+      }
+    });
   }
 })

@@ -1,0 +1,9 @@
+{
+  "name": "processProductRequest",
+  "version": "1.0.0",
+  "description": "处理产品催更请求的云函数（管理员用）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

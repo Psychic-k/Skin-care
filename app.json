@@ -11,7 +11,9 @@
     "pages/ingredients/ingredients",
     "pages/brands/brands",
     "pages/admin/manage",
-    "pages/admin/upload"
+    "pages/admin/upload",
+    "pages/my-products/my-products",
+    "pages/product-request/product-request"
   ],
   "tabBar": {
     "color": "#999999",
@@ -61,4 +63,5 @@
     "downloadFile": 10000
   },
   "debug": true
+
 }

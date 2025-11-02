@@ -1,0 +1,143 @@
+{
+  "templates": {
+    "透明质酸": {
+      "englishName": "Hyaluronic Acid",
+      "category": "active",
+      "safetyLevel": "safe",
+      "safetyScore": 9.5,
+      "effects": ["moisturizing"],
+      "description": "透明质酸是一种天然保湿因子，能够结合自身重量1000倍的水分，为肌肤提供深层保湿。",
+      "usage": "适用于所有肌肤类型，建议在爽肤水后使用。",
+      "precautions": "敏感肌肤首次使用建议先做过敏测试。",
+      "concentrationRange": "0.1-2%",
+      "pH": "6.0-7.0"
+    },
+    "烟酰胺": {
+      "englishName": "Niacinamide",
+      "category": "active",
+      "safetyLevel": "safe",
+      "safetyScore": 9.0,
+      "effects": ["whitening", "acne"],
+      "description": "烟酰胺是维生素B3的一种形式，具有美白、控油、收缩毛孔等多重功效。",
+      "usage": "建议晚间使用，浓度不宜过高。",
+      "precautions": "初次使用可能出现轻微刺激，建议从低浓度开始。",
+      "concentrationRange": "2-10%",
+      "pH": "5.0-7.0"
+    },
+    "水杨酸": {
+      "englishName": "Salicylic Acid",
+      "category": "active",
+      "safetyLevel": "caution",
+      "safetyScore": 7.5,
+      "effects": ["acne"],
+      "description": "水杨酸是一种β-羟基酸，能够深入毛孔清洁，有效改善痘痘和黑头问题。",
+      "usage": "建议晚间使用，需要做好防晒。",
+      "precautions": "孕妇慎用，敏感肌肤需谨慎使用，可能引起干燥和刺激。",
+      "concentrationRange": "0.5-2%",
+      "pH": "3.0-4.0"
+    },
+    "维生素C": {
+      "englishName": "Vitamin C",
+      "category": "active",
+      "safetyLevel": "caution",
+      "safetyScore": 8.5,
+      "effects": ["whitening", "anti-aging"],
+      "description": "维生素C是强效的抗氧化剂，能够抑制黑色素生成，提亮肌肤。",
+      "usage": "建议早晨使用，需要做好防晒。",
+      "precautions": "光敏性成分，使用后必须防晒，开封后需冷藏保存。",
+      "concentrationRange": "5-20%",
+      "pH": "3.0-4.0"
+    },
+    "视黄醇": {
+      "englishName": "Retinol",
+      "category": "active",
+      "safetyLevel": "caution",
+      "safetyScore": 7.0,
+      "effects": ["anti-aging"],
+      "description": "视黄醇是维生素A的一种形式，是公认的抗衰老金标准成分。",
+      "usage": "建议晚间使用，需要建立耐受性。",
+      "precautions": "孕妇禁用，初次使用需要建立耐受，可能引起脱皮和刺激。",
+      "concentrationRange": "0.1-1%",
+      "pH": "5.5-6.5"
+    },
+    "甘油": {
+      "englishName": "Glycerin",
+      "category": "moisturizer",
+      "safetyLevel": "safe",
+      "safetyScore": 9.8,
+      "effects": ["moisturizing"],
+      "description": "甘油是一种优秀的保湿剂，能够从环境中吸收水分并锁住肌肤水分。",
+      "usage": "适用于所有肌肤类型，可日常使用。",
+      "precautions": "一般情况下非常安全，极少数人可能出现过敏反应。",
+      "concentrationRange": "1-10%",
+      "pH": "6.0-8.0"
+    },
+    "神经酰胺": {
+      "englishName": "Ceramide",
+      "category": "active",
+      "safetyLevel": "safe",
+      "safetyScore": 9.2,
+      "effects": ["moisturizing", "sensitive"],
+      "description": "神经酰胺是肌肤屏障的重要组成部分，能够修复受损屏障，增强肌肤防御力。",
+      "usage": "适用于所有肌肤类型，特别适合敏感肌和干性肌肤。",
+      "precautions": "一般情况下安全，敏感肌肤首次使用建议先做过敏测试。",
+      "concentrationRange": "0.5-5%",
+      "pH": "5.5-7.0"
+    },
+    "角鲨烷": {
+      "englishName": "Squalane",
+      "category": "moisturizer",
+      "safetyLevel": "safe",
+      "safetyScore": 9.6,
+      "effects": ["moisturizing"],
+      "description": "角鲨烷是一种轻质的保湿油，能够模拟皮脂结构，提供长效保湿。",
+      "usage": "适用于所有肌肤类型，质地轻盈不油腻。",
+      "precautions": "一般情况下非常安全，极少数人可能出现过敏反应。",
+      "concentrationRange": "1-10%",
+      "pH": "6.0-8.0"
+    },
+    "光甘草定": {
+      "englishName": "Glabridin",
+      "category": "active",
+      "safetyLevel": "safe",
+      "safetyScore": 8.8,
+      "effects": ["whitening"],
+      "description": "光甘草定是从甘草中提取的美白成分，能够抑制酪氨酸酶活性，阻断黑色素生成。",
+      "usage": "建议晚间使用，可与其他美白成分搭配。",
+      "precautions": "一般情况下安全，敏感肌肤首次使用建议先做过敏测试。",
+      "concentrationRange": "0.5-10%",
+      "pH": "5.0-7.0"
+    },
+    "山参提取物": {
+      "englishName": "Ginseng Extract",
+      "category": "active",
+      "safetyLevel": "safe",
+      "safetyScore": 8.5,
+      "effects": ["anti-aging"],
+      "description": "山参提取物富含人参皂苷，能够促进细胞再生，改善肌肤弹性和紧致度。",
+      "usage": "适用于熟龄肌肤，建议长期使用以获得最佳效果。",
+      "precautions": "一般情况下安全，敏感肌肤首次使用建议先做过敏测试。",
+      "concentrationRange": "1-10%",
+      "pH": "5.5-7.0"
+    }
+  },
+  "effect_descriptions": {
+    "moisturizing": "保湿补水，维持肌肤水分平衡",
+    "anti-aging": "抗衰老，改善细纹和肌肤弹性",
+    "whitening": "美白提亮，改善肌肤暗沉和色斑",
+    "acne": "控油祛痘，改善毛孔粗大问题",
+    "sensitive": "舒缓修护，适合敏感肌肤使用"
+  },
+  "category_descriptions": {
+    "active": "活性成分，具有特定护肤功效",
+    "moisturizer": "保湿成分，主要用于补水保湿",
+    "preservative": "防腐剂，用于保持产品稳定性",
+    "surfactant": "表面活性剂，用于清洁和乳化",
+    "emulsifier": "乳化剂，用于稳定乳液质地"
+  },
+  "safety_descriptions": {
+    "safe": "安全性高，适合大多数人使用",
+    "caution": "需要注意使用方法和浓度",
+    "danger": "存在一定风险，需要专业指导"
+  }
+}

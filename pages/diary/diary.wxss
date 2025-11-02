@@ -1,7 +1,76 @@
 /* pages/diary/diary.wxss */
 .diary-container {
-  background-color: #ffffff;
+  background-color: #f8f9fa;
   min-height: 100vh;
+  position: relative;
+}
+
+/* 全局加载遮罩 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.loading-content {
+  background: white;
+  padding: 60rpx;
+  border-radius: 20rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid #4CAF50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner.small {
+  width: 40rpx;
+  height: 40rpx;
+  border-width: 4rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 动画定义 */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10rpx); }
+  60% { transform: translateY(-5rpx); }
 }
 
 /* 头部工具栏 */
@@ -10,25 +79,72 @@
   align-items: center;
   justify-content: space-between;
   padding: 30rpx;
-  background: white;
-  border-bottom: 1rpx solid #eee;
+  /*background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);*/
+  background-color: white;
+  color: white;
+  box-shadow: 0 4rpx 20rpx rgba(102, 126, 234, 0.3);
 }
 
 .header-title {
   font-size: 36rpx;
   font-weight: bold;
-  color: #333;
+  color: #4CAF50;
 }
 
 .header-actions {
   display: flex;
   gap: 20rpx;
+  align-items: center;
+}
+
+/* 草稿指示器 */
+.draft-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 25rpx;
+  backdrop-filter: blur(10rpx);
+  animation: bounce 2s infinite;
+}
+
+.draft-icon {
+  font-size: 24rpx;
+}
+
+.draft-text {
+  font-size: 24rpx;
+  color: white;
+}
+
+/* 导出按钮 */
+.export-btn {
+  width: 60rpx;
+  height: 60rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10rpx);
+  transition: all 0.3s ease;
+}
+
+.export-btn:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.export-icon {
+  font-size: 28rpx;
+  color: white;
 }
 
 .add-btn {
   width: 60rpx;
   height: 60rpx;
-  background: #4CAF50;
+  background: linear-gradient(135deg, #4CAF50, #45a049);
   border-radius: 30rpx;
   display: flex;
   align-items: center;
@@ -36,6 +152,13 @@
   color: white;
   font-size: 32rpx;
   font-weight: bold;
+  box-shadow: 0 4rpx 15rpx rgba(76, 175, 80, 0.4);
+  transition: all 0.3s ease;
+}
+
+.add-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2rpx 10rpx rgba(76, 175, 80, 0.4);
 }
 
 /* 视图模式切换 */
@@ -120,12 +243,65 @@
   margin-bottom: 30rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  animation: slideUp 0.5s ease-out;
+}
+
+.diary-item:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 15rpx rgba(0, 0, 0, 0.1);
 }
 
 .diary-content {
   padding: 30rpx;
   display: flex;
   gap: 30rpx;
+}
+
+/* 加载更多状态 */
+.load-more-container {
+  padding: 40rpx 30rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.load-more-loading {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  color: #666;
+}
+
+.load-more-end {
+  padding: 20rpx 40rpx;
+  background: #f5f5f5;
+  border-radius: 25rpx;
+  color: #999;
+  font-size: 24rpx;
+}
+
+.load-more-error {
+  padding: 20rpx 40rpx;
+  background: #ffebee;
+  border-radius: 25rpx;
+  color: #f44336;
+  font-size: 24rpx;
+  border: 2rpx solid #ffcdd2;
+  transition: all 0.3s ease;
+}
+
+.load-more-error:active {
+  background: #ffcdd2;
+  transform: scale(0.95);
+}
+
+.error-text {
+  color: #f44336;
+}
+
+.end-text {
+  color: #999;
 }
 
 .diary-date {
@@ -275,11 +451,50 @@
 /* 日历视图 */
 .calendar-view {
   padding: 30rpx;
+  background: #f8f9fa;
+  min-height: 100vh;
 }
 
 .calendar-header {
-  text-align: center;
   margin-bottom: 30rpx;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border-radius: 20rpx;
+  padding: 20rpx 30rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.nav-btn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.nav-btn:active {
+  background: #e0e0e0;
+  transform: scale(0.95);
+}
+
+.nav-icon {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.calendar-title-container {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
 }
 
 .calendar-title {
@@ -288,37 +503,180 @@
   color: #333;
 }
 
-.calendar-grid {
+.today-btn {
+  padding: 8rpx 16rpx;
+  background: #4CAF50;
+  color: white;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  transition: all 0.3s ease;
+}
+
+.today-btn:active {
+  background: #45a049;
+  transform: scale(0.95);
+}
+
+.calendar-container {
   background: white;
   border-radius: 20rpx;
   padding: 30rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
 .calendar-weekdays {
   display: flex;
   margin-bottom: 20rpx;
+  border-bottom: 2rpx solid #f0f0f0;
 }
 
 .weekday-item {
   flex: 1;
   text-align: center;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #666;
   padding: 16rpx 0;
+  font-weight: 500;
 }
 
-.calendar-placeholder {
-  height: 400rpx;
+.calendar-days {
   display: flex;
+  flex-wrap: wrap;
+}
+
+.calendar-day {
+  width: calc(100% / 7);
+  height: 100rpx;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #999;
+  position: relative;
+  border-radius: 12rpx;
+  margin-bottom: 8rpx;
+  transition: all 0.3s ease;
+}
+
+.calendar-day:active {
+  transform: scale(0.95);
+}
+
+.calendar-day.current-month {
+  color: #333;
+}
+
+.calendar-day.other-month {
+  color: #ccc;
+}
+
+.calendar-day.today {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  font-weight: bold;
+}
+
+.calendar-day.selected {
+  background: #E3F2FD;
+  border: 2rpx solid #2196F3;
+}
+
+.calendar-day.has-diary {
+  background: #FFF3E0;
+  border: 2rpx solid #FF9800;
+}
+
+.calendar-day.has-diary.today {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  border: 2rpx solid #2E7D32;
+}
+
+.day-number {
+  font-size: 28rpx;
+  line-height: 1;
+  margin-bottom: 4rpx;
+}
+
+.diary-indicators {
+  display: flex;
+  gap: 4rpx;
+  align-items: center;
+}
+
+.mood-indicator {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+}
+
+.skin-indicator {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8rpx;
+  padding: 2rpx 6rpx;
+  min-width: 20rpx;
+}
+
+.skin-score {
+  font-size: 18rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.today-mark {
+  position: absolute;
+  bottom: 4rpx;
+  right: 4rpx;
+  width: 8rpx;
+  height: 8rpx;
+  background: #FF5722;
+  border-radius: 50%;
+}
+
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
+  margin-top: 30rpx;
+  padding: 20rpx;
+  background: white;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.legend-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.mood-dot {
+  background: #FF9800;
+}
+
+.skin-dot {
+  background: #2196F3;
+}
+
+.today-dot {
+  background: #4CAF50;
+}
+
+.legend-text {
   font-size: 24rpx;
+  color: #666;
 }
 
 /* 统计视图 */
 .stats-view {
   padding: 30rpx;
+  background: #f8f9fa;
+  min-height: 100vh;
 }
 
 .stats-summary {
@@ -331,6 +689,7 @@
   background: white;
   border-radius: 20rpx;
   padding: 30rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
 .stats-title {
@@ -349,6 +708,9 @@
 
 .stat-item {
   text-align: center;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 16rpx;
 }
 
 .stat-number {
@@ -362,6 +724,197 @@
 .stat-label {
   font-size: 24rpx;
   color: #666;
+}
+
+/* 肌肤状态统计 */
+.skin-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.skin-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.skin-stat-label {
+  font-size: 26rpx;
+  color: #333;
+  min-width: 80rpx;
+  font-weight: 500;
+}
+
+.skin-stat-bar {
+  flex: 1;
+  height: 16rpx;
+  background: #e0e0e0;
+  border-radius: 8rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.skin-stat-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  border-radius: 8rpx;
+  transition: width 0.3s ease;
+}
+
+.skin-stat-value {
+  font-size: 24rpx;
+  color: #4CAF50;
+  font-weight: bold;
+  min-width: 60rpx;
+  text-align: right;
+}
+
+/* 心情统计 */
+.mood-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20rpx;
+}
+
+.mood-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx;
+  background: #f8f9fa;
+  border-radius: 16rpx;
+}
+
+.mood-stat-icon {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: white;
+  font-weight: bold;
+}
+
+.mood-stat-label {
+  font-size: 22rpx;
+  color: #666;
+  text-align: center;
+}
+
+.mood-stat-count {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+/* 最近7天记录 */
+.recent-days {
+  display: flex;
+  justify-content: space-between;
+  gap: 8rpx;
+}
+
+.day-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 8rpx;
+  border-radius: 16rpx;
+  transition: all 0.3s ease;
+}
+
+.day-item.has-record {
+  background: #E8F5E8;
+  border: 2rpx solid #4CAF50;
+}
+
+.day-item.no-record {
+  background: #f8f9fa;
+  border: 2rpx solid #e0e0e0;
+}
+
+.day-date {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+.day-item.has-record .day-date {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.day-status {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.day-item.has-record .day-status {
+  background: #4CAF50;
+}
+
+.day-item.no-record .day-status {
+  background: #e0e0e0;
+}
+
+/* 产品统计 */
+.product-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 16rpx;
+  background: #f8f9fa;
+  border-radius: 16rpx;
+}
+
+.product-name {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  min-width: 120rpx;
+}
+
+.product-usage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.usage-bar {
+  flex: 1;
+  height: 12rpx;
+  background: #e0e0e0;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.usage-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  border-radius: 6rpx;
+  transition: width 0.3s ease;
+}
+
+.usage-count {
+  font-size: 24rpx;
+  color: #4CAF50;
+  font-weight: bold;
+  min-width: 60rpx;
+  text-align: right;
 }
 
 .trend-chart {
@@ -819,7 +1372,244 @@
 
 .selected-count {
   font-size: 26rpx;
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+/* 产品搜索增强样式 */
+.search-box {
+  padding: 30rpx;
+  background: white;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  border-radius: 25rpx;
+  padding: 0 20rpx;
+  transition: all 0.3s ease;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: #4CAF50;
+  background: white;
+  box-shadow: 0 0 0 6rpx rgba(76, 175, 80, 0.1);
+}
+
+.search-icon {
+  font-size: 28rpx;
+  color: #999;
+  margin-right: 15rpx;
+}
+
+.search-input {
+  flex: 1;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: #333;
+  background: transparent;
+  border: none;
+}
+
+.clear-search {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0e0e0;
+  border-radius: 20rpx;
   color: #666;
+  font-size: 24rpx;
+  transition: all 0.3s ease;
+}
+
+.clear-search:active {
+  background: #d0d0d0;
+  transform: scale(0.9);
+}
+
+/* 搜索建议 */
+.search-suggestions {
+  background: white;
+  border-bottom: 1rpx solid #f0f0f0;
+  max-height: 200rpx;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid #f8f9fa;
+  transition: background 0.2s ease;
+}
+
+.suggestion-item:active {
+  background: #f0f0f0;
+}
+
+.suggestion-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 分类筛选 */
+.category-filter {
+  background: white;
+  border-bottom: 1rpx solid #f0f0f0;
+  padding: 20rpx 0;
+}
+
+.category-tabs {
+  white-space: nowrap;
+  padding: 0 30rpx;
+}
+
+.category-tab {
+  display: inline-block;
+  padding: 12rpx 24rpx;
+  margin-right: 20rpx;
+  background: #f5f5f5;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.category-tab.active {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  box-shadow: 0 4rpx 15rpx rgba(76, 175, 80, 0.3);
+}
+
+.category-tab:active {
+  transform: scale(0.95);
+}
+
+/* 产品列表增强 */
+.products-list {
+  max-height: 60vh;
+  padding: 20rpx 30rpx;
+}
+
+.products-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  padding: 60rpx 0;
+  color: #666;
+}
+
+.product-rating {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.rating-stars {
+  font-size: 20rpx;
+  color: #ffc107;
+}
+
+.rating-score {
+  font-size: 22rpx;
+  color: #666;
+}
+
+.product-checkbox {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 24rpx;
+  background: white;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.product-checkbox.checked {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  border-color: #4CAF50;
+  color: white;
+  font-size: 24rpx;
+  font-weight: bold;
+  transform: scale(1.1);
+  box-shadow: 0 4rpx 15rpx rgba(76, 175, 80, 0.3);
+}
+
+/* 已选产品统计 */
+.selected-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  background: #f8f9fa;
+  border-top: 1rpx solid #e9ecef;
+}
+
+.summary-text {
+  font-size: 26rpx;
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.clear-all-btn {
+  padding: 12rpx 24rpx;
+  background: #ffebee;
+  border-radius: 20rpx;
+  color: #f44336;
+  font-size: 24rpx;
+  transition: all 0.3s ease;
+}
+
+.clear-all-btn:active {
+  background: #ffcdd2;
+  transform: scale(0.95);
+}
+
+/* 空状态优化 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 40rpx;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  margin-bottom: 30rpx;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.empty-action {
+  padding: 20rpx 40rpx;
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border-radius: 25rpx;
+  font-size: 26rpx;
+  transition: all 0.3s ease;
+  box-shadow: 0 4rpx 15rpx rgba(76, 175, 80, 0.3);
+}
+
+.empty-action:active {
+  transform: scale(0.95);
+  box-shadow: 0 2rpx 10rpx rgba(76, 175, 80, 0.3);
 }
 
 .clear-all-btn {
@@ -871,4 +1661,231 @@
   border-radius: 12rpx;
   font-size: 22rpx;
   color: #9e9e9e;
+}
+
+/* 新的产品选择框样式 */
+.product-selector-container {
+  margin-bottom: 20rpx;
+}
+
+.product-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 30rpx;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2rpx solid #e9ecef;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.product-selector:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  border-color: #4CAF50;
+}
+
+.selector-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.selector-arrow {
+  font-size: 24rpx;
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+.selector-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.product-dropdown {
+  background: white;
+  border: 2rpx solid #e9ecef;
+  border-top: none;
+  border-radius: 0 0 16rpx 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.product-dropdown.show {
+  max-height: 600rpx;
+  border-color: #4CAF50;
+}
+
+.dropdown-search {
+  padding: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.dropdown-search .search-input {
+  width: 100%;
+  padding: 16rpx 20rpx;
+  background: #f8f9fa;
+  border: 1rpx solid #e9ecef;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.dropdown-search .search-input:focus {
+  border-color: #4CAF50;
+  background: white;
+}
+
+.product-options {
+  max-height: 400rpx;
+}
+
+.product-option {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+  transition: all 0.3s ease;
+}
+
+.product-option:last-child {
+  border-bottom: none;
+}
+
+.product-option:active {
+  background: #f8f9fa;
+}
+
+.product-option.selected {
+  background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 100%);
+  border-left: 4rpx solid #4CAF50;
+}
+
+.option-image {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 8rpx;
+  margin-right: 20rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
+}
+
+.option-info {
+  flex: 1;
+}
+
+.option-name {
+  display: block;
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 4rpx;
+}
+
+.product-option.selected .option-name {
+  color: #2E7D32;
+  font-weight: 600;
+}
+
+.option-brand {
+  font-size: 22rpx;
+  color: #666;
+}
+
+.product-option.selected .option-brand {
+  color: #4CAF50;
+}
+
+.option-checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 18rpx;
+  background: white;
+  transition: all 0.3s ease;
+  font-size: 20rpx;
+  color: white;
+}
+
+.option-checkbox.checked {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  border-color: #4CAF50;
+  transform: scale(1.1);
+  box-shadow: 0 2rpx 8rpx rgba(76, 175, 80, 0.3);
+}
+
+/* 肌肤状态样式 - 紧凑版本 */
+.skin-condition-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.skin-condition-option {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 24rpx;
+  border: 2rpx solid #eee;
+  border-radius: 30rpx;
+  background: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.skin-condition-option:active {
+  transform: scale(0.95);
+}
+
+.condition-icon {
+  font-size: 24rpx;
+}
+
+.condition-name {
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.condition-level {
+  font-size: 22rpx;
+  color: #666;
+  font-weight: 600;
+}
+
+/* 心情状态样式 - 紧凑版本 */
+.mood-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.mood-option {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 24rpx;
+  border: 2rpx solid #eee;
+  border-radius: 30rpx;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.mood-option.selected {
+  border-color: #4CAF50;
+  background: #E8F5E8;
+  color: #4CAF50;
+}
+
+.mood-icon {
+  font-size: 24rpx;
+}
+
+.mood-name {
+  font-size: 24rpx;
+  font-weight: 500;
 }

@@ -23,7 +23,15 @@
           data-index="{{index}}"
           bindtap="previewImage"
         >
-          <image class="product-image" src="{{item}}" mode="aspectFit" />
+          <image 
+            class="product-image" 
+            src="{{item}}" 
+            mode="aspectFit"
+            lazy-load="{{true}}"
+            data-index="{{index}}"
+            data-type="product-detail"
+            binderror="onImageError"
+          />
         </swiper-item>
       </swiper>
       

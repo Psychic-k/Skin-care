@@ -2,6 +2,7 @@
 const app = getApp()
 const request = require('../../utils/request')
 const { showToast, showLoading, hideLoading } = require('../../utils/utils')
+const Auth = require('../../utils/auth')
 
 Page({
   data: {
@@ -44,6 +45,26 @@ Page({
   },
 
   onLoad(options) {
+    // 检查登录状态
+    if (!Auth.isLoggedIn()) {
+      wx.showModal({
+        title: '需要登录',
+        content: 'AI皮肤检测功能需要登录后使用，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '返回',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({
+              url: '/pages/login/login'
+            })
+          } else {
+            wx.navigateBack()
+          }
+        }
+      })
+      return
+    }
+
     this.getUserInfo()
     this.getRecentDetections()
     
@@ -56,6 +77,11 @@ Page({
   },
 
   onShow() {
+    // 检查登录状态
+    if (!Auth.isLoggedIn()) {
+      return
+    }
+    
     // 检查相机权限
     this.checkCameraAuth()
   },
@@ -157,12 +183,30 @@ Page({
 
   // 开始检测
   startDetection() {
-    if (!this.data.userInfo) {
-      showToast('请先登录')
-      wx.navigateTo({
-        url: '/pages/login/login'
+    // 再次检查登录状态
+    if (!Auth.isLoggedIn()) {
+      wx.showModal({
+        title: '需要登录',
+        content: 'AI皮肤检测功能需要登录后使用，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({
+              url: '/pages/login/login'
+            })
+          }
+        }
       })
       return
+    }
+
+    if (!this.data.userInfo) {
+      this.getUserInfo()
+      if (!this.data.userInfo) {
+        showToast('获取用户信息失败，请重新登录')
+        return
+      }
     }
 
     this.setData({

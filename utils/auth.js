@@ -1,5 +1,6 @@
 // 用户认证相关工具函数
 const app = getApp();
+const Storage = require('./storage.js');
 
 /**
  * 检查用户是否已登录
@@ -7,26 +8,29 @@ const app = getApp();
  */
 function isLoggedIn() {
   const userInfo = getUserInfo();
-  // 检查多种登录状态标识
-  return userInfo && (userInfo.openid || userInfo.id || userInfo.isLogin);
+  // 检查多种登录状态标识，并确保返回严格布尔值
+  return !!(userInfo && (userInfo.openid || userInfo.id || userInfo.isLogin));
 }
 
 /**
  * 获取用户信息
  */
 function getUserInfo() {
-  return wx.getStorageSync('userInfo') || {};
+  // 使用统一的 Storage 工具，确保读取到的是对象而非未解析的字符串
+  return Storage.getUserInfo() || {};
 }
 
 /**
  * 设置用户信息
  */
 function setUserInfo(userInfo) {
-  wx.setStorageSync('userInfo', userInfo);
+  // 统一通过 Storage 写入，避免形态不一致
+  Storage.saveUserInfo(userInfo);
   // 同时设置到全局
   const app = getApp();
   if (app) {
     app.globalData.userInfo = userInfo;
+    app.globalData.isLoggedIn = !!(userInfo && (userInfo.openid || userInfo.id || userInfo.isLogin));
   }
 }
 
@@ -34,12 +38,13 @@ function setUserInfo(userInfo) {
  * 清除用户信息（退出登录）
  */
 function clearUserInfo() {
-  wx.removeStorageSync('userInfo');
+  Storage.clearUserInfo();
   wx.removeStorageSync('token');
   // 同时清除全局用户信息
   const app = getApp();
   if (app) {
     app.globalData.userInfo = null;
+    app.globalData.isLoggedIn = false;
   }
 }
 
@@ -169,6 +174,77 @@ function getUserProfile() {
 
 
 
+/**
+ * 跳转到登录页
+ */
+function redirectToLogin() {
+  console.log('跳转到登录页面');
+  wx.reLaunch({
+    url: '/pages/login/login'
+  });
+}
+
+/**
+ * 检查页面访问权限
+ * @param {string} pageName 页面名称
+ * @returns {boolean} 是否有访问权限
+ */
+function checkPageAccess(pageName) {
+  const loginRequiredPages = ['detection', 'diary'];
+  
+  if (loginRequiredPages.includes(pageName)) {
+    return isLoggedIn();
+  }
+  
+  // 其他页面不需要登录
+  return true;
+}
+
+/**
+ * 验证页面访问权限，如果没有权限则跳转登录页
+ * @param {string} pageName 页面名称
+ * @returns {boolean} 是否有访问权限
+ */
+function requireLogin(pageName) {
+  if (!checkPageAccess(pageName)) {
+    wx.showToast({
+      title: '请先登录',
+      icon: 'none',
+      duration: 2000
+    });
+    
+    setTimeout(() => {
+      redirectToLogin();
+    }, 2000);
+    
+    return false;
+  }
+  return true;
+}
+
+/**
+ * 检查是否为游客用户
+ * @returns {boolean} 是否为游客用户
+ */
+function isGuest() {
+  const userInfo = getUserInfo();
+  return userInfo && userInfo.isGuest === true;
+}
+
+/**
+ * 获取用户登录状态信息
+ * @returns {object} 登录状态信息
+ */
+function getLoginStatus() {
+  const userInfo = getUserInfo();
+  return {
+    isLoggedIn: isLoggedIn(),
+    isGuest: isGuest(),
+    userInfo: userInfo,
+    loginMethod: userInfo ? userInfo.loginMethod : null
+  };
+}
+
 module.exports = {
   isLoggedIn,
   getUserInfo,
@@ -178,6 +254,10 @@ module.exports = {
   getUserRole,
   hasPermission,
   wxLogin,
-  getUserProfile
-
+  getUserProfile,
+  redirectToLogin,
+  checkPageAccess,
+  requireLogin,
+  isGuest,
+  getLoginStatus
 };

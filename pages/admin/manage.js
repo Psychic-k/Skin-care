@@ -1,4 +1,5 @@
 // 管理后台 - 产品数据管理页面
+const cloudApi = require('../../utils/cloudApi')
 Page({
   data: {
     // 权限检查
@@ -151,7 +152,44 @@ Page({
     
     // 加载状态
     loading: false,
-    refreshing: false
+    listLoading: false,
+    refreshing: false,
+
+    // 标签页管理
+    currentTab: 'products', // products, requests
+
+    // 催更请求相关
+    requestsList: [],
+    filteredRequests: [],
+    requestsCount: 0,
+    pendingRequestsCount: 0,
+    
+    // 请求筛选
+    requestSearchText: '',
+    requestFilterStatus: 'all', // all, pending, approved, rejected
+    requestFilterCategory: '',
+    
+    // 请求分页
+    requestsCurrentPage: 1,
+    requestsPageSize: 20,
+    hasMoreRequests: true,
+    requestsLoading: false,
+    
+    // 请求统计
+    requestsStatistics: {
+      totalRequests: 0,
+      pendingRequests: 0,
+      approvedRequests: 0,
+      rejectedRequests: 0
+    },
+    
+    // 请求弹窗
+    showRequestDetail: false,
+    currentRequest: null,
+    showProcessModal: false,
+    processAction: '', // approve, reject
+    processFeedback: '',
+    processLoading: false
   },
 
   onLoad() {
@@ -170,7 +208,7 @@ Page({
   },
 
   onReachBottom() {
-    if (this.data.hasMore && !this.data.loading) {
+    if (this.data.hasMore && !this.data.listLoading) {
       this.loadMoreProducts();
     }
   },
@@ -347,7 +385,9 @@ Page({
       await Promise.all([
         this.loadBrandList(),
         this.loadStatistics(),
-        this.loadProductList()
+        this.loadProductList(),
+        this.loadRequestsList(),
+        this.loadRequestsStatistics()
       ]);
     } catch (error) {
       console.error('加载初始数据失败:', error);
@@ -356,7 +396,7 @@ Page({
         icon: 'error'
       });
     } finally {
-      this.setData({ loading: false });
+      this.setData({ listLoading: false });
     }
   },
 
@@ -379,67 +419,149 @@ Page({
 
   // 加载品牌列表
   async loadBrandList() {
-    // 模拟API调用
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const brands = [
-          { id: 1, name: '兰蔻', logo: '/images/brands/lancome.jpg' },
-          { id: 2, name: '雅诗兰黛', logo: '/images/brands/estee.jpg' },
-          { id: 3, name: '欧莱雅', logo: '/images/brands/loreal.jpg' },
-          { id: 4, name: '资生堂', logo: '/images/brands/shiseido.jpg' },
-          { id: 5, name: 'SK-II', logo: '/images/brands/skii.jpg' }
-        ];
-        const brandOptions = ['全部'].concat(brands.map(b => b.name));
-        this.setData({ 
-          brands,
-          brandOptions
-        });
-        resolve(brands);
-      }, 300);
-    });
+    try {
+      const products = await cloudApi.queryData('products', {}, { limit: 1000 })
+      const brandSet = new Set()
+      products.forEach(p => { if (p.brand) brandSet.add(p.brand) })
+      const brandOptions = ['全部', ...Array.from(brandSet)]
+      this.setData({
+        brands: Array.from(brandSet).map((name, idx) => ({ id: idx + 1, name })),
+        brandOptions
+      })
+      return this.data.brands
+    } catch (error) {
+      console.error('加载品牌列表失败:', error)
+      this.setData({ brands: [], brandOptions: ['全部'] })
+      return []
+    }
   },
 
   // 加载统计数据
   async loadStatistics() {
-    // 模拟API调用
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const statistics = {
-          totalProducts: 156,
-          activeProducts: 142,
-          inactiveProducts: 14,
-          totalBrands: 25,
-          totalCategories: 11
-        };
-        this.setData({ statistics });
-        resolve(statistics);
-      }, 200);
-    });
+    try {
+      const db = cloudApi.getDatabase()
+      const totalRes = await db.collection('products').count()
+      const activeRes = await db.collection('products').where({ isActive: true }).count()
+      const inactiveRes = await db.collection('products').where({ isActive: false }).count()
+
+      const sample = await cloudApi.queryData('products', {}, { limit: 1000 })
+      const brandSet = new Set()
+      const categorySet = new Set()
+      sample.forEach(p => { if (p.brand) brandSet.add(p.brand); if (p.category) categorySet.add(p.category) })
+
+      const statistics = {
+        totalProducts: totalRes.total || 0,
+        activeProducts: activeRes.total || 0,
+        inactiveProducts: inactiveRes.total || 0,
+        totalBrands: brandSet.size,
+        totalCategories: categorySet.size
+      }
+
+      this.setData({ statistics })
+      return statistics
+    } catch (error) {
+      console.error('加载统计数据失败:', error)
+      const statistics = {
+        totalProducts: 0,
+        activeProducts: 0,
+        inactiveProducts: 0,
+        totalBrands: 0,
+        totalCategories: 0
+      }
+      this.setData({ statistics })
+      return statistics
+    }
   },
 
   // 加载产品列表
   async loadProductList(loadMore = false) {
-    if (this.data.loading) return;
+    if (this.data.listLoading) return;
     
-    this.setData({ loading: true });
+    this.setData({ listLoading: true });
     
     try {
-      // 模拟API调用
-      const response = await this.mockProductListAPI();
+      const skip = loadMore 
+        ? this.data.currentPage * this.data.pageSize 
+        : (this.data.currentPage - 1) * this.data.pageSize
       
+      // 查询产品数据
+      const raw = await cloudApi.queryData('products', {}, {
+        limit: this.data.pageSize,
+        skip
+      })
+
+      // 查询总数（只在首次加载时查询）
+      let totalCount = this.data.totalCount;
+      if (!loadMore) {
+        try {
+          const db = cloudApi.getDatabase()
+          const countRes = await db.collection('products').count()
+          totalCount = countRes.total || 0
+        } catch (countError) {
+          console.warn('获取产品总数失败，使用统计数据:', countError)
+          totalCount = this.data.statistics.totalProducts || 0
+        }
+      }
+
+      const CATEGORY_MAP = {
+        cleanser: '洁面',
+        toner: '爽肤水',
+        serum: '精华',
+        emulsion: '乳液',
+        moisturizer: '面霜',
+        mask: '面膜',
+        sunscreen: '防晒',
+        makeup_remover: '卸妆',
+        eye_cream: '眼霜',
+        lip_care: '唇部护理',
+        body_care: '身体护理'
+      }
+
+      // 兼容时间字段为字符串或 Date 对象，统一为 ISO 字符串
+      const normalizeDate = (v) => {
+        if (!v) return ''
+        if (typeof v === 'string') return v
+        try {
+          if (v.toISOString) return v.toISOString()
+        } catch (e) {}
+        return ''
+      }
+
+      const normalized = raw.map(doc => ({
+        id: doc._id || doc.id,
+        name: doc.name || '未命名产品',
+        brand: doc.brand || '未知品牌',
+        category: doc.category || 'other',
+        categoryDisplay: CATEGORY_MAP[doc.category] || doc.category || '其他',
+        image: doc.image || doc.imageUrl || '/images/products/谷雨-淡斑瓶.png',
+        price: typeof doc.price === 'object' ? (doc.price.min ?? doc.price.max ?? 0) : (doc.price ?? 0),
+        status: doc.isActive === false ? 'inactive' : 'active',
+        createTime: normalizeDate(doc.createdAt || doc.createdDate || doc.createTime),
+        updateTime: normalizeDate(doc.updatedAt || doc.updatedDate || doc.updateTime),
+        sales: doc.userCount || doc.sales || 0,
+        rating: (doc.rating ?? (doc.ratings && doc.ratings.average)) || 0
+      }))
+
+      // 计算是否还有更多数据
+      const currentTotal = loadMore ? this.data.productList.length + normalized.length : normalized.length
+      const hasMore = currentTotal < totalCount
+
       if (loadMore) {
         this.setData({
-          productList: [...this.data.productList, ...response.products],
+          productList: [...this.data.productList, ...normalized],
           currentPage: this.data.currentPage + 1,
-          hasMore: response.hasMore
-        });
+          hasMore
+        })
       } else {
+        // 首次加载时，重新生成品牌选项（基于所有产品）
+        await this.loadBrandList()
+        
         this.setData({
-          productList: response.products,
-          totalCount: response.total,
+          productList: normalized,
+          totalCount: totalCount,
           currentPage: 1,
-          hasMore: response.hasMore
-        });
+          hasMore
+        })
       }
       
       this.filterProducts();
@@ -514,30 +636,26 @@ Page({
     }, 300);
   },
 
-  // 筛选产品
+  // 筛选产品（适配真实数据字段）
   filterProducts() {
     let filtered = [...this.data.productList];
     
-    // 搜索筛选
     if (this.data.searchText) {
       const searchText = this.data.searchText.toLowerCase();
       filtered = filtered.filter(product => 
-        product.name.toLowerCase().includes(searchText) ||
-        product.brand.toLowerCase().includes(searchText)
+        (product.name || '').toLowerCase().includes(searchText) ||
+        (product.brand || '').toLowerCase().includes(searchText)
       );
     }
     
-    // 分类筛选
     if (this.data.filterCategory) {
-      filtered = filtered.filter(product => product.category === this.data.filterCategory);
+      filtered = filtered.filter(product => product.categoryDisplay === this.data.filterCategory);
     }
     
-    // 品牌筛选
     if (this.data.filterBrand) {
       filtered = filtered.filter(product => product.brand === this.data.filterBrand);
     }
     
-    // 状态筛选
     if (this.data.filterStatus !== 'all') {
       filtered = filtered.filter(product => product.status === this.data.filterStatus);
     }
@@ -646,16 +764,12 @@ Page({
     wx.showLoading({ title: '更新中...' });
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       const newStatus = product.status === 'active' ? 'inactive' : 'active';
+      await cloudApi.updateData('products', productId, { isActive: newStatus === 'active' })
       const updatedProducts = this.data.filteredProducts.map(p => 
         p.id === productId ? { ...p, status: newStatus } : p
       );
-      
       this.setData({ filteredProducts: updatedProducts });
-      
       wx.showToast({
         title: newStatus === 'active' ? '已启用' : '已禁用',
         icon: 'success'
@@ -693,9 +807,7 @@ Page({
     wx.showLoading({ title: '删除中...' });
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await cloudApi.deleteData('products', productId)
       const updatedProducts = this.data.filteredProducts.filter(p => p.id !== productId);
       this.setData({ filteredProducts: updatedProducts });
       
@@ -761,8 +873,10 @@ Page({
     wx.showLoading({ title: `${action}中...` });
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const updates = this.data.selectedProducts.map(id =>
+        cloudApi.updateData('products', id, { isActive: status === 'active' })
+      )
+      await Promise.all(updates)
       
       const updatedProducts = this.data.filteredProducts.map(p => 
         this.data.selectedProducts.includes(p.id) ? { ...p, status } : p
@@ -794,8 +908,8 @@ Page({
     wx.showLoading({ title: '删除中...' });
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const deletes = this.data.selectedProducts.map(id => cloudApi.deleteData('products', id))
+      await Promise.all(deletes)
       
       const updatedProducts = this.data.filteredProducts.filter(p => 
         !this.data.selectedProducts.includes(p.id)
@@ -1148,5 +1262,314 @@ Page({
         avatar: 'https://example.com/avatar.jpg'
       }
     });
+  },
+
+  // ==================== 标签页管理 ====================
+  
+  // 切换标签页
+  switchTab(e) {
+    const tab = e.currentTarget.dataset.tab;
+    this.setData({ currentTab: tab });
+    
+    if (tab === 'requests' && this.data.requestsList.length === 0) {
+      this.loadRequestsList();
+    }
+  },
+
+  // ==================== 催更请求管理 ====================
+  
+  // 加载催更请求列表
+  async loadRequestsList() {
+    if (this.data.requestsLoading) return;
+    
+    this.setData({ requestsLoading: true });
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'getProductRequests',
+        data: {
+          page: this.data.requestsCurrentPage,
+          limit: this.data.requestsPageSize,
+          status: this.data.requestFilterStatus === 'all' ? undefined : this.data.requestFilterStatus,
+          category: this.data.requestFilterCategory || undefined
+        }
+      });
+
+      if (result.result.success) {
+        const requests = result.result.data.requests || [];
+        const total = result.result.data.total || 0;
+        
+        // 如果是第一页，替换数据；否则追加数据
+        const newRequests = this.data.requestsCurrentPage === 1 ? 
+          requests : [...this.data.requestsList, ...requests];
+        
+        this.setData({
+          requestsList: newRequests,
+          requestsCount: total,
+          hasMoreRequests: requests.length === this.data.requestsPageSize
+        });
+        
+        this.filterRequests();
+      } else {
+        throw new Error(result.result.message || '获取催更请求失败');
+      }
+    } catch (error) {
+      console.error('加载催更请求失败:', error);
+      wx.showToast({
+        title: '加载失败',
+        icon: 'error'
+      });
+    } finally {
+      this.setData({ requestsLoading: false });
+    }
+  },
+
+  // 加载催更请求统计
+  async loadRequestsStatistics() {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'getProductRequests',
+        data: {
+          page: 1,
+          limit: 1,
+          getStatistics: true
+        }
+      });
+
+      if (result.result.success && result.result.data.statistics) {
+        const stats = result.result.data.statistics;
+        this.setData({
+          requestsStatistics: {
+            totalRequests: stats.total || 0,
+            pendingRequests: stats.pending || 0,
+            approvedRequests: stats.approved || 0,
+            rejectedRequests: stats.rejected || 0
+          },
+          pendingRequestsCount: stats.pending || 0
+        });
+      }
+    } catch (error) {
+      console.error('加载催更请求统计失败:', error);
+    }
+  },
+
+  // 筛选催更请求
+  filterRequests() {
+    let filtered = [...this.data.requestsList];
+    
+    // 搜索筛选
+    if (this.data.requestSearchText) {
+      const searchText = this.data.requestSearchText.toLowerCase();
+      filtered = filtered.filter(request => 
+        request.productName.toLowerCase().includes(searchText) ||
+        request.brand.toLowerCase().includes(searchText) ||
+        (request.userNickname && request.userNickname.toLowerCase().includes(searchText))
+      );
+    }
+    
+    // 状态筛选
+    if (this.data.requestFilterStatus !== 'all') {
+      filtered = filtered.filter(request => request.status === this.data.requestFilterStatus);
+    }
+    
+    // 分类筛选
+    if (this.data.requestFilterCategory) {
+      filtered = filtered.filter(request => request.category === this.data.requestFilterCategory);
+    }
+    
+    this.setData({ filteredRequests: filtered });
+  },
+
+  // 搜索输入
+  onRequestSearchInput(e) {
+    this.setData({ requestSearchText: e.detail.value });
+    this.filterRequests();
+  },
+
+  // 状态筛选变化
+  onRequestStatusChange(e) {
+    const statusOptions = ['all', 'pending', 'approved', 'rejected'];
+    const status = statusOptions[e.detail.value];
+    this.setData({ requestFilterStatus: status });
+    this.filterRequests();
+  },
+
+  // 分类筛选变化
+  onRequestCategoryChange(e) {
+    const category = e.detail.value === 0 ? '' : this.data.categories[e.detail.value - 1];
+    this.setData({ requestFilterCategory: category });
+    this.filterRequests();
+  },
+
+  // 清空请求筛选
+  clearRequestFilters() {
+    this.setData({
+      requestSearchText: '',
+      requestFilterStatus: 'all',
+      requestFilterCategory: ''
+    });
+    this.filterRequests();
+  },
+
+  // 加载更多请求
+  loadMoreRequests() {
+    if (this.data.hasMoreRequests && !this.data.requestsLoading) {
+      this.setData({ 
+        requestsCurrentPage: this.data.requestsCurrentPage + 1 
+      });
+      this.loadRequestsList();
+    }
+  },
+
+  // 查看请求详情
+  viewRequestDetail(e) {
+    const requestId = e.currentTarget.dataset.id;
+    const request = this.data.requestsList.find(r => r.id === requestId);
+    if (request) {
+      this.setData({
+        currentRequest: request,
+        showRequestDetail: true
+      });
+    }
+  },
+
+  // 关闭请求详情
+  closeRequestDetail() {
+    this.setData({
+      showRequestDetail: false,
+      currentRequest: null
+    });
+  },
+
+  // 预览图片
+  previewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    const images = this.data.currentRequest.images || [];
+    wx.previewImage({
+      current: url,
+      urls: images
+    });
+  },
+
+  // 快速通过请求
+  approveRequest(e) {
+    const requestId = e.currentTarget.dataset.id;
+    const request = this.data.requestsList.find(r => r.id === requestId);
+    if (request) {
+      this.setData({
+        currentRequest: request,
+        processAction: 'approve',
+        processFeedback: '',
+        showProcessModal: true
+      });
+    }
+  },
+
+  // 快速拒绝请求
+  rejectRequest(e) {
+    const requestId = e.currentTarget.dataset.id;
+    const request = this.data.requestsList.find(r => r.id === requestId);
+    if (request) {
+      this.setData({
+        currentRequest: request,
+        processAction: 'reject',
+        processFeedback: '',
+        showProcessModal: true
+      });
+    }
+  },
+
+  // 显示处理弹窗
+  showProcessModal(e) {
+    const action = e.currentTarget.dataset.action;
+    this.setData({
+      processAction: action,
+      processFeedback: '',
+      showProcessModal: true
+    });
+  },
+
+  // 隐藏处理弹窗
+  hideProcessModal() {
+    this.setData({
+      showProcessModal: false,
+      processAction: '',
+      processFeedback: ''
+    });
+  },
+
+  // 处理反馈输入
+  onProcessFeedbackInput(e) {
+    this.setData({ processFeedback: e.detail.value });
+  },
+
+  // 确认处理请求
+  async confirmProcessRequest() {
+    if (this.data.processLoading) return;
+    
+    const { currentRequest, processAction, processFeedback } = this.data;
+    
+    if (!currentRequest) {
+      wx.showToast({
+        title: '请求信息错误',
+        icon: 'error'
+      });
+      return;
+    }
+
+    this.setData({ processLoading: true });
+
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'processProductRequest',
+        data: {
+          requestId: currentRequest.id,
+          action: processAction,
+          adminFeedback: processFeedback || undefined
+        }
+      });
+
+      if (result.result.success) {
+        wx.showToast({
+          title: processAction === 'approve' ? '已通过请求' : '已拒绝请求',
+          icon: 'success'
+        });
+
+        // 更新本地数据
+        const updatedRequests = this.data.requestsList.map(request => {
+          if (request.id === currentRequest.id) {
+            return {
+              ...request,
+              status: processAction === 'approve' ? 'approved' : 'rejected',
+              adminFeedback: processFeedback,
+              processTime: new Date().toISOString()
+            };
+          }
+          return request;
+        });
+
+        this.setData({
+          requestsList: updatedRequests,
+          showProcessModal: false,
+          showRequestDetail: false,
+          currentRequest: null,
+          processAction: '',
+          processFeedback: ''
+        });
+
+        this.filterRequests();
+        this.loadRequestsStatistics();
+      } else {
+        throw new Error(result.result.message || '处理请求失败');
+      }
+    } catch (error) {
+      console.error('处理请求失败:', error);
+      wx.showToast({
+        title: '处理失败',
+        icon: 'error'
+      });
+    } finally {
+      this.setData({ processLoading: false });
+    }
   }
 });
