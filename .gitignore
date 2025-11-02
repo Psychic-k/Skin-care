@@ -23,6 +23,13 @@ node_modules/
 dist/
 build/
 
+# Project caches and local outputs
+miniprogram_npm/
+.npm-cache/
+log/
+cloudfunctions/**/node_modules/
+project.private.config.json
+
 # Environment variables
 .env
 .env.local
