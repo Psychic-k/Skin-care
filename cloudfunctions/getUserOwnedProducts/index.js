@@ -16,13 +16,15 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      userId,
       category = 'all', // all, cleanser, toner, serum, moisturizer, sunscreen, mask, other
       status = 'all', // all, active, used_up, expired
       page = 1,
       limit = 20,
       keyword = '' // 搜索关键词
     } = event
+
+    // 统一鉴权：使用 OPENID 作为用户标识
+    const userId = wxContext.OPENID
     
     if (!userId) {
       return {

@@ -28,9 +28,10 @@ exports.main = async (event, context) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
     if (fileType && !allowedTypes.includes(fileType)) {
       return {
-        success: false,
+        code: -1,
+        message: '不支持的文件类型，仅支持 JPEG、PNG、GIF、WebP 格式',
         error: 'INVALID_FILE_TYPE',
-        message: '不支持的文件类型，仅支持 JPEG、PNG、GIF、WebP 格式'
+        data: null
       }
     }
     
@@ -38,9 +39,10 @@ exports.main = async (event, context) => {
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (fileSize && fileSize > maxSize) {
       return {
-        success: false,
+        code: -1,
+        message: '文件大小不能超过 10MB',
         error: 'FILE_TOO_LARGE',
-        message: '文件大小不能超过 10MB'
+        data: null
       }
     }
     
@@ -87,9 +89,10 @@ exports.main = async (event, context) => {
     
     const uploadId = recordResult._id
     
-    // 返回上传配置信息
+    // 返回上传配置信息（统一返回格式）
     return {
-      success: true,
+      code: 0,
+      message: '获取上传配置成功',
       data: {
         uploadId: uploadId,
         cloudPath: cloudPath,
@@ -99,16 +102,16 @@ exports.main = async (event, context) => {
           env: cloud.DYNAMIC_CURRENT_ENV,
           timeout: 60000 // 60秒超时
         }
-      },
-      message: '获取上传配置成功'
+      }
     }
     
   } catch (error) {
     console.error('文件上传配置失败:', error)
     return {
-      success: false,
+      code: -1,
+      message: '获取上传配置失败，请重试',
       error: error.message,
-      message: '获取上传配置失败，请重试'
+      data: null
     }
   }
 }

@@ -16,12 +16,14 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      userId,
       userProductId, // 用户产品记录ID
       removeType = 'soft' // soft: 软删除（标记为deleted），hard: 硬删除（物理删除）
     } = event
+
+    // 统一鉴权：使用 OPENID 作为用户标识
+    const userId = wxContext.OPENID
     
-    if (!userId || !userProductId) {
+    if (!userProductId) {
       return {
         code: -1,
         message: '用户ID和产品记录ID不能为空',

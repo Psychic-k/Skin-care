@@ -208,13 +208,13 @@ Page({
       if (error.message && error.message.includes('用户不存在')) {
         wx.showModal({
           title: '提示',
-          content: '检测到您是新用户，请先完成登录授权',
+          content: '检测到您是新用户，请先完善资料',
           showCancel: false,
-          confirmText: '去登录',
+          confirmText: '去完善',
           success: (res) => {
             if (res.confirm) {
               wx.navigateTo({
-                url: '/pages/login/login'
+                url: '/pages/profile/profile'
               })
             }
           }
@@ -360,6 +360,7 @@ Page({
         title: '请先登录',
         icon: 'none'
       })
+      wx.navigateTo({ url: '/pages/login/login' })
       return
     }
     
@@ -368,10 +369,10 @@ Page({
     })
   },
 
-  // 点击未登录文字跳转登录
+  // 点击未登录文字进入登录页
   onLoginTap() {
-    // 检查用户是否未登录
     if (!this.data.userInfo.openid || this.data.userInfo.nickName === '未登录') {
+      console.log('用户中心-未登录点击，跳转登录页');
       wx.navigateTo({
         url: '/pages/login/login'
       })
@@ -388,6 +389,7 @@ Page({
         title: '请先登录',
         icon: 'none'
       })
+      wx.navigateTo({ url: '/pages/login/login' })
       return
     }
     
@@ -462,16 +464,17 @@ Page({
       if (app.globalData.cloudEnabled) {
         // 使用云开发API登录
         const loginResult = await cloudApi.login()
-        
-        this.setData({
-          userInfo: {
-            ...this.data.userInfo,
-            ...loginResult.userInfo
-          }
-        })
-        
-        wx.setStorageSync('userInfo', loginResult.userInfo)
-        app.globalData.userInfo = loginResult.userInfo
+        const user = (loginResult && loginResult.data && loginResult.data.user) ? loginResult.data.user : {}
+        const normalizedUser = {
+          ...this.data.userInfo,
+          ...user,
+          nickName: user.nickName || user.nickname || '微信用户',
+          avatarUrl: user.avatarUrl || user.avatar || '/images/default-avatar.png',
+          isLogin: true
+        }
+        this.setData({ userInfo: normalizedUser })
+        wx.setStorageSync('userInfo', normalizedUser)
+        app.globalData.userInfo = normalizedUser
         
         wx.showToast({
           title: '登录成功',

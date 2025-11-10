@@ -16,12 +16,14 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      userId,
       userProductId, // 必填，用户产品记录ID
       updateData // 必填，要更新的数据
     } = event
+
+    // 统一鉴权：使用 OPENID 作为用户标识
+    const userId = wxContext.OPENID
     
-    if (!userId || !userProductId || !updateData) {
+    if (!userProductId || !updateData) {
       return {
         code: -1,
         message: '用户ID、产品记录ID和更新数据不能为空',

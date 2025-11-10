@@ -15,7 +15,6 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      userId,
       date,
       morningRoutine = [],
       eveningRoutine = [],
@@ -25,6 +24,16 @@ exports.main = async (event, context) => {
       notes = '',
       photos = []
     } = event
+
+    // 统一鉴权：以 OPENID 作为用户标识，禁止冒充他人 userId
+    const userId = wxContext.OPENID
+    if (event.userId && event.userId !== userId) {
+      return {
+        code: -1,
+        message: '无权以他人身份创建日记',
+        data: null
+      }
+    }
     
     // 必填字段验证
     if (!userId) {
@@ -213,10 +222,6 @@ exports.main = async (event, context) => {
         data: null
       }
     }
-      
-      // 检查是否有无效的产品ID
-      const invalidProducts = products.filter(id => !validProducts.includes(id))
-      if (invalidProducts.length > 0) {
     // 构建日记数据
     const diaryData = {
       userId: userId,
@@ -268,10 +273,10 @@ exports.main = async (event, context) => {
     
     // 获取产品详情
     let productDetails = []
-    if (validProducts.length > 0) {
+    if (validProductIds.length > 0) {
       const productsDetailResult = await db.collection('products')
         .where({
-          _id: db.command.in(validProducts)
+          _id: db.command.in(validProductIds)
         })
         .get()
       

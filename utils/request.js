@@ -367,6 +367,12 @@ class Request {
       'api/detection/history': 'detectionHistory',
       'detection/analyze': 'detectionAnalyze',
       'detection/history': 'detectionHistory',
+      'api/detection/report': 'detectionReport',
+      'detection/report': 'detectionReport',
+      'api/detection/comparison': 'detectionComparison',
+      'detection/comparison': 'detectionComparison',
+      'api/profile/save-detection': 'saveDetectionToProfile',
+      'profile/save-detection': 'saveDetectionToProfile',
       
       // 日记相关
       'api/diary/list': 'diaryList',
@@ -390,7 +396,13 @@ class Request {
       
       // 文件上传
       'api/upload/file': 'uploadFile',
-      'upload/file': 'uploadFile'
+      'upload/file': 'uploadFile',
+      'api/brands/list': 'brandsList',
+      'brands/list': 'brandsList',
+      'api/admin/products/create': 'adminCreateProduct',
+      'admin/products/create': 'adminCreateProduct',
+      'api/admin/products/upload': 'adminBatchUpload',
+      'admin/products/upload': 'adminBatchUpload'
     };
     
     // 处理带参数的URL路径，移除动态参数

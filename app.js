@@ -117,10 +117,10 @@ App({
           });
         }, 100);
       } else {
-        // 用户未登录，跳转到登录页
-        console.log('用户未登录，跳转到登录页');
+        // 免登录：未检测到本地用户信息，作为访客继续
+        console.log('未检测到本地用户信息，作为免登录访客继续');
         this.globalData.isLoggedIn = false;
-        this.redirectToLogin();
+        // 不跳转登录页，页面可按需引导完善资料
       }
     } catch (error) {
       console.error('检查登录状态失败:', error);
@@ -130,11 +130,11 @@ App({
     }
   },
 
-  // 跳转到登录页
+  // 跳转到登录页（保持管理员入口可用）
   redirectToLogin() {
-    console.log('跳转到登录页面');
+    console.log('跳转登录页');
     setTimeout(() => {
-      wx.reLaunch({
+      wx.navigateTo({
         url: '/pages/login/login'
       });
     }, 100);
@@ -293,9 +293,9 @@ App({
       this.notifyLoginStatusChange(false, null);
     }
     
-    // 跳转到登录页
-    wx.reLaunch({
-      url: '/pages/login/login'
+    // 返回首页，保留访客可浏览能力；需要受限操作时再引导资料完善
+    wx.switchTab({
+      url: '/pages/index/index'
     });
   },
 

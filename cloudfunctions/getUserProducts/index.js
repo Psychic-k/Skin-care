@@ -16,11 +16,13 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      userId,
       type = 'all', // all, favorites, used, recommended
       page = 1,
       limit = 20
     } = event
+
+    // 统一鉴权：使用 OPENID 作为用户标识
+    const userId = wxContext.OPENID
     
     if (!userId) {
       return {

@@ -65,7 +65,7 @@ Page({
     try {
       showLoading('加载报告中...')
       
-      const res = await request.get(`/api/detection/report/${this.data.detectionId}`)
+      const res = await request.get('/api/detection/report', { detectionId: this.data.detectionId })
 
       console.log('报告数据加载结果:', res)
 
@@ -98,7 +98,7 @@ Page({
       if (!userInfo) return
 
       const res = await request({
-        url: `/api/detection/comparison/${userInfo.id}`,
+        url: '/api/detection/comparison',
         method: 'GET',
         data: {
           currentDetectionId: this.data.detectionId,
@@ -106,7 +106,7 @@ Page({
         }
       })
 
-      if (res.success && res.data.length > 0) {
+      if (res.code === 0 && res.data && res.data.length > 0) {
         this.setData({
           comparisonData: res.data,
           showComparison: true
@@ -182,13 +182,12 @@ Page({
         url: '/api/profile/save-detection',
         method: 'POST',
         data: {
-          userId: userInfo.id,
           detectionId: this.data.detectionId,
           reportData: this.data.reportData
         }
       })
 
-      if (res.success) {
+      if (res.code === 0) {
         showToast('已保存到护肤档案')
       } else {
         throw new Error(res.message || '保存失败')

@@ -158,7 +158,9 @@ Page({
       const normalizedProduct = {
         ...product,
         image: normalizedPrimary || '/images/products/谷雨-淡斑瓶.png',
-        images: normalizedImages
+        images: normalizedImages,
+        // 预计算展示字段，避免在 WXML 中调用方法
+        discountText: (product.discount && product.discount < 1) ? `${(product.discount * 10).toFixed(1)}折` : ''
       };
 
       this.setData({

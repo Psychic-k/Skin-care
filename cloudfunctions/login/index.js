@@ -29,6 +29,10 @@ exports.main = async (event, context) => {
         openid: OPENID,
         unionid: UNIONID || null,
         appid: APPID,
+        // 统一字段命名
+        nickName: event.userInfo?.nickName || '微信用户',
+        avatarUrl: event.userInfo?.avatarUrl || '',
+        // 兼容旧字段
         nickname: event.userInfo?.nickName || '微信用户',
         avatar: event.userInfo?.avatarUrl || '',
         gender: event.userInfo?.gender || 0,
@@ -36,11 +40,25 @@ exports.main = async (event, context) => {
         province: event.userInfo?.province || '',
         country: event.userInfo?.country || '',
         language: event.userInfo?.language || 'zh_CN',
+        // 业务字段
+        role: 'user',
+        userStatus: 'active',
         skinType: null,
         skinConcerns: [],
         preferences: {
           notifications: true,
           dataCollection: true
+        },
+        consents: {
+          privacyAcceptedAt: new Date(),
+          marketingAcceptedAt: null
+        },
+        profileCompleted: false,
+        stats: {
+          detectionCount: 0,
+          diaryCount: 0,
+          reportCount: 0,
+          favoriteCount: 0
         },
         createTime: createTime,
         updateTime: createTime,
@@ -73,22 +91,23 @@ exports.main = async (event, context) => {
     }
     
     return {
-      success: true,
+      code: 0,
+      message: '登录成功',
       data: {
         openid: OPENID,
         unionid: UNIONID,
         user: user,
         isNewUser: userQuery.data.length === 0
-      },
-      message: '登录成功'
+      }
     }
     
   } catch (error) {
     console.error('登录失败:', error)
     return {
-      success: false,
-      error: error.message,
-      message: '登录失败，请重试'
+      code: -1,
+      message: '登录失败，请重试',
+      data: null,
+      error: error.message
     }
   }
 }

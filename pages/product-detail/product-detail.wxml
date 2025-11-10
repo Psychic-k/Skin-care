@@ -52,7 +52,7 @@
       <view class="product-price">
         <view class="current-price">¥{{product.price}}</view>
         <view class="original-price" wx:if="{{product.originalPrice > product.price}}">¥{{product.originalPrice}}</view>
-        <view class="discount" wx:if="{{product.discount < 1}}">{{(product.discount * 10).toFixed(1)}}折</view>
+        <view class="discount" wx:if="{{product.discountText}}">{{product.discountText}}</view>
       </view>
       
       <view class="product-stats">

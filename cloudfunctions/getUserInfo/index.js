@@ -13,10 +13,10 @@ exports.main = async (event, context) => {
   
   try {
     const { OPENID } = wxContext
-    const { userId } = event
+    const { userId: queryUserId } = event
     
-    // 如果提供了 userId，则查询指定用户；否则查询当前用户
-    const queryOpenid = userId ? userId : OPENID
+    // 统一鉴权：仅允许查询本人或管理员在安全校验后查询他人（此处先收敛为本人）
+    const queryOpenid = queryUserId && queryUserId === OPENID ? OPENID : OPENID
     
     // 查询用户信息
     const userQuery = await db.collection('users').where({

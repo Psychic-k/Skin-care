@@ -15,11 +15,12 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      userId,
       imageUrl,
       detectionType = 'comprehensive', // comprehensive, acne, wrinkle, moisture, oil
       analysisOptions = {}
     } = event
+
+    const userId = wxContext.OPENID
     
     if (!userId) {
       return {

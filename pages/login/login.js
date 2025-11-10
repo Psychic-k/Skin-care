@@ -21,9 +21,21 @@ Page({
     }
   },
 
+  onShow() {
+    const app = getApp();
+    // 若已登录，自动返回首页（兜底避免停留登录页）
+    if (app.globalData && app.globalData.isLoggedIn) {
+      console.log('检测到已登录，自动切到首页');
+      wx.switchTab({
+        url: '/pages/index/index'
+      });
+    }
+  },
+
   // 微信登录
   async onWechatLogin() {
     if (this.data.isLoading) return;
+    console.log('登录页：点击“微信一键登录”');
     
     this.setData({ isLoading: true });
     Utils.showLoading('登录中...');
@@ -36,24 +48,33 @@ Page({
         Utils.hideLoading();
         Utils.showSuccess('登录成功');
         
-        // 设置用户信息到全局
+        // 设置用户信息到全局（cloudApi.login 已返回规范化对象）
         const app = getApp();
-        const userInfo = {
-          ...loginResult,
-          id: loginResult.openid || loginResult.id || 'cloud_' + Date.now(),
-          openid: loginResult.openid || 'cloud_' + Date.now(),
-          nickname: loginResult.nickName || loginResult.nickname || '微信用户',
-          nickName: loginResult.nickName || loginResult.nickname || '微信用户',
-          avatar: loginResult.avatarUrl || loginResult.avatar || '/images/default-avatar.png',
-          avatarUrl: loginResult.avatarUrl || loginResult.avatar || '/images/default-avatar.png',
+        const userInfo = loginResult.data?.user || loginResult;
+        const openid = loginResult.data?.openid || userInfo.openid;
+        const normalized = {
+          ...userInfo,
+          id: userInfo._id || userInfo.id || openid || ('cloud_' + Date.now()),
+          openid: openid || ('cloud_' + Date.now()),
+          nickName: userInfo.nickName || userInfo.nickname || '微信用户',
+          avatarUrl: userInfo.avatarUrl || userInfo.avatar || '/images/default-avatar.png',
           isLogin: true
         };
-        console.log('云开发登录成功，用户信息:', userInfo);
-        app.setUserInfo(userInfo);
+        console.log('云开发登录成功，用户信息:', normalized);
+        app.setUserInfo(normalized);
         
         // 跳转到首页
         wx.switchTab({
-          url: '/pages/index/index'
+          url: '/pages/index/index',
+          success: () => {
+            console.log('登录后切换到首页成功');
+          },
+          fail: (err) => {
+            console.error('登录后切换到首页失败', err);
+            wx.showToast({ title: '无法进入首页，尝试重新进入', icon: 'error' });
+            // 兜底：强制重启到首页，避免停留在登录页
+            wx.reLaunch({ url: '/pages/index/index' });
+          }
         });
       } else {
         // 降级到传统登录方式
@@ -79,7 +100,16 @@ Page({
         
         // 跳转到首页
         wx.switchTab({
-          url: '/pages/index/index'
+          url: '/pages/index/index',
+          success: () => {
+            console.log('登录后切换到首页成功');
+          },
+          fail: (err) => {
+            console.error('登录后切换到首页失败', err);
+            wx.showToast({ title: '无法进入首页，尝试重新进入', icon: 'error' });
+            // 兜底：强制重启到首页，避免停留在登录页
+            wx.reLaunch({ url: '/pages/index/index' });
+          }
         });
       }
       

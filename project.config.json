@@ -1,6 +1,6 @@
 {
   "miniprogramRoot": "./",
-  "cloudfunctionRoot": "./cloudfunctions/",
+  "cloudfunctionRoot": "cloudfunctions/",
   "setting": {
     "urlCheck": false,
     "es6": true,
@@ -15,7 +15,16 @@
       "outputPath": ""
     },
     "useCompilerPlugins": false,
-    "minifyWXML": true
+    "minifyWXML": true,
+    "compileWorklet": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "minifyWXSS": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
   },
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
@@ -27,7 +36,5 @@
   "projectname": "SkinCare",
   "editorSetting": {},
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
-  "watchOptions": {
-    "ignore": []
-  }
+  "libVersion": "3.10.3"
 }

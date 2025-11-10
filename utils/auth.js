@@ -113,21 +113,26 @@ function wxLogin() {
               code: res.code
             },
             success: (result) => {
-              const { openid, session_key } = result.result;
-              const userInfo = {
-                id: openid, // 添加id字段
-                openid,
-                session_key,
-                nickname: '微信用户',
-                nickName: '微信用户', // 统一字段名
-                avatar: '/images/default-avatar.png',
-                avatarUrl: '/images/default-avatar.png', // 统一字段名
-                role: 'user', // 默认为普通用户
-                isLogin: true, // 添加登录状态标识
-                loginTime: new Date().getTime()
-              };
-              setUserInfo(userInfo);
-              resolve(userInfo);
+              if (result.result && result.result.code === 0) {
+                const data = result.result.data || {}
+                const openid = data.openid
+                const user = data.user || {}
+                const userInfo = {
+                  ...user,
+                  id: user._id || user.id || openid || ('cloud_' + Date.now()),
+                  openid: openid || ('cloud_' + Date.now()),
+                  nickName: user.nickName || user.nickname || '微信用户',
+                  avatarUrl: user.avatarUrl || user.avatar || '/images/default-avatar.png',
+                  role: user.role || 'user',
+                  isLogin: true,
+                  loginTime: new Date().getTime()
+                }
+                setUserInfo(userInfo);
+                resolve(userInfo);
+              } else {
+                const msg = (result.result && result.result.message) || '登录失败'
+                reject(new Error(msg))
+              }
             },
             fail: reject
           });
@@ -178,8 +183,8 @@ function getUserProfile() {
  * 跳转到登录页
  */
 function redirectToLogin() {
-  console.log('跳转到登录页面');
-  wx.reLaunch({
+  console.log('跳转登录页');
+  wx.navigateTo({
     url: '/pages/login/login'
   });
 }
@@ -212,11 +217,7 @@ function requireLogin(pageName) {
       icon: 'none',
       duration: 2000
     });
-    
-    setTimeout(() => {
-      redirectToLogin();
-    }, 2000);
-    
+    // 不再自动跳转，由页面按需引导到资料完善
     return false;
   }
   return true;

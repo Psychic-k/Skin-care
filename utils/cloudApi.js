@@ -57,14 +57,32 @@ class CloudApi {
 
       wx.hideLoading()
 
-      if (result.result.success) {
-        // 保存用户信息到本地存储
-        wx.setStorageSync('userInfo', result.result.data.user)
+      if (result.result && result.result.code === 0) {
+        const user = result.result.data?.user || {}
+        const normalizedUser = {
+          ...user,
+          nickName: user.nickName || user.nickname || '微信用户',
+          avatarUrl: user.avatarUrl || user.avatar || '/images/default-avatar.png',
+          isLogin: true
+        }
+        wx.setStorageSync('userInfo', normalizedUser)
         wx.setStorageSync('openid', result.result.data.openid)
-        
-        return result.result
+        return { code: 0, message: '登录成功', data: { user: normalizedUser, openid: result.result.data.openid } }
+      } else if (result.result && result.result.success) {
+        // 兼容旧版云函数返回结构 { success, data }
+        const user = (result.result.data && result.result.data.user) ? result.result.data.user : {}
+        const normalizedUser = {
+          ...user,
+          nickName: user.nickName || user.nickname || '微信用户',
+          avatarUrl: user.avatarUrl || user.avatar || '/images/default-avatar.png',
+          isLogin: true
+        }
+        const openid = (result.result.data && result.result.data.openid) ? result.result.data.openid : (normalizedUser.openid || '')
+        wx.setStorageSync('userInfo', normalizedUser)
+        if (openid) wx.setStorageSync('openid', openid)
+        return { code: 0, message: '登录成功', data: { user: normalizedUser, openid } }
       } else {
-        throw new Error(result.result.message || '登录失败')
+        throw new Error((result.result && result.result.message) || '登录失败')
       }
     } catch (error) {
       wx.hideLoading()
@@ -93,10 +111,25 @@ class CloudApi {
         }
       })
 
-      if (result.result.success) {
-        return result.result.data
+      if (result.result && result.result.code === 0) {
+        const data = result.result.data || {}
+        const user = data.user || data
+        return {
+          ...user,
+          nickName: user.nickName || user.nickname || '微信用户',
+          avatarUrl: user.avatarUrl || user.avatar || '/images/default-avatar.png'
+        }
+      } else if (result.result && (result.result.success || result.result.data)) {
+        // 兼容旧版返回结构
+        const data = result.result.data || {}
+        const user = data.user || data
+        return {
+          ...user,
+          nickName: user.nickName || user.nickname || '微信用户',
+          avatarUrl: user.avatarUrl || user.avatar || '/images/default-avatar.png'
+        }
       } else {
-        throw new Error(result.result.message || '获取用户信息失败')
+        throw new Error((result.result && result.result.message) || '获取用户信息失败')
       }
     } catch (error) {
       console.error('获取用户信息失败:', error)

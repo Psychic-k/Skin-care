@@ -120,9 +120,8 @@ Page({
     if (userInfo) {
       this.setData({ userInfo })
     } else {
-      wx.navigateTo({
-        url: '/pages/login/login'
-      })
+      // 免登录：未登录也允许进入，提示完善资料即可
+      this.setData({ userInfo: null })
     }
   },
 
@@ -139,7 +138,7 @@ Page({
         method: 'GET'
       })
 
-      if (res.success) {
+      if (res.code === 0 && res.data) {
         this.setData({
           profileData: res.data.profile,
           skinProfile: res.data.skinProfile || this.data.skinProfile,
@@ -170,7 +169,7 @@ Page({
         }
       })
 
-      if (res.success) {
+      if (res.code === 0 && res.data) {
         const newHistory = res.data.detections || []
         this.setData({
           detectionHistory: [...this.data.detectionHistory, ...newHistory],
@@ -211,7 +210,7 @@ Page({
         }
       })
 
-      if (res.success) {
+      if (res.code === 0 && res.data) {
         this.setData({
           detectionHistory: res.data.detections || [],
           historyPage: 1,
@@ -256,7 +255,7 @@ Page({
         }
       })
 
-      if (res.success) {
+      if (res.code === 0 && res.data) {
         this.setData({
           skinProfile: this.data.editData,
           isEditing: false,
@@ -351,7 +350,7 @@ Page({
         method: 'GET'
       })
 
-      if (res.success) {
+      if (res.code === 0 && res.data) {
         // 这里可以实现数据导出功能
         showToast('导出成功')
       }

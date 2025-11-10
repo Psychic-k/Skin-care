@@ -16,13 +16,15 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      adminUserId,
       requestId, // 必填，请求ID
       action, // 必填，操作类型：approve, reject, complete, update_priority, add_note
       data // 可选，操作相关数据
     } = event
+
+    // 统一鉴权：后台操作仅允许管理员，强制用 OPENID 识别操作者
+    const adminUserId = wxContext.OPENID
     
-    if (!adminUserId || !requestId || !action) {
+    if (!requestId || !action) {
       return {
         code: -1,
         message: '管理员用户ID、请求ID和操作类型不能为空',

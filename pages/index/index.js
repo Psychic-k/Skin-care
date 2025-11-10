@@ -61,10 +61,15 @@ Page({
     }
   },
 
-  // 跳转到登录页面
+  // 跳转登录页
   goToLogin: function() {
+    console.log('首页点击立即登录，准备跳转登录页');
     wx.navigateTo({
-      url: '/pages/login/login'
+      url: '/pages/login/login',
+      fail: (err) => {
+        console.error('跳转登录页失败', err);
+        wx.showToast({ title: '无法打开登录页', icon: 'error' });
+      }
     });
   },
 

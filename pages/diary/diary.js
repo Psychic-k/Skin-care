@@ -514,7 +514,7 @@ Page({
 
       hideLoading()
 
-      if (res.result && res.result.success) {
+      if (res.result && res.result.code === 0) {
         this.setData({
           statsData: res.result.data
         })
@@ -1241,7 +1241,7 @@ Page({
         ? await request.put(`/api/diary/${editingId}`, requestData)
         : await request.post('/api/diary/create', requestData)
 
-      if (res.success) {
+      if (res.code === 0) {
         showToast(editingId ? '更新成功' : '保存成功')
         // 清除草稿
         this.clearDraft()
@@ -1487,7 +1487,7 @@ Page({
         exportMode: true
       })
 
-      if (res.success && res.data) {
+      if (res.code === 0 && res.data) {
         const exportData = this.formatExportData(res.data, format)
         
         if (format === 'excel') {
@@ -1700,7 +1700,7 @@ Page({
 
       const res = await request.callCloudFunction('createBackup', backupData)
       
-      if (res.success) {
+      if (res.code === 0) {
         showToast('云端备份创建成功')
       } else {
         throw new Error(res.message || '备份失败')

@@ -14,15 +14,10 @@ exports.main = async (event, context) => {
   try {
     console.log('userProfile 云函数调用开始', event)
     
-    const { action, userId, profileData } = event
+    const { action, profileData } = event
     
-    if (!userId) {
-      return {
-        code: -1,
-        message: '用户ID不能为空',
-        data: null
-      }
-    }
+    // 统一鉴权：强制使用 OPENID 作为 userId
+    const userId = wxContext.OPENID
     
     switch (action) {
       case 'get':

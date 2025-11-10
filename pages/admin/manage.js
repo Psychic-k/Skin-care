@@ -1295,9 +1295,9 @@ Page({
         }
       });
 
-      if (result.result.success) {
-        const requests = result.result.data.requests || [];
-        const total = result.result.data.total || 0;
+      if (result.result && result.result.code === 0) {
+        const requests = result.result.data?.requests || [];
+        const total = result.result.data?.total || 0;
         
         // 如果是第一页，替换数据；否则追加数据
         const newRequests = this.data.requestsCurrentPage === 1 ? 
@@ -1336,7 +1336,7 @@ Page({
         }
       });
 
-      if (result.result.success && result.result.data.statistics) {
+      if (result.result && result.result.code === 0 && result.result.data && result.result.data.statistics) {
         const stats = result.result.data.statistics;
         this.setData({
           requestsStatistics: {
@@ -1529,7 +1529,7 @@ Page({
         }
       });
 
-      if (result.result.success) {
+      if (result.result && result.result.code === 0) {
         wx.showToast({
           title: processAction === 'approve' ? '已通过请求' : '已拒绝请求',
           icon: 'success'

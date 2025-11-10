@@ -16,7 +16,6 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      userId,
       page = 1,
       limit = 10,
       detectionType = 'all', // all, comprehensive, acne, wrinkle, moisture, oil
@@ -24,6 +23,9 @@ exports.main = async (event, context) => {
       endDate,
       sortBy = 'time' // time, score
     } = event
+
+    // 统一鉴权：使用 OPENID 作为用户标识
+    const userId = wxContext.OPENID
     
     if (!userId) {
       return {

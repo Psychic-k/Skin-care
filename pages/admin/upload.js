@@ -113,7 +113,7 @@ Page({
         method: 'GET'
       })
 
-      if (res.success) {
+      if (res.code === 0) {
         this.setData({
           brandList: res.data.brands || []
         })
@@ -166,97 +166,69 @@ Page({
     })
   },
 
-  // 批量上传文件
+  // 批量上传文件（云存储 + 云函数）
   async uploadFile() {
     if (!this.data.selectedFile) {
       showToast('请先选择文件')
       return
     }
 
-    this.setData({
-      isUploading: true,
-      uploadProgress: 0
-    })
+    this.setData({ isUploading: true, uploadProgress: 0 })
 
     try {
-      // 模拟上传进度
       const progressInterval = setInterval(() => {
         const progress = this.data.uploadProgress + 10
-        this.setData({
-          uploadProgress: Math.min(progress, 90)
-        })
+        this.setData({ uploadProgress: Math.min(progress, 90) })
       }, 200)
 
-      const uploadTask = wx.uploadFile({
-        url: 'https://api.example.com/admin/products/upload',
-        filePath: this.data.selectedFile.path,
-        name: 'file',
-        formData: {
-          type: 'batch',
-          userId: this.data.userInfo.id
-        },
-        success: (res) => {
-          clearInterval(progressInterval)
-          this.setData({
-            uploadProgress: 100
-          })
+      // 1) 申请上传配置
+      const cfg = await request.callCloudFunction('uploadFile', {
+        fileType: 'application/vnd.ms-excel',
+        fileName: this.data.selectedFile.name || 'batch.xlsx',
+        fileSize: this.data.selectedFile.size,
+        category: 'product',
+        metadata: { source: 'adminBatch' }
+      })
+      if (cfg.code !== 0) throw new Error(cfg.message || '获取上传配置失败')
 
-          const result = JSON.parse(res.data)
-          if (result.success) {
-            this.setData({
-              uploadResult: {
-                success: true,
-                message: '上传成功',
-                data: result.data
-              }
-            })
-            showToast('上传成功')
-          } else {
-            this.setData({
-              uploadResult: {
-                success: false,
-                message: result.message || '上传失败',
-                errors: result.errors || []
-              }
-            })
-            showToast('上传失败')
-          }
-        },
-        fail: (error) => {
-          clearInterval(progressInterval)
-          console.error('上传失败:', error)
-          this.setData({
-            uploadResult: {
-              success: false,
-              message: '网络错误，上传失败',
-              errors: []
-            }
-          })
-          showToast('上传失败')
-        },
-        complete: () => {
-          this.setData({
-            isUploading: false
-          })
-        }
+      // 2) 上传到云存储
+      const cloudRet = await wx.cloud.uploadFile({
+        cloudPath: cfg.data.cloudPath,
+        filePath: this.data.selectedFile.path
       })
 
-      // 监听上传进度
-      uploadTask.onProgressUpdate((res) => {
+      // 3) 调用批量导入云函数
+      const importRes = await request.callCloudFunction('adminBatchUpload', {
+        fileID: cloudRet.fileID
+      })
+
+      clearInterval(progressInterval)
+      this.setData({ uploadProgress: 100, isUploading: false })
+
+      if (importRes.code === 0) {
         this.setData({
-          uploadProgress: res.progress
+          uploadResult: {
+            success: true,
+            message: `导入完成：成功 ${importRes.data.successCount} 条，失败 ${importRes.data.failureCount} 条`,
+            data: importRes.data
+          }
         })
-      })
-
+        showToast('上传成功')
+      } else {
+        this.setData({
+          uploadResult: {
+            success: false,
+            message: importRes.message || '上传失败',
+            errors: (importRes.data && importRes.data.errors) || []
+          }
+        })
+        showToast('上传失败')
+      }
     } catch (error) {
       console.error('上传文件失败:', error)
       this.setData({
         isUploading: false,
-        uploadResult: {
-          success: false,
-          message: '上传失败',
-          errors: []
-        }
+        uploadResult: { success: false, message: '上传失败', errors: [] }
       })
       showToast('上传失败')
     }
@@ -377,36 +349,29 @@ Page({
     })
   },
 
-  // 上传图片
+  // 上传图片（云存储）
   async uploadImage(filePath) {
     showLoading('上传图片中...')
-    
     try {
-      const uploadTask = wx.uploadFile({
-        url: 'https://api.example.com/upload/image',
-        filePath: filePath,
-        name: 'image',
-        success: (res) => {
-          const result = JSON.parse(res.data)
-          if (result.success) {
-            this.setData({
-              'productForm.imageUrl': result.data.url
-            })
-            showToast('图片上传成功')
-          } else {
-            showToast('图片上传失败')
-          }
-        },
-        fail: () => {
-          showToast('图片上传失败')
-        },
-        complete: () => {
-          hideLoading()
-        }
+      const conf = await request.callCloudFunction('uploadFile', {
+        fileType: 'image/jpeg',
+        fileName: `product_${Date.now()}.jpg`,
+        category: 'product'
       })
-    } catch (error) {
-      hideLoading()
+      if (conf.code !== 0) throw new Error(conf.message || '获取上传配置失败')
+
+      const up = await wx.cloud.uploadFile({
+        cloudPath: conf.data.cloudPath,
+        filePath
+      })
+
+      this.setData({ 'productForm.imageUrl': up.fileID })
+      showToast('图片上传成功')
+    } catch (e) {
+      console.error('图片上传失败:', e)
       showToast('图片上传失败')
+    } finally {
+      hideLoading()
     }
   },
 
@@ -460,7 +425,7 @@ Page({
         }
       })
 
-      if (res.success) {
+      if (res.code === 0) {
         showToast('产品添加成功')
         this.resetForm()
       } else {

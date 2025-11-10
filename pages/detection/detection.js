@@ -123,12 +123,9 @@ Page({
   // 获取最近检测记录
   async getRecentDetections() {
     try {
-      const userInfo = app.globalData.userInfo
-      if (!userInfo) return
+      const res = await request.get('/api/detection/history', { page: 1, limit: 3 })
 
-      const res = await request.get(`/api/detection/history/${userInfo.id}`)
-
-      if (res.success) {
+      if (res.code === 0 && res.data) {
         this.setData({
           recentDetections: res.data.detections.slice(0, 3) // 只显示最近3次
         })
@@ -276,7 +273,6 @@ Page({
       // 调用AI检测接口 - 修正参数名称
       const res = await request.post('/api/detection/analyze', {
         imageUrl: base64,  // 修改为云函数期望的参数名
-        userId: this.data.userInfo.id,
         detectionType: this.data.selectedType
       })
 

@@ -16,7 +16,6 @@ exports.main = async (event, context) => {
     
     // 参数验证
     const { 
-      userId,
       productId, // 可选，如果是从产品库选择的产品
       productName, // 必填，产品名称
       brand, // 必填，品牌
@@ -32,9 +31,12 @@ exports.main = async (event, context) => {
       notes, // 可选，备注
       tags // 可选，标签数组
     } = event
-    
+
+    // 统一鉴权：强制使用 OPENID，不信任前端 userId
+    const userId = wxContext.OPENID
+
     // 必填参数验证
-    if (!userId || !productName || !brand || !category) {
+    if (!productName || !brand || !category) {
       return {
         code: -1,
         message: '用户ID、产品名称、品牌和分类不能为空',
